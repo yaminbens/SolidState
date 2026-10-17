@@ -1,7 +1,7 @@
 # Jupyter Book 2 (MyST) configuration
 version: 1
 project:
-  title: מבוא למצב מוצק תשפ"ז – הדגמות נומריות
+  title: מבוא למצב מוצק תשפ״ז · הדגמות נומריות
   description: הדגמות שבועיות קצרות לתרגולי הקורס מבוא למצב מוצק (אוניברסיטת תל אביב)
   authors:
     - name: ימין בן שמעון
@@ -10,15 +10,10 @@ project:
   copyright: "2026"
   toc:
     - file: index.md
-    - title: שבוע 1 – התפלגויות וצפיפות מצבים
-      children:
-        - file: week01/index.md
-        - file: week01/demo.ipynb
-    - title: שבוע 2 – מודל דרודה
-      children:
-        - file: week02/index.md
-        - file: week02/demo.ipynb
+    - file: week01.ipynb
+    - file: week02.ipynb
 site:
   template: book-theme
+  title: מבוא למצב מוצק תשפ״ז
   options:
     style: site.css

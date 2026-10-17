@@ -1,9 +1,102 @@
-/* Hebrew content: right-to-left text, keep code, math and figures left-to-right */
+/* ============================================================
+   Intro to Solid State - course demos. Formal, with a lively accent palette.
+   Hebrew content is right-to-left; code, math and figures stay left-to-right.
+   ============================================================ */
+@import url("https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap");
+
+:root {
+  --sd-ink: #12294d;
+  --sd-blue: #2563eb;
+  --sd-teal: #0f9d8a;
+  --sd-amber: #f08a24;
+  --myst-color-primary: #2563eb;
+  --myst-color-link: #1d4ed8;
+  --myst-color-link-underline: #0f9d8a;     /* accent bar on code cells */
+  --myst-color-accent-surface: #eef4ff;
+  --myst-color-code: #0f766e;
+}
+.dark {
+  --sd-ink: #e8eefc;
+  --myst-color-link: #7fb0ff;
+  --myst-color-link-underline: #2dd4bf;
+  --myst-color-code: #5eead4;
+}
+
+/* ---------- typography ---------- */
+body, .myst-top-nav-bar, article p, article li, article h1, article h2, article h3, article h4,
+article blockquote, article dt, article dd, article figcaption {
+  font-family: "Heebo", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+}
+article p, article li { line-height: 1.8; font-size: 1.04rem; }
+
+/* ---------- right-to-left text; code, math, figures stay left-to-right ---------- */
 article p, article li, article h1, article h2, article h3, article h4,
-article blockquote, article dt, article dd,
-.myst-article p, .myst-article li, .myst-article h1, .myst-article h2, .myst-article h3 {
+article blockquote, article dt, article dd, article figcaption,
+.myst-article p, .myst-article li {
   direction: rtl; text-align: right;
 }
-article pre, article code, article .katex-display, article .katex, article img,
+article pre, article code, article .katex-display, article img,
 .myst-article pre, .myst-article code { direction: ltr; text-align: left; unicode-bidi: isolate; }
-article ul, article ol { padding-right: 1.5rem; padding-left: 0; }
+article .katex { direction: ltr; unicode-bidi: isolate; }
+article ul, article ol { padding-right: 1.6rem; padding-left: 0; }
+
+/* ---------- headings ---------- */
+article h1.myst-fm-block-title {
+  font-weight: 800; letter-spacing: -0.01em; color: var(--sd-ink);
+  direction: rtl; text-align: right;
+  padding-bottom: .35em; margin-bottom: .3em;
+  border-bottom: 4px solid transparent;
+  border-image: linear-gradient(to left, var(--sd-blue), var(--sd-teal), var(--sd-amber)) 1;
+}
+article h2 {
+  font-weight: 700; color: var(--sd-ink);
+  border-right: 5px solid var(--sd-amber); padding-right: .7rem; margin-top: 2.2rem;
+}
+article h3 { font-weight: 600; color: var(--myst-color-link); margin-top: 1.8rem; }
+
+/* ---------- call-outs (the notebooks use block quotes: 🧭 🔮 ✅) ---------- */
+article blockquote {
+  font-style: normal;
+  background: color-mix(in srgb, var(--sd-blue) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sd-blue) 22%, transparent);
+  border-right: 5px solid var(--sd-amber);
+  border-left: 1px solid color-mix(in srgb, var(--sd-blue) 22%, transparent);
+  border-radius: 12px;
+  padding: .75rem 1.1rem; margin: 1.2rem 0;
+}
+article blockquote p { margin: .25rem 0; }
+
+/* ---------- code cells and figures ---------- */
+article .myst-code, article [class*="jupyter-output"] { border-radius: 10px; }
+article .myst-code { overflow: hidden; }
+article img { border-radius: 10px; }
+
+/* ---------- top bar accent ---------- */
+.myst-top-nav-bar { border-top: 4px solid var(--sd-teal); }
+
+/* ---------- landing page ---------- */
+article:has(.hero) .myst-fm-block-title,
+article:has(.hero) header.myst-fm-authors-affiliations { display: none; }
+
+.hero {
+  position: relative; overflow: hidden;
+  margin: .6rem 0 2.2rem; padding: 2.4rem 2.2rem;
+  color: #fff; border-radius: 22px;
+  background: linear-gradient(135deg, #12294d 0%, #1d4ed8 58%, #0f9d8a 100%);
+  box-shadow: 0 16px 40px rgba(18, 41, 77, .28);
+}
+.hero::after {                       /* decorative faded symbol */
+  content: "ℏ"; position: absolute; left: 1.2rem; bottom: -3.2rem;
+  font: 800 13rem/1 "Heebo", serif; color: rgba(255, 255, 255, .10); direction: ltr; pointer-events: none;
+}
+.hero h2 { color: #fff; border: none; padding: 0; margin: 0 0 .4rem; font-size: 2.5rem; font-weight: 800; }
+.hero p { color: rgba(255, 255, 255, .93); font-size: 1.12rem; max-width: 46rem; }
+.hero strong { color: #ffd9a8; }
+
+/* cards (landing page) */
+article [class*="card"], article .myst-card {
+  border-radius: 16px !important;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+article a[class*="card"]:hover, article [class*="card"]:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(37, 99, 235, .18); }
+article [class*="card"] * { direction: rtl; text-align: right; }

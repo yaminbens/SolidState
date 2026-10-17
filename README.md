@@ -4,9 +4,10 @@
 **https://yaminbens.github.io/SolidState/**
 
 ## מבנה
-- `weekNN/demo.ipynb` – מחברת ההדגמה של שבוע NN (עם פלטים שמורים). `weekNN/index.md` – עמוד פתיחה עם כפתור Colab.
-- `myst.yml`, `index.md`, `site.css` – הגדרות האתר (Jupyter Book 2 / MyST).
+- `weekNN.ipynb` – מחברת ההדגמה של שבוע NN (עם פלטים שמורים). עמוד אחד לשבוע באתר: `https://yaminbens.github.io/SolidState/weekNN`.
+- `myst.yml`, `index.md`, `site.css` – הגדרות האתר (Jupyter Book 2 / MyST), עמוד הבית והעיצוב.
 - `tools/make_notebooks.py` – יוצר ומריץ את המחברות (אפשר להוסיף שם שבועות חדשים).
+- `tools/prepare_site.py` – רץ רק ב-CI: מסיר מהמחברות את עטיפת ה-`<div dir="rtl">` (שמשבשת נוסחאות באתר); במחברת עצמה היא נשארת כדי שיהיה RTL ב-Colab.
 - `.github/workflows/deploy.yml` – בונה ומפרסם את האתר ב-GitHub Pages בכל push ל-`main`.
 
 ## הפעלה חד-פעמית

@@ -27,7 +27,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install Jupyter Book
-        run: pip install "jupyter-book>=2"
+        run: pip install "jupyter-book>=2" nbformat
+      - name: Prepare notebooks for the site (strip the RTL wrapper that breaks math)
+        run: python tools/prepare_site.py
       - name: Build HTML
         env:
           BASE_URL: /${{ github.event.repository.name }}

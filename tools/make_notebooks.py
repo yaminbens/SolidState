@@ -1,6 +1,9 @@
 """Generate the weekly demo notebooks (Hebrew RTL markdown + English code), then execute them
 so that outputs are stored in the .ipynb (the Jupyter Book site shows them without re-running).
 usage: python tools/make_notebooks.py
+
+The notebooks keep an RTL <div> wrapper in every markdown cell (right-to-left in Colab / local Jupyter).
+The site build strips it first (tools/prepare_site.py), because MyST flattens math inside raw HTML.
 """
 import json, pathlib
 import nbformat
@@ -9,6 +12,21 @@ from nbclient import NotebookClient
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 H = '<div dir="rtl" style="text-align:right">\n\n'
 F = '\n\n</div>'
+
+REPO = "yaminbens/SolidState"
+
+def header(week, title, kicker):
+    """First cell: title (becomes the page title), kicker line, Colab badge and download link."""
+    nm = f"week{week:02d}.ipynb"
+    return f"""
+# {title}
+
+*{kicker}*
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/{REPO}/blob/main/{nm}) &nbsp;&nbsp; [⬇ הורדת המחברת](https://github.com/{REPO}/raw/main/{nm})
+
+> 🧭 **איך עובדים עם המחברת?** ראשית, לפני כל גרף, נסו לנחש מה תראו. שנית, הריצו (*Run all*, או תא אחר תא); כל המחברת רצה בתוך דקה, ב-Colab או מקומית (`numpy`, `scipy`, `matplotlib`). לבסוף, ענו לעצמכם על שאלות הדיון שבסוף. אין צורך לכתוב קוד: הסעיף החישובי בתרגיל הבית נשען על ההדגמה הזו.
+"""
 
 def nb_from(cells):
     nb = nbformat.v4.new_notebook()
@@ -22,13 +40,9 @@ def nb_from(cells):
 
 # ------------------------------------------------------------------ week 1
 w1 = [
-("md", r"""
-# מבוא למצב מוצק תשפ"ז – הדגמה לתרגול 1
-## פוטנציאל כימי כתלות בטמפרטורה
-
-**איך מריצים?** לוחצים על *Run all* (או מריצים תא אחר תא). ההרצה כולה אורכת פחות מדקה. אפשר להריץ ב-Colab (כפתור בראש הדף) או מקומית (`numpy`, `scipy`, `matplotlib`).
-
-**מה עושים כאן?** בטמפרטורה סופית האכלוס נקבע על ידי $f_{FD}$, והפוטנציאל הכימי $\mu$ נקבע מהדרישה שמספר החלקיקים נשאר קבוע:
+("md", header(1, "שבוע 1 · פוטנציאל כימי כתלות בטמפרטורה", "הדגמה לתרגול 1 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## מה עושים כאן?
+בטמפרטורה סופית האכלוס נקבע על ידי $f_{FD}$, והפוטנציאל הכימי $\mu$ נקבע מהדרישה שמספר החלקיקים נשאר קבוע:
 $$n=\int_0^\infty g(\varepsilon)\,f_{FD}(\varepsilon;\mu,T)\,d\varepsilon .$$
 זו משוואה לא-ליניארית עבור $\mu(T)$, והמחברת פותרת אותה מספרית (מציאת שורש) בכל טמפרטורה.
 
@@ -42,7 +56,7 @@ from scipy.optimize import brentq
 from scipy.special import expit   # expit(x) = 1/(1+exp(-x)), numerically stable
 """),
 ("md", r"""
-### פרמטרים
+### ⚙️ פרמטרים
 - `d` – המימד של הגז. צפיפות המצבים היא $g(\varepsilon)=c\,\varepsilon^{d/2-1}$, כאשר הקבוע $c$ נקבע כך שב-$T=0$ מתקבל $n=\int_0^{\varepsilon_F}g\,d\varepsilon=1$ (כלומר $c=d/2$).
 - `T_max` – הטמפרטורה הגבוהה ביותר בגרפים, ביחידות של $T_F$.
 """),
@@ -93,6 +107,7 @@ plt.legend(frameon=False); plt.show()
 """),
 ("md", r"""
 ### 4. $\mu(T)$
+> 🔮 **נחשו:** כשמעלים את הטמפרטורה, האם $\mu$ עולה, יורד או נשאר קבוע? נמקו במשפט אחד לפני שמסתכלים על הגרף.
 """),
 ("code", """
 Ts = np.linspace(0.02, T_max, 100)
@@ -102,22 +117,20 @@ plt.xlabel("T / T_F"); plt.ylabel("mu / epsilon_F"); plt.legend(frameon=False)
 plt.show()
 """),
 ("md", r"""
-### שאלות לדיון
+### 💬 שאלות לדיון
 1. מהי ההתנהגות של $\mu$ ב-$T\ll T_F$? האם השינוי ביחס ל-$\varepsilon_F$ גדול או קטן?
 2. מה קורה ל-$\mu$ כש-$T\gg T_F$? מה הסימן שלו, ולמה? (רמז: הגבול הקלאסי.)
 3. מה מייחד את צפיפות המצבים בסביבת $\varepsilon_F$, ואיך זה קשור להתנהגות שראיתם?
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
 """),
 ]
 
 # ------------------------------------------------------------------ week 2
 w2 = [
-("md", r"""
-# מבוא למצב מוצק תשפ"ז – הדגמה לתרגול 2
-## סימולציית דרודה
-
-**איך מריצים?** לוחצים על *Run all*. ההרצה אורכת כמה שניות (`numpy` ו-`matplotlib` בלבד). אפשר ב-Colab (כפתור בראש הדף) או מקומית.
-
-**מה עושים כאן?** מדמים אלקטרונים (או נושאי מטען אחרים) בשני ממדים. בין פיזורים הם נעים תחת כוח לורנץ, ובכל פיזור — שמתרחש בהסתברות $dt/\tau$ בכל צעד — הם "שוכחים" את מהירותם ומקבלים מהירות חדשה מהתפלגות בולצמן. זה בדיוק המודל מהתרגול.
+("md", header(2, "שבוע 2 · סימולציית דרודה", "הדגמה לתרגול 2 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## מה עושים כאן?
+מדמים נושאי מטען (למשל אלקטרונים) בשני ממדים. בין פיזורים הם נעים תחת כוח לורנץ, ובכל פיזור, שמתרחש בהסתברות $dt/\tau$ בכל צעד, הם "שוכחים" את מהירותם ומקבלים מהירות חדשה מהתפלגות בולצמן. זה בדיוק המודל מהתרגול.
 
 **יחידות:** $m=\tau=k_BT=c=1$, ומטען נמדד ביחידות של $|e|$. השדה המגנטי בכיוון $\hat z$, והשדה החשמלי במישור.
 """),
@@ -127,7 +140,7 @@ import matplotlib.pyplot as plt
 rng = np.random.default_rng(1)
 """),
 ("md", r"""
-### פרמטרים
+### ⚙️ פרמטרים
 - `charge` – מטען נושא המטען ביחידות של $|e|$ (אלקטרון: `-1`).
 - `E0` – גודל השדה החשמלי.
 - `N` – מספר נושאי המטען בסימולציה (יותר – פחות רעש, אבל איטי יותר).
@@ -160,6 +173,8 @@ def simulate(E, B, q=charge, N=N, dt=0.02, T=12.0):
 """),
 ("md", r"""
 ### 1. מהירות סחיפה כפונקציה של השדה
+> 🔮 **נחשו:** איזו מהירות סחיפה תצפו לקבל עבור $E=0.3$ (ביחידות המחברת), ואיך היא תשתנה כשמכפילים את השדה?
+
 זרם החלקיקים הממוצע נקבע לפי $\langle v\rangle=q\,E\,\tau/m$. האם התלות בשדה לינארית (חוק אוהם)?
 """),
 ("code", """
@@ -171,6 +186,8 @@ plt.xlabel('E'); plt.ylabel('<v_x>'); plt.legend(frameon=False); plt.show()
 """),
 ("md", r"""
 ### 2. זווית הול
+> 🔮 **נחשו:** כשהשדה המגנטי גדל, לאיזה כיוון ובאיזו מידה ייטה הזרם ביחס לשדה החשמלי?
+
 מפעילים שדה חשמלי בכיוון $x$ ושדה מגנטי $B$ (כאן $B=\omega_c\tau$, כי $m=q=\tau=1$). הזרם $\mathbf J=q n\langle\mathbf v\rangle$ אינו בהכרח בכיוון $\mathbf E$. מודדים את הזווית בין $\mathbf J$ ל-$\mathbf E$ ומשווים לתחזית של דרודה מהתרגול.
 """),
 ("code", """
@@ -188,6 +205,8 @@ plt.axhline(0, color='0.7', lw=0.8); plt.legend(frameon=False); plt.show()
 """),
 ("md", r"""
 ### 3. תגובה לשדה חשמלי תלוי בזמן
+> 🔮 **נחשו:** מה יקרה לגודל התגובה ולפאזה שלה ביחס לשדה כשהתדר עולה?
+
 מפעילים שדה $E(t)=E_0\cos\omega t$ (ללא שדה מגנטי), ועוקבים אחרי המהירות הממוצעת $\langle v_x\rangle$ כפונקציה של הזמן, עבור שלושה תדרים. הקו המקווקו הוא הפרופיל של השדה עצמו (בקנה מידה). כשהתדר נמוך ($\omega\tau\ll1$) המהירות עוקבת אחרי השדה; מה קורה כשהוא עולה?
 """),
 ("code", """
@@ -211,10 +230,12 @@ for ax, omega in zip(axs, [0.3, 1.0, 3.0]):
 axs[0].legend(frameon=False, fontsize=8); plt.tight_layout(); plt.show()
 """),
 ("md", r"""
-### שאלות לדיון
+### 💬 שאלות לדיון
 1. מה קובע את שיפוע הגרף בחלק 1? מה היה משתנה אילו הזמן $\tau$ בין פיזורים היה ארוך יותר?
 2. בחלק 2: מה קורה לזווית כש-$\omega_c\tau$ גדל, ולמה היא לא עוברת $90^\circ$?
 3. בחלק 3: מה קורה לגודל התגובה ולמופע שלה ביחס לשדה כשהתדר עולה? מדוע (חשבו על $\tau$ כזמן שלוקח לנושא המטען "להגיב")? קשרו לביטוי $\sigma(\omega)=\sigma_D/(1-i\omega\tau)$ מהתרגול.
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
 """),
 ]
 
@@ -225,5 +246,5 @@ def build(name, cells, out):
     print("wrote", out)
 
 if __name__ == "__main__":
-    build("w1", w1, ROOT / "week01" / "demo.ipynb")
-    build("w2", w2, ROOT / "week02" / "demo.ipynb")
+    build("w1", w1, ROOT / "week01.ipynb")
+    build("w2", w2, ROOT / "week02.ipynb")
