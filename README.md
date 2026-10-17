@@ -1,7 +1,7 @@
 # מבוא למצב מוצק תשפ"ז – הדגמות נומריות
 
 הדגמות שבועיות קצרות (Jupyter) לתרגולי הקורס, מפורסמות כאתר Jupyter Book:
-**https://yaminbens.github.io/solidstate/**
+**https://yaminbens.github.io/SolidState/**
 
 ## מבנה
 - `weekNN/demo.ipynb` – מחברת ההדגמה של שבוע NN (עם פלטים שמורים). `weekNN/index.md` – עמוד פתיחה עם כפתור Colab.
