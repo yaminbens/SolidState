@@ -1,0 +1,9 @@
+/* Hebrew content: right-to-left text, keep code, math and figures left-to-right */
+article p, article li, article h1, article h2, article h3, article h4,
+article blockquote, article dt, article dd,
+.myst-article p, .myst-article li, .myst-article h1, .myst-article h2, .myst-article h3 {
+  direction: rtl; text-align: right;
+}
+article pre, article code, article .katex-display, article .katex, article img,
+.myst-article pre, .myst-article code { direction: ltr; text-align: left; unicode-bidi: isolate; }
+article ul, article ol { padding-right: 1.5rem; padding-left: 0; }
