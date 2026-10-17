@@ -12,7 +12,7 @@ OPEN = re.compile(r'\A<div dir="rtl"[^>]*>\s*')
 CLOSE = re.compile(r'\s*</div>\s*\Z')
 
 ABSTRACT = ("הרצת הקוד באתר: לחצו על כפתור ההפעלה ▶ (Start compute environment) שמתחת לכותרת והמתינו לחיבור "
-            "(עד כשתי דקות בהפעלה הראשונה). לאחר מכן לחצו Run all cells, או הריצו תא אחר תא עם Run cell. "
+            "(עד כשתי דקות בהפעלה הראשונה). "
             "אפשר גם לפתוח את המחברת ב-Colab (הכפתור מתחת), ללא המתנה לשרת האתר.")
 
 for path in sorted(ROOT.glob("week*.ipynb")):
