@@ -19,3 +19,8 @@ pip install "jupyter-book>=2"
 python tools/make_notebooks.py     # (מחדש את המחברות)
 jupyter-book build --html          # האתר ב-_build/html
 ```
+
+## הרצת הקוד באתר
+
+בכל עמוד שבועי יש כפתור הפעלה (Binder) שמריץ את המחברת בענן. `requirements.txt` מגדיר את החבילות.
+המחברות נשמרות ללא פלט (unrun), כך שהתוצאות מופיעות רק אחרי שמריצים את הקוד.

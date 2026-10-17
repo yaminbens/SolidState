@@ -7,6 +7,7 @@ project:
     - name: ימין בן שמעון
   github: https://github.com/yaminbens/SolidState
   license: CC-BY-4.0
+  jupyter: true
   copyright: "2026"
   toc:
     - file: index.md

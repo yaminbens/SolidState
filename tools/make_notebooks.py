@@ -1,11 +1,12 @@
-"""Generate the weekly demo notebooks (Hebrew RTL markdown + English code), then execute them
-so that outputs are stored in the .ipynb (the Jupyter Book site shows them without re-running).
+"""Generate the weekly demo notebooks (Hebrew RTL markdown + English code), then check that they run
+(the saved notebooks are unrun, so students see no results until they run the code themselves).
 usage: python tools/make_notebooks.py
 
 The notebooks keep an RTL <div> wrapper in every markdown cell (right-to-left in Colab / local Jupyter).
 The site build strips it first (tools/prepare_site.py), because MyST flattens math inside raw HTML.
 """
 import json, pathlib
+import copy
 import nbformat
 from nbclient import NotebookClient
 
@@ -241,9 +242,14 @@ axs[0].legend(frameon=False, fontsize=8); plt.tight_layout(); plt.show()
 
 def build(name, cells, out):
     nb = nb_from(cells)
-    NotebookClient(nb, timeout=600, kernel_name="python3").execute()
+    # Execute a copy only to verify that every cell runs; the notebook that is saved stays
+    # unrun (no outputs), so students see the results only after they run the code themselves.
+    NotebookClient(copy.deepcopy(nb), timeout=600, kernel_name="python3").execute()
+    for c in nb.cells:
+        if c.cell_type == "code":
+            c.outputs, c.execution_count = [], None
     nbformat.write(nb, out)
-    print("wrote", out)
+    print("wrote (unrun)", out)
 
 if __name__ == "__main__":
     build("w1", w1, ROOT / "week01.ipynb")
