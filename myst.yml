@@ -16,4 +16,5 @@ site:
   template: book-theme
   title: מבוא למצב מוצק תשפ״ז
   options:
+    logo_text: מבוא למצב מוצק תשפ״ז
     style: site.css

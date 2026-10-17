@@ -64,7 +64,9 @@ article blockquote {
   border-radius: 12px;
   padding: .75rem 1.1rem; margin: 1.2rem 0;
 }
+article blockquote, article blockquote p { font-style: normal !important; font-weight: 400; }
 article blockquote p { margin: .25rem 0; }
+article blockquote strong { font-weight: 700; }
 
 /* ---------- code cells and figures ---------- */
 article .myst-code, article [class*="jupyter-output"] { border-radius: 10px; }

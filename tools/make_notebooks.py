@@ -106,7 +106,7 @@ plt.xlabel("epsilon / epsilon_F"); plt.ylabel("f_FD"); plt.title(f"d = {d}")
 plt.legend(frameon=False); plt.show()
 """),
 ("md", r"""
-### 4. $\mu(T)$
+### 4. הגרף של $\mu(T)$
 > 🔮 **נחשו:** כשמעלים את הטמפרטורה, האם $\mu$ עולה, יורד או נשאר קבוע? נמקו במשפט אחד לפני שמסתכלים על הגרף.
 """),
 ("code", """
