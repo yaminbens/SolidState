@@ -11,9 +11,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 OPEN = re.compile(r'\A<div dir="rtl"[^>]*>\s*')
 CLOSE = re.compile(r'\s*</div>\s*\Z')
 
-ABSTRACT = ("הרצת הקוד באתר: לחצו על כפתור ההפעלה ▶ (Start compute environment) שמתחת לכותרת והמתינו לחיבור "
-            "(עד כשתי דקות בהפעלה הראשונה). "
-            "אפשר גם לפתוח את המחברת ב-Colab (הכפתור מתחת), ללא המתנה לשרת האתר.")
+ABSTRACT = ("הרצת הקוד באתר: לחצו על כפתור ההפעלה העגול (Start compute environment) שמתחת לטקסט זה, "
+            "והמתינו לחיבור (עד כשתי דקות בהפעלה הראשונה). אפשר גם לפתוח את המחברת ב-Colab, בכפתור שבהמשך העמוד.")
 
 for path in sorted(ROOT.glob("week*.ipynb")):
     nb = nbformat.read(path, 4)
