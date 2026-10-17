@@ -16,6 +16,10 @@ F = '\n\n</div>'
 
 REPO = "yaminbens/SolidState"
 
+ABSTRACT = ("**הרצת הקוד באתר:** לחצו על כפתור ההפעלה ▶ (*Start compute environment*) שמתחת לכותרת והמתינו לחיבור "
+            "(עד כשתי דקות בהפעלה הראשונה). לאחר מכן לחצו *Run all cells*, או הריצו תא אחר תא עם *Run cell*. "
+            "אפשר גם לפתוח את המחברת ב-Colab (הכפתור מתחת), ללא המתנה לשרת האתר.")
+
 def header(week, title, kicker):
     """First cell: title (becomes the page title), kicker line, Colab badge and download link."""
     nm = f"week{week:02d}.ipynb"
@@ -26,7 +30,7 @@ def header(week, title, kicker):
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/{REPO}/blob/main/{nm}) &nbsp;&nbsp; [⬇ הורדת המחברת](https://github.com/{REPO}/raw/main/{nm})
 
-> 🧭 **איך עובדים עם המחברת?** ראשית, לפני כל גרף, נסו לנחש מה תראו. שנית, הריצו (*Run all*, או תא אחר תא); כל המחברת רצה בתוך דקה, ב-Colab או מקומית (`numpy`, `scipy`, `matplotlib`). לבסוף, ענו לעצמכם על שאלות הדיון שבסוף. אין צורך לכתוב קוד: הסעיף החישובי בתרגיל הבית נשען על ההדגמה הזו.
+> 🧭 **איך עובדים עם המחברת?** ראשית, לפני כל גרף, נסו לנחש מה תראו. שנית, הריצו את הקוד (*Run all*, או תא אחר תא), באתר או ב-Colab; כל המחברת רצה בתוך דקה (`numpy`, `scipy`, `matplotlib`). לבסוף, ענו לעצמכם על שאלות הדיון שבסוף. אין צורך לכתוב קוד: הסעיף החישובי בתרגיל הבית נשען על ההדגמה הזו.
 """
 
 def nb_from(cells):
@@ -37,6 +41,8 @@ def nb_from(cells):
                         else nbformat.v4.new_code_cell(src))
     nb.metadata["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
     nb.metadata["language_info"] = {"name": "python"}
+    # Shown by the Jupyter Book site above the run button (ignored by Colab / Jupyter).
+    nb.metadata["frontmatter"] = {"abstract": ABSTRACT}
     return nb
 
 # ------------------------------------------------------------------ week 1

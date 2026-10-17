@@ -3,8 +3,6 @@ version: 1
 project:
   title: מבוא למצב מוצק תשפ״ז · הדגמות נומריות
   description: הדגמות שבועיות קצרות לתרגולי הקורס מבוא למצב מוצק (אוניברסיטת תל אביב)
-  authors:
-    - name: ימין בן שמעון
   github: https://github.com/yaminbens/SolidState
   license: CC-BY-4.0
   jupyter: true
