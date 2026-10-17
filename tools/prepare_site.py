@@ -21,6 +21,6 @@ for path in sorted(ROOT.glob("week*.ipynb")):
         if cell.cell_type == "markdown":
             cell.source = CLOSE.sub("", OPEN.sub("", cell.source))
     # Site only: a front-matter cell puts the run instructions above the run button.
-    nb.cells.insert(0, nbformat.v4.new_markdown_cell("---\nabstract: |\n  " + ABSTRACT + "\n---"))
+    nb.cells.insert(0, nbformat.v4.new_markdown_cell("---\nsubtitle: |\n  " + ABSTRACT + "\n---"))
     nbformat.write(nb, path)
     print("prepared", path.name)
