@@ -113,3 +113,12 @@ article [class*="card"] * { direction: rtl; text-align: right; }
   border-right: 4px solid var(--sd-teal); border-radius: 0.5rem;
   padding: 0.7rem 1rem; margin-top: 1rem !important;
 }
+
+/* ---------- interactive pages (viz/*.html embedded with an iframe) ---------- */
+/* The theme wraps iframes in a 60% aspect-ratio box; the interactive pages are tall, so give them a fixed height. */
+article div:has(> iframe[src*="/viz/"]) {
+  display: block !important; width: 100% !important; padding-bottom: 0 !important;
+  height: 1720px; border-radius: 14px; overflow: hidden;
+}
+@media (max-width: 860px) { article div:has(> iframe[src*="/viz/"]) { height: 2900px; } }
+article iframe[src*="/viz/"] { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
