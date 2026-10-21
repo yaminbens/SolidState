@@ -501,11 +501,16 @@ document.querySelectorAll("#lseg button").forEach(b=>b.addEventListener("click",
 document.querySelectorAll("#nseg button").forEach(b=>b.addEventListener("click",()=>{ R2.th=360/+b.dataset.n; $("th").value=R2.th; pressed("nseg","n",b.dataset.n); draw2D(); }));
 $("th").addEventListener("input",e=>{ R2.th=+e.target.value; const n=360/R2.th; pressed("nseg","n",Math.abs(n-Math.round(n))<1e-9?Math.round(n):-1); draw2D(); });
 // When embedded in the course site (same origin), size the iframe box to the content height.
+// The site re-renders its own markup, so the rule goes into a <style> element in the parent's <head>.
 function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
-  const h=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
-  fe.parentElement.style.height=h+"px"; }catch(e){} }
+  const pd=fe.ownerDocument, h=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
+  let st=pd.getElementById("viz-fit"); if(!st){ st=pd.createElement("style"); st.id="viz-fit"; pd.head.appendChild(st); }
+  st.textContent=`article div:has(> iframe[src*="/viz/"]){display:block!important;width:100%!important;padding-bottom:0!important;height:${h}px!important}
+article iframe[src*="/viz/"]{position:absolute;inset:0;width:100%;height:100%;border:0}`;
+}catch(e){} }
 window.addEventListener("resize",()=>{ drawAll(); fitFrame(); });
 window.addEventListener("load",fitFrame);
+if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawAll);
 
 pressed("sseg","s",S.s); pressed("cseg","c",S.cell); pressed("lseg","l",R2.l); pressed("nseg","n",4);
