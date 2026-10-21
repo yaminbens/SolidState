@@ -34,6 +34,8 @@ jobs:
         env:
           BASE_URL: /${{ github.event.repository.name }}
         run: jupyter-book build --html
+      - name: Add the interactive pages (static HTML, embedded by the weekly pages)
+        run: cp -r viz _build/html/viz
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _build/html

@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>גבישים בתלת-ממד</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course palette (same as site.css): ink, blue, teal, amber. */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --fg:#12294d; --muted:#53627a; --line:#d6dde8; --soft:#eef3fb;
+  --blue:#2563eb; --teal:#0f9d8a; --amber:#f08a24; --rose:#d6455b; --edge:#12294d;
+  --f-body:"Heebo","Segoe UI",Arial,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root.dark{
+  --bg:#0e141c; --panel:#151d28; --fg:#e8eefc; --muted:#9aa8bc; --line:#2a3646; --soft:#1b2534;
+  --blue:#6aa1ff; --teal:#2dd4bf; --amber:#f6a14a; --rose:#f07a8c; --edge:#c9d6ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{padding:14px max(14px,env(safe-area-inset-left)) 28px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
+.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+  box-shadow:0 6px 18px rgba(18,41,77,.06)}
+.card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
+.card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+.hint{color:var(--muted);font-size:12.5px;margin:6px 0 0}
+.ctl{display:flex;flex-direction:column;gap:12px}
+.lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;background:transparent;color:var(--fg);border:1px solid var(--line);
+  border-radius:999px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) 3.2em;gap:10px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.checks label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.box p{margin:3px 0}
+.num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px}
+p .num{white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
+.ok{color:var(--teal);font-weight:700}
+.no{color:var(--rose);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>גבישים בתלת-ממד: סריג, בסיס ותאי יחידה</h1>
+    <p class="lede">גררו את התמונה כדי לסובב אותה. בחרו מבנה ותא יחידה, ולחצו על אטום כדי לראות את השכנים הקרובים שלו. גודל האטומים סכמטי.</p>
+  </header>
+
+  <!-- ================= Panel 1: crystal viewer ================= -->
+  <section class="card">
+    <h2>מבנה גבישי</h2>
+    <p class="sub">כל גביש הוא סריג ברווה ועליו בסיס. התא הפרימיטיבי מכיל נקודת סריג אחת; התא הקונבנציונלי שומר על הסימטריה; תא ויגנר-זייץ הוא כל הנקודות שקרובות לנקודת סריג אחת יותר מאשר לכל האחרות.</p>
+    <div class="grid">
+      <div>
+        <canvas id="c3" width="680" height="600" aria-label="מבנה גבישי בתלת-ממד"></canvas>
+        <div class="legend" id="legend"></div>
+        <p class="hint">גרירה: סיבוב. לחיצה על אטום: בחירת האטום שבמרכז. אטומים חיוורים נמצאים מחוץ לתא, ומוצגים רק כדי להשלים את התא או את השכנים.</p>
+      </div>
+      <div class="ctl">
+        <div>
+          <div class="lab">מבנה</div>
+          <div class="seg" id="sseg">
+            <button data-s="sc">SC</button><button data-s="bcc">BCC</button><button data-s="fcc">FCC</button>
+            <button data-s="hcp">HCP</button><button data-s="cscl">CsCl</button><button data-s="nacl">NaCl</button>
+            <button data-s="perov">BaTiO₃</button>
+          </div>
+        </div>
+        <div>
+          <div class="lab">תא יחידה</div>
+          <div class="seg" id="cseg">
+            <button data-c="conv">קונבנציונלי</button><button data-c="prim">פרימיטיבי</button>
+            <button data-c="ws">ויגנר-זייץ</button><button data-c="none">ללא</button>
+          </div>
+        </div>
+        <div class="row"><span class="lab" style="margin:0">מספר תאים</span><input id="n" type="range" min="1" max="3" value="1"><output id="no">1</output></div>
+        <div class="checks">
+          <label><input type="checkbox" id="nn" checked> שכנים קרובים</label>
+          <label><input type="checkbox" id="vec"> וקטורים פרימיטיביים</label>
+          <label><input type="checkbox" id="spin"> סיבוב אוטומטי</label>
+        </div>
+        <div class="box" id="info"></div>
+        <div class="box" id="cellinfo"></div>
+        <div class="box" id="nninfo"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Panel 2: rotations ================= -->
+  <section class="card">
+    <h2>אילו סיבובים סריג יכול לסבול?</h2>
+    <p class="sub">מסובבים העתק של סריג דו-ממדי סביב נקודת סריג. אם כל נקודה מסובבת נוחתת על נקודת סריג, הסיבוב הוא סימטריה של הסריג.</p>
+    <div class="grid">
+      <div>
+        <canvas id="c2" width="680" height="560" aria-label="סריג דו-ממדי והעתק מסובב"></canvas>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--blue)"></i>הסריג</span>
+          <span><i class="dot" style="border:2px solid var(--amber)"></i>ההעתק המסובב</span>
+          <span><i class="dot" style="background:var(--teal)"></i>נקודה מסובבת שנוחתת על נקודת סריג</span>
+        </div>
+      </div>
+      <div class="ctl">
+        <div>
+          <div class="lab">סריג</div>
+          <div class="seg" id="lseg">
+            <button data-l="sq">ריבועי</button><button data-l="tri">משולשי</button>
+            <button data-l="rect">מלבני</button><button data-l="obl">אלכסוני</button>
+          </div>
+        </div>
+        <div>
+          <div class="lab">סיבוב ב-2π/n</div>
+          <div class="seg" id="nseg">
+            <button data-n="2">n=2</button><button data-n="3">n=3</button><button data-n="4">n=4</button>
+            <button data-n="5">n=5</button><button data-n="6">n=6</button><button data-n="7">n=7</button><button data-n="8">n=8</button>
+          </div>
+        </div>
+        <div class="row"><span class="lab" style="margin:0">זווית</span><input id="th" type="range" min="0" max="360" step="0.5" value="90"><output id="tho">90°</output></div>
+        <div class="box" id="rotinfo"></div>
+        <div class="box">
+          <h3>המטריצה בבסיס הווקטורים הפרימיטיביים</h3>
+          <p>כותבים את הסיבוב כמטריצה M שפועלת על המקדמים <span class="num">(n₁, n₂)</span> של <span class="num">R = n₁a₁ + n₂a₂</span>. אם הסיבוב מעביר את הסריג לעצמו, כל איברי M שלמים, ולכן גם העקבה שלה. העקבה לא תלויה בבחירת הבסיס, והיא שווה ל-<span class="num">2cos θ</span>.</p>
+          <p class="num" id="mat" style="font-size:14px"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const TAU = 2*Math.PI, S3 = Math.sqrt(3), CHCP = Math.sqrt(8/3);
+
+/* ---------------- theme: follow the course site (same origin) or the OS ---------------- */
+function applyTheme(){
+  let dark = false;
+  try{ const p = window.parent && window.parent !== window ? window.parent.document.documentElement : null;
+       if(p) dark = p.classList.contains("dark"); else throw 0; }
+  catch(e){ dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  document.documentElement.classList.toggle("dark", dark);
+}
+applyTheme();
+try{ if(window.parent !== window) new MutationObserver(()=>{applyTheme(); drawAll();})
+      .observe(window.parent.document.documentElement,{attributes:true,attributeFilter:["class"]}); }catch(e){}
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawAll();});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------------- small vector helpers ---------------- */
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]], sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const mul=(a,s)=>[a[0]*s,a[1]*s,a[2]*s], dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const norm=a=>Math.sqrt(dot(a,a));
+const det3=(a,b,c)=>dot(a,cross(b,c));
+function solve3(r1,r2,r3,d){ // rows r_i . x = d_i
+  const D=det3(r1,r2,r3); if(Math.abs(D)<1e-9) return null;
+  const c23=cross(r2,r3), c31=cross(r3,r1), c12=cross(r1,r2);
+  return mul(add(add(mul(c23,d[0]),mul(c31,d[1])),mul(c12,d[2])),1/D);
+}
+
+/* ---------------- structures (cubic edge a = 1; HCP: in-plane a = 1, c = sqrt(8/3)) ---------------- */
+const SC_A=[[1,0,0],[0,1,0],[0,0,1]], BCC_A=[[-.5,.5,.5],[.5,-.5,.5],[.5,.5,-.5]], FCC_A=[[0,.5,.5],[.5,0,.5],[.5,.5,0]];
+const HCP_A=[[1,0,0],[-.5,S3/2,0],[0,0,CHCP]];
+const ST = {
+  sc:{ A:SC_A, region:"cube", species:[{n:"A",c:"--blue",r:.17}], basis:[[0,[0,0,0]]],
+       title:"קובי פשוט (SC)", text:"סריג ברווה. נקודת סריג אחת בכל פינה של הקובייה.",
+       prim:["a₁ = a(1, 0, 0)","a₂ = a(0, 1, 0)","a₃ = a(0, 0, 1)"] },
+  bcc:{ A:BCC_A, region:"cube", species:[{n:"A",c:"--blue",r:.15}], basis:[[0,[0,0,0]]],
+       title:"קובי ממורכז גוף (BCC)", text:"סריג ברווה: הנקודה שבמרכז הקובייה שקולה לחלוטין לנקודות שבפינות.",
+       prim:["a₁ = a/2 (−1, 1, 1)","a₂ = a/2 (1, −1, 1)","a₃ = a/2 (1, 1, −1)"] },
+  fcc:{ A:FCC_A, region:"cube", species:[{n:"A",c:"--blue",r:.13}], basis:[[0,[0,0,0]]],
+       title:"קובי ממורכז פאה (FCC)", text:"סריג ברווה: הנקודות שבמרכזי הפאות שקולות לנקודות שבפינות.",
+       prim:["a₁ = a/2 (0, 1, 1)","a₂ = a/2 (1, 0, 1)","a₃ = a/2 (1, 1, 0)"] },
+  hcp:{ A:HCP_A, region:"hex", species:[{n:"שכבה A",c:"--blue",r:.2},{n:"שכבה B",c:"--teal",r:.2}],
+       basis:[[0,[0,0,0]],[1,[0,1/S3,CHCP/2]]],
+       title:"הקסגונלי צפוף (HCP)", text:"אינו סריג ברווה: סריג הקסגונלי עם בסיס של שני אטומים זהים (הצבע מבחין בין שתי השכבות). c/a = √(8/3) ≈ 1.633.",
+       prim:["a₁ = a(1, 0, 0)","a₂ = a(−1/2, √3/2, 0)","a₃ = (0, 0, c)"] },
+  cscl:{ A:SC_A, region:"cube", species:[{n:"Cs",c:"--blue",r:.2},{n:"Cl",c:"--amber",r:.16}],
+       basis:[[0,[0,0,0]],[1,[.5,.5,.5]]],
+       title:"CsCl", text:"סריג SC עם בסיס של שני אטומים שונים. זה אינו סריג BCC: האטום שבמרכז אינו שקול לאטומים שבפינות.",
+       prim:["a₁ = a(1, 0, 0)","a₂ = a(0, 1, 0)","a₃ = a(0, 0, 1)"] },
+  nacl:{ A:FCC_A, region:"cube", species:[{n:"Na",c:"--blue",r:.11},{n:"Cl",c:"--amber",r:.15}],
+       basis:[[0,[0,0,0]],[1,[.5,0,0]]],
+       title:"NaCl (מלח בישול)", text:"סריג FCC עם בסיס: Na בראשית ו-Cl במרחק a/2 לאורך x̂.",
+       prim:["a₁ = a/2 (0, 1, 1)","a₂ = a/2 (1, 0, 1)","a₃ = a/2 (1, 1, 0)"] },
+  perov:{ A:SC_A, region:"cube", species:[{n:"Ba",c:"--blue",r:.17},{n:"Ti",c:"--teal",r:.11},{n:"O",c:"--rose",r:.1}],
+       basis:[[0,[0,0,0]],[1,[.5,.5,.5]],[2,[.5,.5,0]],[2,[.5,0,.5]],[2,[0,.5,.5]]],
+       title:"BaTiO₃ (פרובסקיט, הפאזה הקובית)", text:"סריג SC עם בסיס של חמישה אטומים: Ba בפינה, Ti במרכז ו-O במרכזי הפאות.",
+       prim:["a₁ = a(1, 0, 0)","a₂ = a(0, 1, 0)","a₃ = a(0, 0, 1)"] }
+};
+
+/* ---------------- state ---------------- */
+const S = { s:"fcc", cell:"conv", n:1, nn:true, vec:false, spin:false, yaw:-0.55, pitch:0.38, sel:null };
+let G = null;   // geometry of the current structure
+
+function regionTest(kind, n){
+  const t=1e-6;
+  if(kind==="cube") return p => p[0]>-t&&p[0]<n+t&&p[1]>-t&&p[1]<n+t&&p[2]>-t&&p[2]<n+t;
+  // hexagonal prism: hexagon with vertices at distance n (lattice points), height n*c
+  const R=n, h=n*CHCP, ns=[[S3/2,.5],[0,1],[-S3/2,.5]];
+  return p => p[2]>-t && p[2]<h+t && ns.every(v=>Math.abs(p[0]*v[0]+p[1]*v[1])<R*S3/2+t);
+}
+function regionCenter(kind,n){ return kind==="cube" ? [n/2,n/2,n/2] : [0,0,n*CHCP/2]; }
+function strictInside(kind){ // n = 1 region, strict interior test for counting fractions
+  const t=1e-9;
+  if(kind==="cube") return p => p[0]>t&&p[0]<1-t&&p[1]>t&&p[1]<1-t&&p[2]>t&&p[2]<1-t;
+  const ns=[[S3/2,.5],[0,1],[-S3/2,.5]];
+  return p => p[2]>t && p[2]<CHCP-t && ns.every(v=>Math.abs(p[0]*v[0]+p[1]*v[1])<S3/2-t);
+}
+const latt = (A,m) => add(add(mul(A[0],m[0]),mul(A[1],m[1])),mul(A[2],m[2]));
+
+/* all atoms (lattice point + basis) with lattice-coefficient range M around a given lattice point */
+function atomsAround(st, center, M){
+  const out=[];
+  for(let i=-M;i<=M;i++) for(let j=-M;j<=M;j++) for(let k=-M;k<=M;k++){
+    const R=add(center,latt(st.A,[i,j,k]));
+    st.basis.forEach(([sp,b])=>out.push({p:add(R,b),sp,lp:R}));
+  }
+  return out;
+}
+const key = p => p.map(x=>Math.round(x*1e5)).join(",");
+
+/* fibonacci directions for solid-angle fractions */
+const DIRS = (()=>{ const N=2400, out=[], g=Math.PI*(3-Math.sqrt(5));
+  for(let i=0;i<N;i++){ const y=1-2*(i+.5)/N, r=Math.sqrt(1-y*y), t=g*i; out.push([r*Math.cos(t),y,r*Math.sin(t)]); } return out; })();
+
+function fracName(f){
+  const table=[[1,"1"],[1/2,"1/2"],[1/4,"1/4"],[1/8,"1/8"],[1/6,"1/6"],[1/3,"1/3"],[1/12,"1/12"]];
+  let best=table[0]; table.forEach(t=>{ if(Math.abs(t[0]-f)<Math.abs(best[0]-f)) best=t; }); return best;
+}
+
+/* ---------------- Wigner-Seitz cell of a lattice (half-space intersection) ---------------- */
+const wsCache={};
+function wignerSeitz(sname){
+  if(wsCache[sname]) return wsCache[sname];
+  const A=ST[sname].A, vs=[];
+  for(let i=-3;i<=3;i++) for(let j=-3;j<=3;j++) for(let k=-3;k<=3;k++){ if(!i&&!j&&!k) continue; vs.push(latt(A,[i,j,k])); }
+  vs.sort((a,b)=>norm(a)-norm(b));
+  const rmin=norm(vs[0]), planes=vs.filter(v=>norm(v)<2.05*rmin).map(v=>({n:v,d:dot(v,v)/2}));
+  const verts=[];
+  for(let a=0;a<planes.length;a++) for(let b=a+1;b<planes.length;b++) for(let c=b+1;c<planes.length;c++){
+    const x=solve3(planes[a].n,planes[b].n,planes[c].n,[planes[a].d,planes[b].d,planes[c].d]); if(!x) continue;
+    if(planes.every(P=>dot(P.n,x)<=P.d+1e-7) && !verts.some(v=>norm(sub(v,x))<1e-6)) verts.push(x);
+  }
+  const shells=[]; planes.forEach(P=>{ const r=norm(P.n); if(!shells.some(s=>Math.abs(s-r)<1e-6)) shells.push(r); }); shells.sort((a,b)=>a-b);
+  const faces=[];
+  planes.forEach(P=>{
+    const on=verts.filter(v=>Math.abs(dot(P.n,v)-P.d)<1e-6); if(on.length<3) return;
+    const c=mul(on.reduce((s,v)=>add(s,v),[0,0,0]),1/on.length), nh=mul(P.n,1/norm(P.n));
+    const u=mul(sub(on[0],c),1/norm(sub(on[0],c))), w=cross(nh,u);
+    on.sort((p,q)=>Math.atan2(dot(sub(p,c),w),dot(sub(p,c),u))-Math.atan2(dot(sub(q,c),w),dot(sub(q,c),u)));
+    faces.push({v:on, c, shell:shells.findIndex(s=>Math.abs(s-norm(P.n))<1e-6)});
+  });
+  return wsCache[sname]={faces, verts};
+}
+
+/* ---------------- geometry for the current choices ---------------- */
+function build(){
+  const st=ST[S.s], n=S.n, inR=regionTest(st.region,n), cen=regionCenter(st.region,n);
+  // atoms inside the displayed region
+  const M=3*n+3, all=atomsAround(st,[0,0,0],M), seen=new Set(), atoms=[];
+  all.forEach(a=>{ if(inR(a.p)){ const k=key(a.p); if(!seen.has(k)){seen.add(k); atoms.push({...a,ghost:false});} } });
+  const lattice=[]; { const s2=new Set(); all.forEach(a=>{ if(a.sp===st.basis[0][0] && inR(a.lp)){ const k=key(a.lp); if(!s2.has(k)){s2.add(k); lattice.push(a.lp);} } }); }
+  // central lattice point: nearest to the region centre
+  let c0=lattice[0]; lattice.forEach(p=>{ if(norm(sub(p,cen))<norm(sub(c0,cen))) c0=p; });
+  const extra=[]; const addGhost=(p,sp)=>{ const k=key(p); if(!seen.has(k)){ seen.add(k); extra.push({p,sp,ghost:true}); } };
+  // edges of the chosen cell
+  let edges=[], faces=[];
+  if(S.cell==="conv"){
+    if(st.region==="cube"){
+      const C=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
+      const E=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+      for(let i=0;i<n;i++) for(let j=0;j<n;j++) for(let k=0;k<n;k++)
+        E.forEach(([p,q])=>edges.push([add(C[p],[i,j,k]),add(C[q],[i,j,k]),"--edge"]));
+    } else {
+      for(let L=0;L<n;L++){ const z0=L*CHCP, z1=(L+1)*CHCP;
+        for(let t=0;t<6;t++){ const a=[n*Math.cos(t*TAU/6),n*Math.sin(t*TAU/6)], b=[n*Math.cos((t+1)*TAU/6),n*Math.sin((t+1)*TAU/6)];
+          edges.push([[a[0],a[1],z0],[b[0],b[1],z0],"--edge"],[[a[0],a[1],z1],[b[0],b[1],z1],"--edge"],[[a[0],a[1],z0],[a[0],a[1],z1],"--edge"]); } }
+    }
+  }
+  if(S.cell==="prim"){
+    const o = st.region==="cube" ? [0,0,0] : [0,0,0], A=st.A;
+    const C=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]].map(m=>add(o,latt(A,m)));
+    [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(([p,q])=>edges.push([C[p],C[q],"--amber"]));
+    C.forEach(p=>addGhost(p,st.basis[0][0]));
+    const fs=[[0,1,2,3],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
+    fs.forEach(f=>{ const v=f.map(i=>C[i]); faces.push({v,c:mul(v.reduce((s,x)=>add(s,x),[0,0,0]),1/4),col:"--amber"}); });
+  }
+  let ws=null;
+  if(S.cell==="ws"){
+    ws=wignerSeitz(S.s);
+    ws.faces.forEach(F=>{ const v=F.v.map(x=>add(x,c0)); faces.push({v,c:add(F.c,c0),col:F.shell===0?"--teal":"--amber"});
+      for(let i=0;i<v.length;i++) edges.push([v[i],v[(i+1)%v.length],F.shell===0?"--teal":"--amber"]); });
+  }
+  // selected atom and its nearest neighbours
+  if(!S.sel || !atoms.some(a=>key(a.p)===S.sel)){
+    const c=atoms.filter(a=>a.sp===st.basis[0][0]).reduce((b,a)=>norm(sub(a.p,cen))<norm(sub(b.p,cen))?a:b);
+    S.sel=key(c.p);
+  }
+  const selAtom=atoms.find(a=>key(a.p)===S.sel);
+  let bonds=[], nn=null;
+  { const near=atomsAround(st, selAtom.lp, 3).filter(a=>norm(sub(a.p,selAtom.p))>1e-6);
+    const dmin=Math.min(...near.map(a=>norm(sub(a.p,selAtom.p))));
+    const nb=near.filter(a=>norm(sub(a.p,selAtom.p))<dmin*(1+1e-6));
+    nn={count:nb.length, d:dmin, sp:[...new Set(nb.map(a=>a.sp))]};
+    if(S.nn){ nb.forEach(a=>{ addGhost(a.p,a.sp); bonds.push([selAtom.p,a.p]); }); }
+  }
+  // counting atoms of one conventional cell (n = 1) by solid-angle fractions
+  const inStrict=strictInside(st.region), inOne=regionTest(st.region,1), count={};
+  const s1=new Set();
+  atomsAround(st,[0,0,0],4).forEach(a=>{
+    if(!inOne(a.p)) return; const k=key(a.p); if(s1.has(k)) return; s1.add(k);
+    let inside=0; DIRS.forEach(d=>{ if(inStrict(add(a.p,mul(d,1e-3)))) inside++; });
+    const f=fracName(inside/DIRS.length);
+    (count[a.sp]=count[a.sp]||{})[f[1]]=((count[a.sp]||{})[f[1]]||0)+1;
+    count[a.sp]["_tot"]=(count[a.sp]["_tot"]||0)+f[0];
+  });
+  G={st, atoms:atoms.concat(extra), edges, faces, bonds, cen, nn, sel:selAtom, ws, count, c0};
+}
+
+/* ---------------- 3D drawing (orthographic, painter's order) ---------------- */
+let scale=1;
+function setupCanvas(c){
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.height/c.width;
+  const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio};
+}
+function draw3D(){
+  if(!G) return;
+  const cv=$("c3"), {ctx,w,h}=setupCanvas(cv), st=G.st;
+  ctx.clearRect(0,0,w,h);
+  const cy=Math.cos(S.yaw), sy=Math.sin(S.yaw), cp=Math.cos(S.pitch), sp=Math.sin(S.pitch);
+  const ext = st.region==="cube" ? S.n*0.95+0.55 : S.n*1.25+0.6;
+  scale = Math.min(w,h)/(2*ext*1.05);
+  const P = q => { const x=q[0]-G.cen[0], y=q[1]-G.cen[1], z=q[2]-G.cen[2];
+    const x1=x*cy-y*sy, y1=x*sy+y*cy;                 // yaw around z
+    const y2=y1*cp-z*sp, z2=y1*sp+z*cp;               // pitch
+    return [w/2+x1*scale, h/2-z2*scale, y2]; };        // depth: larger y2 = farther
+  const items=[];
+  G.faces.forEach(F=>{ const pv=F.v.map(P); items.push({t:"f",d:P(F.c)[2],pv,col:F.col}); });
+  G.edges.forEach(E=>{ const a=P(E[0]), b=P(E[1]); items.push({t:"e",d:(a[2]+b[2])/2,a,b,col:E[2]}); });
+  G.bonds.forEach(B=>{ const a=P(B[0]), b=P(B[1]); items.push({t:"b",d:(a[2]+b[2])/2,a,b}); });
+  G.atoms.forEach(A=>{ const q=P(A.p); items.push({t:"a",d:q[2],q,A}); });
+  items.sort((u,v)=>v.d-u.d);
+  const selKey=S.sel;
+  items.forEach(it=>{
+    if(it.t==="f"){ ctx.beginPath(); it.pv.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath();
+      ctx.fillStyle=css(it.col); ctx.globalAlpha=S.cell==="ws"?0.2:0.13; ctx.fill(); ctx.globalAlpha=1; }
+    else if(it.t==="e"){ ctx.strokeStyle=css(it.col); ctx.lineWidth=it.col==="--edge"?1.3:2; ctx.globalAlpha=it.col==="--edge"?0.55:0.95;
+      ctx.beginPath(); ctx.moveTo(it.a[0],it.a[1]); ctx.lineTo(it.b[0],it.b[1]); ctx.stroke(); ctx.globalAlpha=1; }
+    else if(it.t==="b"){ ctx.strokeStyle=css("--amber"); ctx.lineWidth=3; ctx.globalAlpha=.85;
+      ctx.beginPath(); ctx.moveTo(it.a[0],it.a[1]); ctx.lineTo(it.b[0],it.b[1]); ctx.stroke(); ctx.globalAlpha=1; }
+    else { const A=it.A, spc=st.species[A.sp], isSel=key(A.p)===selKey, wsMode=S.cell==="ws";
+      const r=Math.max(3,spc.r*scale*0.85*(wsMode&&!isSel?0.55:1)), col=css(spc.c), x=it.q[0], y=it.q[1];
+      ctx.globalAlpha=A.ghost?0.32:(wsMode&&!isSel?0.55:1);
+      const g=ctx.createRadialGradient(x-r*.35,y-r*.4,r*.15,x,y,r);
+      g.addColorStop(0,"#ffffff"); g.addColorStop(.35,col); g.addColorStop(1,shade(col,-.35));
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,TAU); ctx.fill();
+      if(key(A.p)===selKey){ ctx.globalAlpha=1; ctx.strokeStyle=css("--amber"); ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x,y,r+4,0,TAU); ctx.stroke(); }
+      ctx.globalAlpha=1; it.scr=[x,y,r]; A.scr=[x,y,r]; }
+  });
+  if(S.vec){
+    const o=P(st.region==="cube"?[0,0,0]:[0,0,0]);
+    st.A.forEach((v,i)=>{ const e=P(v); arrow(ctx,o,e,css("--rose")); label(ctx,"a"+"₁₂₃"[i],e[0]+(e[0]>o[0]?10:-10),e[1]-6,css("--rose")); });
+  }
+}
+function arrow(ctx,a,b,col){ ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), L=11;
+  ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(b[0]-L*Math.cos(ang-.4),b[1]-L*Math.sin(ang-.4)); ctx.lineTo(b[0]-L*Math.cos(ang+.4),b[1]-L*Math.sin(ang+.4)); ctx.fill(); }
+function label(ctx,t,x,y,col){ ctx.font="600 14px "+css("--f-num"); ctx.fillStyle=col; ctx.textAlign="center"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+function shade(hex,f){ const m=hex.match(/^#?([0-9a-f]{6})$/i); if(!m) return hex; const v=parseInt(m[1],16);
+  const ch=[v>>16,(v>>8)&255,v&255].map(c=>Math.round(f<0?c*(1+f):c+(255-c)*f)); return "rgb("+ch.join(",")+")"; }
+
+/* ---------------- readouts ---------------- */
+const fv = t => { const q=t.split("/"); return q.length>1 ? +q[0]/+q[1] : +q[0]; };
+function surdNum(x){ for(let q=1;q<=16;q++){ const p=Math.round(x*q); if(Math.abs(p/q-x)<1e-9) return q===1?String(p):p+"/"+q; } return x.toFixed(3); }
+function surd(d2){ // pretty form of sqrt(d2) for simple rationals: sqrt(P/Q) = s*sqrt(r)/Q
+  const g=(a,b)=>b?g(b,a%b):a;
+  for(let q=1;q<=16;q++){ const p=Math.round(d2*q); if(Math.abs(p/q-d2)>1e-9) continue;
+    const k=g(p,q), P=p/k, Q=q/k; let m=P*Q, sq=1;
+    for(let f=2;f*f<=m;f++) while(m%(f*f)===0){ m/=f*f; sq*=f; }
+    const k2=g(sq,Q), num=sq/k2, den=Q/k2;
+    if(m>1) return `${num===1?"":num}√${m}${den===1?"":"/"+den} a`;
+    return den===1 ? (num===1?"a":num+"a") : (num===1?"a/"+den:num+"a/"+den);
+  }
+  return null;
+}
+function readouts(){
+  const st=G.st;
+  const vp=Math.abs(det3(...st.A));
+  const vpTxt = st.region==="cube" ? `v<sub>p</sub> = |a₁·(a₂×a₃)| = ${surdNum(vp)} a³` : `v<sub>p</sub> = (√3/2) a²c ≈ ${vp.toFixed(3)} a³`;
+  $("info").innerHTML = `<h3>${st.title}</h3><p>${st.text}</p>
+    <p style="margin-top:6px">וקטורים פרימיטיביים:</p>${st.prim.map(t=>`<p class="num">${t}</p>`).join("")}
+    <p style="margin-top:6px">נפח התא הפרימיטיבי: <span class="num">${vpTxt}</span></p>`;
+  // cell box
+  let html="";
+  if(S.cell==="ws"){
+    const F=G.ws.faces, byShell={}; F.forEach(f=>{ byShell[f.shell]=(byShell[f.shell]||0)+1; });
+    const byV={}; F.forEach(f=>{ byV[f.v.length]=(byV[f.v.length]||0)+1; });
+    const nm={4:"מרובעים",6:"משושים",5:"מחומשים",3:"משולשים"};
+    html=`<h3>תא ויגנר-זייץ</h3><p>${F.length} פאות: ${Object.keys(byV).map(k=>byV[k]+" "+(nm[k]||k+"-גונים")).join(" + ")}.</p>
+      <p>כל פאה היא מישור חוצה-אנך של קטע אל נקודת סריג שכנה. <span style="color:var(--teal);font-weight:700">טורקיז</span>: מישורים מול שכנים ראשונים (${byShell[0]||0})${byShell[1]?`; <span style="color:var(--amber);font-weight:700">כתום</span>: מול שכנים שניים (${byShell[1]})`:""}.</p>
+      <p>נפח התא שווה ל-v<sub>p</sub>: זה תא פרימיטיבי, שמכיל נקודת סריג אחת.</p>`;
+  } else if(S.cell==="prim"){
+    html=`<h3>התא הפרימיטיבי</h3><p>המקבילון שפורשים a₁, a₂, a₃. בכל אחת משמונה הפינות יש נקודת סריג, וכל אחת מהן משותפת לשמונה תאים: סך הכול נקודת סריג אחת${st.basis.length>1?`, ואיתה בסיס של ${st.basis.length} אטומים`:""}.</p>
+      <p>הסימטריה של המקבילון נמוכה מזו של הסריג${S.s==="sc"||S.s==="cscl"||S.s==="perov"?" (כאן הוא במקרה הקובייה עצמה)":""}.</p>`;
+  } else {
+    const parts=Object.keys(G.count).map(sp=>{ const c=G.count[sp], spc=st.species[sp];
+      const terms=Object.keys(c).filter(k=>k!=="_tot").sort((a,b)=>fv(a)-fv(b)).map(k=>`${c[k]} × ${k}`).join(" + ");
+      return `<p><span class="dot" style="background:var(${spc.c})"></span>${spc.n}: <span class="num">${terms} = ${Math.round(c._tot*100)/100}</span></p>`; }).join("");
+    const vconv = st.region==="cube"?1:3*Math.abs(det3(...st.A));
+    const npts = Math.round(vconv/Math.abs(det3(...st.A)));
+    html=`<h3>ספירת האטומים בתא ${st.region==="cube"?"הקובי":"המשושה"}</h3>${parts}
+      <p>אטום בפינה, על מקצוע או על פאה נספר לפי החלק שלו שבתוך התא. ${st.region==="cube"?"נפח הקובייה":"נפח המנסרה"} חלקי v<sub>p</sub> = <span class="num">${npts}</span> נקודות סריג${st.basis.length>1?`, כפול ${st.basis.length} אטומים בבסיס`:""}.</p>`;
+  }
+  $("cellinfo").innerHTML=html;
+  const nn=G.nn, names=nn.sp.map(i=>st.species[i].n).join(", "), selSp=st.species[G.sel.sp].n;
+  const s=surd(nn.d*nn.d);
+  $("nninfo").innerHTML=`<h3>שכנים קרובים של האטום המסומן (${selSp})</h3>
+    <p>מספר קואורדינציה: <b>${nn.count}</b> (${names})</p>
+    <p>מרחק: <span class="num">${s==="a"?"a":(s?s+" ≈ ":"")+nn.d.toFixed(3)+" a"}</span></p>`;
+  const lg=st.species.map(s=>`<span><i class="dot" style="background:var(${s.c})"></i>${s.n}</span>`).join("");
+  $("legend").innerHTML=lg + (S.cell==="ws"?`<span><i class="dot" style="background:var(--teal);opacity:.5"></i>פאות מול שכנים ראשונים</span><span><i class="dot" style="background:var(--amber);opacity:.5"></i>פאות מול שכנים שניים</span>`:"")
+    + (S.cell==="prim"?`<span><i class="dot" style="background:var(--amber);opacity:.6"></i>התא הפרימיטיבי</span>`:"");
+}
+
+/* ---------------- 2D rotation panel ---------------- */
+const L2 = { sq:[[1,0],[0,1]], tri:[[1,0],[.5,S3/2]], rect:[[1,0],[0,1.6]], obl:[[1,0],[.32,1.15]] };
+const R2 = { l:"sq", th:90 };
+function draw2D(){
+  const cv=$("c2"), {ctx,w,h}=setupCanvas(cv); ctx.clearRect(0,0,w,h);
+  const [a1,a2]=L2[R2.l], th=R2.th*Math.PI/180, c=Math.cos(th), s=Math.sin(th);
+  const sc=Math.min(w,h)/9.2, X=p=>w/2+p[0]*sc, Y=p=>h/2-p[1]*sc, rad=4.6;
+  const det=a1[0]*a2[1]-a1[1]*a2[0];
+  const coef=p=>[(p[0]*a2[1]-p[1]*a2[0])/det,(a1[0]*p[1]-a1[1]*p[0])/det];
+  const pts=[]; for(let i=-12;i<=12;i++) for(let j=-12;j<=12;j++){ const p=[i*a1[0]+j*a2[0], i*a1[1]+j*a2[1]]; if(Math.hypot(p[0],p[1])<4.4) pts.push(p); }
+  // primitive vectors
+  ctx.fillStyle=css("--blue"); pts.forEach(p=>{ ctx.beginPath(); ctx.arc(X(p),Y(p),rad,0,TAU); ctx.fill(); });
+  let hit=0, tot=0;
+  pts.forEach(p=>{ const q=[c*p[0]-s*p[1], s*p[0]+c*p[1]], m=coef(q), r=[Math.round(m[0]),Math.round(m[1])];
+    const back=[r[0]*a1[0]+r[1]*a2[0], r[0]*a1[1]+r[1]*a2[1]], ok=Math.hypot(back[0]-q[0],back[1]-q[1])<1e-3;
+    if(Math.hypot(p[0],p[1])>1e-9){ tot++; if(ok) hit++; }
+    ctx.lineWidth=2; ctx.strokeStyle=css(ok?"--teal":"--amber");
+    if(ok){ ctx.fillStyle=css("--teal"); ctx.beginPath(); ctx.arc(X(q),Y(q),rad+.5,0,TAU); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(X(q),Y(q),rad+2.5,0,TAU); ctx.stroke(); } });
+  const o=[0,0]; arrow(ctx,[X(o),Y(o)],[X(a1),Y(a1)],css("--rose")); arrow(ctx,[X(o),Y(o)],[X(a2),Y(a2)],css("--rose"));
+  label(ctx,"a₁",X(a1)+12,Y(a1)+16,css("--rose")); label(ctx,"a₂",X(a2)-12,Y(a2)-6,css("--rose"));
+  // rotation matrix in the lattice basis: columns are coefficients of R a1 and R a2
+  const Ra1=coef([c*a1[0]-s*a1[1], s*a1[0]+c*a1[1]]), Ra2=coef([c*a2[0]-s*a2[1], s*a2[0]+c*a2[1]]);
+  const f=x=>{ const r=Math.round(x); return Math.abs(r-x)<1e-9 ? String(r).replace("-","−") : x.toFixed(3).replace("-","−"); };
+  const tr=2*Math.cos(th), trInt=Math.abs(tr-Math.round(tr))<1e-9;
+  $("mat").innerHTML=`M = [[ ${f(Ra1[0])}, ${f(Ra2[0])} ], [ ${f(Ra1[1])}, ${f(Ra2[1])} ]]<br>tr M = 2cos θ = ${f(tr)} ${trInt?'<span class="ok">(שלם)</span>':'<span class="no">(לא שלם)</span>'}`;
+  const pct=tot?Math.round(100*hit/tot):0, sym=hit===tot;
+  $("rotinfo").innerHTML=`<p>זווית: <span class="num">θ = ${R2.th.toFixed(1).replace(/\.0$/,"")}°</span></p>
+    <p>נקודות מסובבות שנוחתות על נקודות סריג: <b>${pct}%</b></p>
+    <p>${sym?'<span class="ok">הסיבוב הוא סימטריה של הסריג.</span>':'<span class="no">הסיבוב אינו סימטריה של הסריג.</span>'}</p>`;
+  $("tho").textContent=R2.th.toFixed(0)+"°";
+}
+
+/* ---------------- wiring ---------------- */
+function drawAll(){ draw3D(); draw2D(); }
+function refresh(){ build(); readouts(); draw3D(); }
+function pressed(groupId, attr, val){ document.querySelectorAll(`#${groupId} button`).forEach(b=>b.setAttribute("aria-pressed", b.dataset[attr]===String(val)?"true":"false")); }
+document.querySelectorAll("#sseg button").forEach(b=>b.addEventListener("click",()=>{ S.s=b.dataset.s; S.sel=null; if(S.s==="hcp"&&S.n>2){S.n=2;$("n").value=2;$("no").textContent=2;} pressed("sseg","s",S.s); refresh(); }));
+document.querySelectorAll("#cseg button").forEach(b=>b.addEventListener("click",()=>{ S.cell=b.dataset.c; pressed("cseg","c",S.cell); refresh(); }));
+$("n").addEventListener("input",e=>{ S.n=+e.target.value; if(S.s==="hcp"&&S.n>2){S.n=2;e.target.value=2;} $("no").textContent=S.n; S.sel=null; refresh(); });
+$("nn").addEventListener("change",e=>{ S.nn=e.target.checked; refresh(); });
+$("vec").addEventListener("change",e=>{ S.vec=e.target.checked; draw3D(); });
+let spinRaf=null;
+$("spin").addEventListener("change",e=>{ S.spin=e.target.checked; if(S.spin){ let last=performance.now();
+  const step=t=>{ if(!S.spin){spinRaf=null;return;} S.yaw+=(t-last)*0.00035; last=t; draw3D(); spinRaf=requestAnimationFrame(step); };
+  spinRaf=requestAnimationFrame(step); } });
+(function(){ const c=$("c3"); let drag=null, moved=0;
+  c.addEventListener("pointerdown",e=>{ drag=[e.clientX,e.clientY]; moved=0; c.setPointerCapture(e.pointerId); });
+  c.addEventListener("pointermove",e=>{ if(!drag) return; const dx=e.clientX-drag[0], dy=e.clientY-drag[1]; moved+=Math.abs(dx)+Math.abs(dy);
+    S.yaw-=dx*0.008; S.pitch=Math.max(-1.45,Math.min(1.45,S.pitch+dy*0.008)); drag=[e.clientX,e.clientY]; draw3D(); });
+  c.addEventListener("pointerup",e=>{ if(drag && moved<5){ // click: pick the nearest non-ghost atom
+      const r=c.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top; let best=null, bd=1e9;
+      G.atoms.forEach(A=>{ if(A.ghost||!A.scr) return; const d=Math.hypot(A.scr[0]-x,A.scr[1]-y); if(d<A.scr[2]+6&&d<bd){bd=d;best=A;} });
+      if(best){ S.sel=key(best.p); refresh(); } }
+    drag=null; });
+  c.addEventListener("pointercancel",()=>{drag=null;});
+})();
+document.querySelectorAll("#lseg button").forEach(b=>b.addEventListener("click",()=>{ R2.l=b.dataset.l; pressed("lseg","l",R2.l); draw2D(); }));
+document.querySelectorAll("#nseg button").forEach(b=>b.addEventListener("click",()=>{ R2.th=360/+b.dataset.n; $("th").value=R2.th; pressed("nseg","n",b.dataset.n); draw2D(); }));
+$("th").addEventListener("input",e=>{ R2.th=+e.target.value; const n=360/R2.th; pressed("nseg","n",Math.abs(n-Math.round(n))<1e-9?Math.round(n):-1); draw2D(); });
+window.addEventListener("resize",drawAll);
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawAll);
+
+pressed("sseg","s",S.s); pressed("cseg","c",S.cell); pressed("lseg","l",R2.l); pressed("nseg","n",4);
+refresh(); draw2D();
+// expose for testing
+window.__crystal = {S, ST, wignerSeitz, get G(){return G;}, refresh, R2, draw2D};
+})();
+</script>
+</body>
+</html>

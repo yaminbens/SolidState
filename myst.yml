@@ -11,6 +11,8 @@ project:
     - file: index.md
     - file: week01.ipynb
     - file: week02.ipynb
+    - file: week04.ipynb
+    - file: week04-crystals.md
 site:
   template: book-theme
   title: מבוא למצב מוצק תשפ״ז

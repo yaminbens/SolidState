@@ -240,6 +240,121 @@ axs[0].legend(frameon=False, fontsize=8); plt.tight_layout(); plt.show()
 """),
 ]
 
+# ------------------------------------------------------------------ week 4
+w4 = [
+("md", header(4, "שבוע 4 · בונים גביש: סריג ובסיס", "הדגמה לתרגול 4 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+גביש הוא סריג ברווה, $\mathbf R=n_1\mathbf a_1+n_2\mathbf a_2+n_3\mathbf a_3$ עם $n_i$ שלמים, ועל כל נקודת סריג אותו בסיס של אטומים במיקומים $\mathbf d_j$. מיקומי כל האטומים הם $\mathbf R+\mathbf d_j$. המחברת בונה חתיכה גדולה של גביש מהווקטורים הפרימיטיביים ומהבסיס, ומחשבת ממנה שלושה דברים:
+1. נפח התא הפרימיטיבי $v_p=|\mathbf a_1\cdot(\mathbf a_2\times\mathbf a_3)|$, ומספר האטומים בקובייה של צלע $a$;
+2. קליפות השכנים: לכל מרחק $r$, כמה אטומים נמצאים בדיוק במרחק הזה מאטום נתון, והפונקציה $N(r)$ שסופרת את האטומים במרחק של עד $r$;
+3. יחס האריזה.
+
+**יחידות:** אורכים נמדדים ביחידות של צלע הקובייה $a$.
+
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week04-crystals) שמציג את המבנים בתלת-ממד.
+"""),
+("code", """
+import itertools
+import numpy as np
+import matplotlib.pyplot as plt
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+- `a1`, `a2`, `a3` – הווקטורים הפרימיטיביים, ביחידות של $a$. ברירת המחדל היא סריג BCC.
+- `basis` – רשימת וקטורי הבסיס: המיקומים של האטומים ביחס לכל נקודת סריג. לסריג ברווה יש אטום אחד בבסיס, בראשית.
+- `r_max` – המרחק הגדול ביותר שמוצג בניתוח השכנים.
+"""),
+("code", """
+# ---- Parameters ----
+a1 = [-0.5, 0.5, 0.5]       # primitive vectors (units of the cube edge a)
+a2 = [0.5, -0.5, 0.5]
+a3 = [0.5, 0.5, -0.5]
+basis = [[0.0, 0.0, 0.0]]   # positions of the atoms attached to every lattice point
+r_max = 1.6                 # largest distance in the neighbour analysis (units of a)
+"""),
+("md", r"""
+### 1. בניית הגביש וספירת האטומים בקובייה
+יוצרים את כל וקטורי הסריג עם $|n_i|\le 6$, ומוסיפים לכל אחד מהם את וקטורי הבסיס. את האטומים בקובייה סופרים בתוך הקובייה ה"חצי-פתוחה" $0\le x,y,z<a$: אטום שנמצא על הפאה, על המקצוע או בפינה של הקובייה משויך כך לקובייה אחת בלבד מבין השכנות.
+
+> 🔮 **נחשו:** כמה אטומים יש בקובייה של צלע $a$, וכמה זה ביחס ל-$1/v_p$?
+"""),
+("code", """
+A = np.array([a1, a2, a3], dtype=float)
+B = np.array(basis, dtype=float)
+M = 6
+n = np.array(list(itertools.product(range(-M, M + 1), repeat=3)))
+R = n @ A                                            # lattice vectors
+atoms = (R[:, None, :] + B[None, :, :]).reshape(-1, 3)
+kind = np.tile(np.arange(len(B)), len(R))            # which basis atom each position is
+
+v_p = abs(np.linalg.det(A))
+eps = 1e-9
+in_cube = np.all((atoms > -eps) & (atoms < 1 - eps), axis=1)   # half-open cube [0, a)^3
+print(f"v_p = {v_p:.4f} a^3   ->   lattice points per a^3 = 1/v_p = {1 / v_p:.3f}")
+print(f"atoms in the basis = {len(B)}   ->   atoms per a^3 = {len(B) / v_p:.3f}")
+print(f"atoms counted in the half-open cube = {in_cube.sum()}")
+"""),
+("md", r"""
+### 2. תמונה של הקובייה
+מציגים את כל האטומים בקובייה הסגורה $0\le x,y,z\le a$ (כולל הפינות והפאות). הצבע מבחין בין אטומי הבסיס השונים.
+"""),
+("code", """
+closed = np.all((atoms > -eps) & (atoms < 1 + eps), axis=1)
+fig = plt.figure(figsize=(5, 5))
+ax = fig.add_subplot(projection="3d")
+corners = np.array(list(itertools.product([0, 1], repeat=3)))
+for i, j in itertools.combinations(range(8), 2):
+    if np.abs(corners[i] - corners[j]).sum() == 1:
+        ax.plot(*zip(corners[i], corners[j]), color="0.6", lw=0.8)
+for k in range(len(B)):
+    sel = closed & (kind == k)
+    ax.scatter(*atoms[sel].T, s=60, depthshade=False, label=f"basis atom {k}")
+ax.set_box_aspect((1, 1, 1)); ax.set_axis_off(); ax.legend(frameon=False, loc="upper left")
+plt.show()
+"""),
+("md", r"""
+### 3. קליפות של שכנים
+מחשבים את המרחקים מהאטום הראשון בבסיס (בראשית) לכל שאר האטומים, ומקבצים מרחקים שווים לקליפות. הטבלה מציגה לכל קליפה את המרחק ואת מספר האטומים בה; הקליפה הראשונה נותנת את מספר הקואורדינציה. הגרף מציג את $N(r)$: מספר האטומים במרחק של עד $r$ מהאטום שבראשית.
+
+> 🔮 **נחשו:** בסריג ברירת המחדל, כמה שכנים יש בקליפה הראשונה ובשנייה, ובאילו מרחקים?
+"""),
+("code", """
+d = np.linalg.norm(atoms - B[0], axis=1)
+d = np.sort(d[(d > eps) & (d <= r_max + eps)])
+shell_r, shell_n = np.unique(np.round(d, 6), return_counts=True)
+print(" shell   distance / a   (distance / a)^2   atoms")
+for i, (r, c) in enumerate(zip(shell_r, shell_n), start=1):
+    print(f"{i:5d}   {r:12.4f}   {r**2:16.4f}   {c:5d}")
+
+r_grid = np.linspace(0, r_max, 2000)
+N_of_r = np.searchsorted(d, r_grid, side="right")    # number of atoms within distance r
+plt.figure(figsize=(6, 3.4))
+plt.plot(r_grid, N_of_r, lw=1.8)
+plt.xlabel("r / a"); plt.ylabel("N(r)"); plt.title("atoms within distance r of the atom at the origin")
+plt.show()
+"""),
+("md", r"""
+### 4. יחס אריזה
+מציבים בכל אטום כדור. הרדיוס הגדול ביותר שאפשר, כשכל הכדורים שווים, הוא חצי מהמרחק לשכן הקרוב, $R_{\max}=r_1/2$. יחס האריזה הוא החלק מהנפח שהכדורים ממלאים:
+$$\eta=\frac{m\cdot\tfrac{4\pi}{3}R_{\max}^3}{v_p},$$
+כאשר $m$ הוא מספר האטומים בבסיס.
+"""),
+("code", """
+R_max = shell_r[0] / 2
+eta = len(B) * (4 * np.pi / 3) * R_max**3 / v_p
+print(f"nearest-neighbour distance r_1 = {shell_r[0]:.4f} a,  coordination number = {shell_n[0]}")
+print(f"packing fraction eta = {eta:.4f}")
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. למה הספירה בקובייה החצי-פתוחה נותנת את אותה תוצאה כמו הספירה בחלקים ($8\times\tfrac18+\dots$)?
+2. בסריג ברירת המחדל, בכמה אחוזים הקליפה השנייה רחוקה יותר מהראשונה? איך זה קשור לצורה של תא ויגנר-זייץ שראיתם בתרגול?
+3. החליפו את הווקטורים הפרימיטיביים בבחירה אחרת של אותו סריג, למשל $\mathbf a_1=(1,0,0)$, $\mathbf a_2=(0,1,0)$, $\mathbf a_3=(\tfrac12,\tfrac12,\tfrac12)$. מה משתנה בתוצאות ומה לא? למה?
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
 def build(name, cells, out):
     nb = nb_from(cells)
     # Execute a copy only to verify that every cell runs; the notebook that is saved stays
@@ -254,3 +369,4 @@ def build(name, cells, out):
 if __name__ == "__main__":
     build("w1", w1, ROOT / "week01.ipynb")
     build("w2", w2, ROOT / "week02.ipynb")
+    build("w4", w4, ROOT / "week04.ipynb")
