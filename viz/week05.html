@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>המרחב ההופכי</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course palette (same as site.css): ink, blue, teal, amber. */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --fg:#12294d; --muted:#53627a; --line:#d6dde8; --soft:#eef3fb;
+  --blue:#2563eb; --teal:#0f9d8a; --amber:#f08a24; --rose:#d6455b; --edge:#12294d;
+  --f-body:"Heebo","Segoe UI",Arial,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root.dark{
+  --bg:#0e141c; --panel:#151d28; --fg:#e8eefc; --muted:#9aa8bc; --line:#2a3646; --soft:#1b2534;
+  --blue:#6aa1ff; --teal:#2dd4bf; --amber:#f6a14a; --rose:#f07a8c; --edge:#c9d6ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{padding:14px max(14px,env(safe-area-inset-left)) 28px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
+.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+  box-shadow:0 6px 18px rgba(18,41,77,.06)}
+.card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
+.card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+.hint{color:var(--muted);font-size:12.5px;margin:6px 0 0}
+.ctl{display:flex;flex-direction:column;gap:12px}
+.lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;background:transparent;color:var(--fg);border:1px solid var(--line);
+  border-radius:999px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) 3.2em;gap:10px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.checks label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.box p{margin:3px 0}
+.num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px}
+p .num{white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
+.ok{color:var(--teal);font-weight:700}
+.no{color:var(--rose);font-weight:700}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.pair{grid-template-columns:minmax(0,1fr)}}
+.pair figure{margin:0}
+.pair figcaption{font-size:13px;color:var(--muted);margin-top:4px}
+.ctlrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:12px}
+@media (max-width:760px){.ctlrow{grid-template-columns:minmax(0,1fr)}}
+.step{display:inline-flex;align-items:center;gap:6px}
+.step button{font:inherit;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+.step span{font-family:var(--f-num);min-width:2.2em;text-align:center;direction:ltr}
+table.pts{border-collapse:collapse;font-size:13px;width:100%}
+table.pts td,table.pts th{padding:3px 6px;border-bottom:1px solid var(--line);text-align:center}
+table.pts th{color:var(--muted);font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>המרחב ההופכי: הסריג ההופכי, אזורי ברילואן ומישורי סריג</h1>
+    <p class="lede">שנו את הסריג הישיר וראו איך הסריג ההופכי ואזורי ברילואן משתנים איתו. בחלק התחתון: אזור ברילואן הראשון בתלת-ממד והנקודות בעלות הסימטריה הגבוהה. אין צורך להריץ דבר.</p>
+  </header>
+
+  <!-- ================= Panel 1: 2D lattice and its reciprocal ================= -->
+  <section class="card">
+    <h2>סריג דו-ממדי והסריג ההופכי שלו</h2>
+    <p class="sub">הווקטורים ההופכיים מקיימים a<sub>i</sub>·b<sub>j</sub> = 2πδ<sub>ij</sub>. משפחת ישרי הסריג עם אינדקסי מילר (h,k) ניצבת לווקטור G = h b₁ + k b₂, והמרחק בין ישרים סמוכים הוא 2π/|G|. הצבעים בסריג ההופכי הם אזורי ברילואן 1 עד 4.</p>
+    <div class="pair">
+      <figure><canvas id="cr" width="560" height="520" aria-label="הסריג הישיר"></canvas><figcaption>הסריג הישיר, a₁ ו-a₂, ומשפחת הישרים (h,k)</figcaption></figure>
+      <figure><canvas id="ck" width="560" height="520" aria-label="הסריג ההופכי"></canvas><figcaption>הסריג ההופכי, b₁ ו-b₂, אזורי ברילואן והווקטור G</figcaption></figure>
+    </div>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div>
+          <div class="lab">סריג</div>
+          <div class="seg" id="pseg">
+            <button data-p="sq">ריבועי</button><button data-p="rect">מלבני</button>
+            <button data-p="crect">מלבני ממורכז</button><button data-p="obl">אלכסוני</button>
+          </div>
+        </div>
+        <div class="row"><span class="lab" style="margin:0">|a₂| / |a₁|</span><input id="ratio" type="range" min="0.5" max="2" step="0.01" value="1"><output id="ratioo">1.00</output></div>
+        <div class="row"><span class="lab" style="margin:0">הזווית בין a₁ ל-a₂</span><input id="ang" type="range" min="40" max="140" step="1" value="90"><output id="ango">90°</output></div>
+        <div>
+          <div class="lab">אינדקסי מילר (h,k)</div>
+          <div class="step"><button id="hm" aria-label="h פחות">−</button><span id="hv">1</span><button id="hp" aria-label="h יותר">+</button>
+            &nbsp;&nbsp;<button id="km" aria-label="k פחות">−</button><span id="kv">0</span><button id="kp" aria-label="k יותר">+</button></div>
+        </div>
+        <div class="checks"><label><input type="checkbox" id="zones" checked> אזורי ברילואן</label><label><input type="checkbox" id="fam" checked> משפחת ישרים</label></div>
+      </div>
+      <div class="ctl">
+        <div class="box" id="vecs"></div>
+        <div class="box" id="millerbox"></div>
+        <div class="legend" id="zleg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Panel 2: 3D Brillouin zones ================= -->
+  <section class="card">
+    <h2>אזור ברילואן הראשון בתלת-ממד</h2>
+    <p class="sub">אזור ברילואן הראשון הוא תא ויגנר-זייץ של הסריג ההופכי. גררו כדי לסובב. הנקודות המסומנות הן הנקודות בעלות הסימטריה הגבוהה, שלאורך הקווים ביניהן מציירים יחסי נפיצה של פונונים ושל אלקטרונים.</p>
+    <div class="grid">
+      <div>
+        <canvas id="c3" width="680" height="600" aria-label="אזור ברילואן הראשון"></canvas>
+        <p class="hint">גרירה: סיבוב. היחידות הן 2π/a, כאשר a היא צלע הקובייה של הסריג הישיר.</p>
+      </div>
+      <div class="ctl">
+        <div>
+          <div class="lab">הסריג הישיר</div>
+          <div class="seg" id="bseg"><button data-b="sc">SC</button><button data-b="bcc">BCC</button><button data-b="fcc">FCC</button></div>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="path" checked> מסלול סימטריה</label>
+          <label><input type="checkbox" id="gpts"> נקודות הסריג ההופכי השכנות</label>
+          <label><input type="checkbox" id="spin3"> סיבוב אוטומטי</label>
+        </div>
+        <div class="box" id="bzinfo"></div>
+        <div class="box"><h3>נקודות בעלות סימטריה גבוהה (ביחידות 2π/a)</h3><table class="pts" id="pts"></table></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const TAU = 2*Math.PI, S3 = Math.sqrt(3);
+
+/* ---------------- theme: follow the course site (same origin) or the OS ---------------- */
+function applyTheme(){
+  let dark=false;
+  try{ const p=window.parent&&window.parent!==window?window.parent.document.documentElement:null; if(p) dark=p.classList.contains("dark"); else throw 0; }
+  catch(e){ dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  document.documentElement.classList.toggle("dark",dark);
+}
+applyTheme();
+try{ if(window.parent!==window) new MutationObserver(()=>{applyTheme(); drawAll();}).observe(window.parent.document.documentElement,{attributes:true,attributeFilter:["class"]}); }catch(e){}
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawAll();});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function setupCanvas(c){
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.height/c.width;
+  const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio,dpr};
+}
+function arrow(ctx,a,b,col,lw){ ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw||2.4;
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), L=10;
+  ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(b[0]-L*Math.cos(ang-.4),b[1]-L*Math.sin(ang-.4)); ctx.lineTo(b[0]-L*Math.cos(ang+.4),b[1]-L*Math.sin(ang+.4)); ctx.fill(); }
+function label(ctx,t,x,y,col,size){ ctx.font=`600 ${size||14}px `+css("--f-num"); ctx.fillStyle=col; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+
+/* ================= Panel 1 ================= */
+const P = { ratio:1, ang:90, h:1, k:0, zones:true, fam:true };
+const PRESETS = { sq:[1,90], rect:[1.6,90], crect:[1,70], obl:[1.3,72] };
+function lat(){ const th=P.ang*Math.PI/180; return [[1,0],[P.ratio*Math.cos(th),P.ratio*Math.sin(th)]]; }
+function recip(a){ const [a1,a2]=a, D=a1[0]*a2[1]-a1[1]*a2[0];
+  return [[TAU*a2[1]/D,-TAU*a2[0]/D],[-TAU*a1[1]/D,TAU*a1[0]/D]]; }   // b_i . a_j = 2 pi delta_ij
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const ZCOL=["--teal","--blue","--amber","--rose"];
+
+function drawReal(){
+  const {ctx,w,h}=setupCanvas($("cr")), a=lat(), b=recip(a);
+  ctx.clearRect(0,0,w,h);
+  const sc=Math.min(w,h)/7.2, X=p=>w/2+p[0]*sc, Y=p=>h/2-p[1]*sc;
+  const pts=[]; for(let i=-12;i<=12;i++) for(let j=-12;j<=12;j++){ const p=[i*a[0][0]+j*a[1][0],i*a[0][1]+j*a[1][1]]; if(Math.abs(X(p)-w/2)<w/2+8&&Math.abs(Y(p)-h/2)<h/2+8) pts.push(p); }
+  // family of lines (h,k): G.r = 2 pi m
+  if(P.fam && (P.h||P.k)){
+    const G=[P.h*b[0][0]+P.k*b[1][0],P.h*b[0][1]+P.k*b[1][1]], g2=G[0]*G[0]+G[1]*G[1], n=[G[0]/Math.sqrt(g2),G[1]/Math.sqrt(g2)], t=[-n[1],n[0]];
+    const dd=TAU/Math.sqrt(g2), M=Math.ceil(5/dd);
+    for(let m=-M;m<=M;m++){ const c=[n[0]*m*dd,n[1]*m*dd], p=[c[0]-t[0]*20,c[1]-t[1]*20], q=[c[0]+t[0]*20,c[1]+t[1]*20];
+      ctx.strokeStyle=css(m===0?"--amber":"--amber"); ctx.globalAlpha=m===0?0.95:0.55; ctx.lineWidth=m===0?2.2:1.4;
+      ctx.beginPath(); ctx.moveTo(X(p),Y(p)); ctx.lineTo(X(q),Y(q)); ctx.stroke(); }
+    ctx.globalAlpha=1;
+    // spacing marker between line 0 and line 1, at a free spot
+    const s0=[t[0]*1.6,t[1]*1.6], s1=[s0[0]+n[0]*dd,s0[1]+n[1]*dd];
+    ctx.strokeStyle=css("--fg"); ctx.lineWidth=1.6; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(X(s0),Y(s0)); ctx.lineTo(X(s1),Y(s1)); ctx.stroke(); ctx.setLineDash([]);
+    label(ctx,"d",(X(s0)+X(s1))/2+10,(Y(s0)+Y(s1))/2-8,css("--fg"),13);
+  }
+  ctx.fillStyle=css("--fg"); pts.forEach(p=>{ ctx.beginPath(); ctx.arc(X(p),Y(p),3.6,0,TAU); ctx.fill(); });
+  const o=[0,0]; arrow(ctx,[X(o),Y(o)],[X(a[0]),Y(a[0])],css("--blue")); arrow(ctx,[X(o),Y(o)],[X(a[1]),Y(a[1])],css("--blue"));
+  label(ctx,"a₁",X(a[0])+6,Y(a[0])+15,css("--blue")); label(ctx,"a₂",X(a[1])-14,Y(a[1])-8,css("--blue"));
+}
+
+function zoneIndex(kx,ky,Gs){ const k2=kx*kx+ky*ky; let c=0; for(let i=0;i<Gs.length;i++){ const dx=kx-Gs[i][0], dy=ky-Gs[i][1]; if(dx*dx+dy*dy<k2-1e-12) c++; } return c+1; }
+function drawRecip(){
+  const {ctx,w,h,dpr}=setupCanvas($("ck")), a=lat(), b=recip(a);
+  ctx.clearRect(0,0,w,h);
+  const bmax=Math.max(Math.hypot(...b[0]),Math.hypot(...b[1]));
+  const sc=Math.min(w,h)/(4.4*bmax), X=p=>w/2+p[0]*sc, Y=p=>h/2-p[1]*sc;
+  const Gs=[]; for(let i=-8;i<=8;i++) for(let j=-8;j<=8;j++){ if(!i&&!j) continue; const G=[i*b[0][0]+j*b[1][0],i*b[0][1]+j*b[1][1]]; if(Math.hypot(...G)<4.2*bmax) Gs.push(G); }
+  if(P.zones){
+    const W=Math.round(w*dpr), H=Math.round(h*dpr), img=ctx.createImageData(W,H), st=dpr>1.5?2:1, kcut2=(2.4*bmax)**2;
+    const cols=ZCOL.map(c=>hexRGB(css(c)));
+    for(let py=0;py<H;py+=st) for(let px=0;px<W;px+=st){
+      const kx=(px/dpr-w/2)/sc, ky=-(py/dpr-h/2)/sc; if(kx*kx+ky*ky>kcut2) continue; const z=zoneIndex(kx,ky,Gs);
+      if(z<=4){ const c=cols[z-1]; for(let yy=py;yy<Math.min(py+st,H);yy++) for(let xx=px;xx<Math.min(px+st,W);xx++){ const o=(yy*W+xx)*4; img.data[o]=c[0]; img.data[o+1]=c[1]; img.data[o+2]=c[2]; img.data[o+3]=z===1?110:70; } }
+    }
+    ctx.putImageData(img,0,0);
+  }
+  ctx.fillStyle=css("--fg"); [[0,0]].concat(Gs).forEach(p=>{ if(Math.abs(X(p)-w/2)<w/2+8&&Math.abs(Y(p)-h/2)<h/2+8){ ctx.beginPath(); ctx.arc(X(p),Y(p),3.6,0,TAU); ctx.fill(); } });
+  const o=[0,0]; arrow(ctx,[X(o),Y(o)],[X(b[0]),Y(b[0])],css("--blue")); arrow(ctx,[X(o),Y(o)],[X(b[1]),Y(b[1])],css("--blue"));
+  label(ctx,"b₁",X(b[0])+14,Y(b[0])+12,css("--blue")); label(ctx,"b₂",X(b[1])-14,Y(b[1])-8,css("--blue"));
+  if(P.h||P.k){ const G=[P.h*b[0][0]+P.k*b[1][0],P.h*b[0][1]+P.k*b[1][1]]; arrow(ctx,[X(o),Y(o)],[X(G),Y(G)],css("--amber"),3); label(ctx,"G",X(G)+12,Y(G)-10,css("--amber")); }
+  // readouts
+  const f=x=>(Math.abs(x)<5e-4?0:x).toFixed(3).replace("-","−");
+  const dots=[[0,0],[0,1],[1,0],[1,1]].map(([i,j])=>a[i][0]*b[j][0]+a[i][1]*b[j][1]);
+  $("vecs").innerHTML=`<h3>הווקטורים (ביחידות של |a₁|)</h3>
+    <p class="num">a₁ = (${f(a[0][0])}, ${f(a[0][1])}),   a₂ = (${f(a[1][0])}, ${f(a[1][1])})</p>
+    <p class="num">b₁ = 2π·(${f(b[0][0]/TAU)}, ${f(b[0][1]/TAU)}),   b₂ = 2π·(${f(b[1][0]/TAU)}, ${f(b[1][1]/TAU)})</p>
+    <p>בדיקה: <span class="num">a_i·b_j / 2π = [[${f(dots[0]/TAU)}, ${f(dots[1]/TAU)}], [${f(dots[2]/TAU)}, ${f(dots[3]/TAU)}]]</span></p>
+    <p>b₁ ניצב ל-a₂, ו-b₂ ניצב ל-a₁. כשמאריכים את a₂, הווקטור b₂ מתקצר.</p>`;
+  let mb;
+  if(!P.h&&!P.k) mb=`<h3>משפחת הישרים</h3><p>בחרו (h,k) שאינו (0,0).</p>`;
+  else{ const G=[P.h*b[0][0]+P.k*b[1][0],P.h*b[0][1]+P.k*b[1][1]], g=Math.hypot(...G), m=gcd(P.h,P.k);
+    mb=`<h3>משפחת הישרים (${P.h}, ${P.k})</h3><p>|G| = <span class="num">${(g/TAU).toFixed(3)}·2π</span>, &nbsp; d = 2π/|G| = <span class="num">${(TAU/g).toFixed(3)}</span></p>`+
+      (m>1?`<p class="no">(${P.h}, ${P.k}) = ${m}×(${P.h/m}, ${P.k/m}): רק ישר אחד מכל ${m} עובר דרך נקודות סריג. אינדקסי מילר של משפחת מישורי סריג הם תמיד ללא מחלק משותף.</p>`
+            :`<p>כל ישר במשפחה עובר דרך אינסוף נקודות סריג, וכל נקודות הסריג נמצאות על ישרי המשפחה.</p>`); }
+  $("millerbox").innerHTML=mb;
+  $("zleg").innerHTML=ZCOL.map((c,i)=>`<span><i class="dot" style="background:var(${c});opacity:${i?0.55:0.8}"></i>אזור ${i+1}</span>`).join("");
+}
+function hexRGB(h){ const m=h.match(/^#?([0-9a-f]{6})$/i); if(!m) return [128,128,128]; const v=parseInt(m[1],16); return [v>>16,(v>>8)&255,v&255]; }
+function draw2(){ drawReal(); drawRecip();
+  $("ratioo").textContent=P.ratio.toFixed(2); $("ango").textContent=Math.round(P.ang)+"°"; $("hv").textContent=P.h; $("kv").textContent=P.k; }
+
+/* ================= Panel 2: 3D Brillouin zones ================= */
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]], sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], mul=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2], cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]], norm=a=>Math.sqrt(dot(a,a));
+function solve3(r1,r2,r3,d){ const D=dot(r1,cross(r2,r3)); if(Math.abs(D)<1e-9) return null;
+  return mul(add(add(mul(cross(r2,r3),d[0]),mul(cross(r3,r1),d[1])),mul(cross(r1,r2),d[2])),1/D); }
+// reciprocal primitive vectors in units of 2 pi / a (a = cube edge of the DIRECT lattice)
+const BZ = {
+  sc:{ B:[[1,0,0],[0,1,0],[0,0,1]], name:"קובייה", recip:"SC עם צלע 2π/a",
+       pts:{"Γ":[0,0,0],"X":[.5,0,0],"M":[.5,.5,0],"R":[.5,.5,.5]}, path:["Γ","X","M","Γ","R","X"],
+       text:"הסריג ההופכי של SC הוא SC, ולכן אזור ברילואן הוא קובייה עם צלע 2π/a." },
+  bcc:{ B:[[0,1,1],[1,0,1],[1,1,0]], name:"דודקאהדרון מעויני (12 פאות)", recip:"FCC עם צלע 4π/a",
+       pts:{"Γ":[0,0,0],"H":[1,0,0],"N":[.5,.5,0],"P":[.5,.5,.5]}, path:["Γ","H","N","Γ","P","H"],
+       text:"הסריג ההופכי של BCC הוא FCC, ולכן אזור ברילואן הוא תא ויגנר-זייץ של FCC: אותה צורה שראיתם בשבוע 4." },
+  fcc:{ B:[[-1,1,1],[1,-1,1],[1,1,-1]], name:"אוקטהדרון קטום (14 פאות)", recip:"BCC עם צלע 4π/a",
+       pts:{"Γ":[0,0,0],"X":[1,0,0],"L":[.5,.5,.5],"K":[.75,.75,0],"W":[1,.5,0],"U":[1,.25,.25]}, path:["Γ","X","W","K","Γ","L","W"],
+       text:"הסריג ההופכי של FCC הוא BCC, ולכן אזור ברילואן הוא תא ויגנר-זייץ של BCC: 8 משושים ו-6 ריבועים." }
+};
+const T3 = { b:"fcc", path:true, gpts:false, spin:false, yaw:-0.62, pitch:0.36 };
+const bzCache={};
+function bzGeom(name){
+  if(bzCache[name]) return bzCache[name];
+  const B=BZ[name].B, vs=[];
+  for(let i=-2;i<=2;i++) for(let j=-2;j<=2;j++) for(let k=-2;k<=2;k++){ if(!i&&!j&&!k) continue; vs.push(add(add(mul(B[0],i),mul(B[1],j)),mul(B[2],k))); }
+  vs.sort((p,q)=>norm(p)-norm(q));
+  const rmin=norm(vs[0]), planes=vs.filter(v=>norm(v)<1.8*rmin).map(v=>({n:v,d:dot(v,v)/2}));
+  const verts=[];
+  for(let a=0;a<planes.length;a++) for(let b=a+1;b<planes.length;b++) for(let c=b+1;c<planes.length;c++){
+    const x=solve3(planes[a].n,planes[b].n,planes[c].n,[planes[a].d,planes[b].d,planes[c].d]); if(!x) continue;
+    if(planes.every(P=>dot(P.n,x)<=P.d+1e-7) && !verts.some(v=>norm(sub(v,x))<1e-6)) verts.push(x); }
+  const faces=[], used=[];
+  planes.forEach(P=>{ const on=verts.filter(v=>Math.abs(dot(P.n,v)-P.d)<1e-6); if(on.length<3) return;
+    const c=mul(on.reduce((s,v)=>add(s,v),[0,0,0]),1/on.length), nh=mul(P.n,1/norm(P.n)), u=mul(sub(on[0],c),1/norm(sub(on[0],c))), w=cross(nh,u);
+    on.sort((p,q)=>Math.atan2(dot(sub(p,c),w),dot(sub(p,c),u))-Math.atan2(dot(sub(q,c),w),dot(sub(q,c),u)));
+    faces.push({v:on,c}); used.push(P.n); });
+  return bzCache[name]={faces,verts,G:used};
+}
+function draw3D(){
+  const cv=$("c3"), {ctx,w,h}=setupCanvas(cv), g=bzGeom(T3.b), info=BZ[T3.b];
+  ctx.clearRect(0,0,w,h);
+  const cy=Math.cos(T3.yaw), sy=Math.sin(T3.yaw), cp=Math.cos(T3.pitch), sp=Math.sin(T3.pitch);
+  const ext=T3.gpts?Math.max(...g.G.map(norm))*1.08:Math.max(...g.verts.map(norm))*1.12, scale=Math.min(w,h)/(2*ext);
+  const P3=q=>{ const x1=q[0]*cy-q[1]*sy, y1=q[0]*sy+q[1]*cy, y2=y1*cp-q[2]*sp, z2=y1*sp+q[2]*cp; return [w/2+x1*scale,h/2-z2*scale,y2]; };
+  const items=[];
+  g.faces.forEach(F=>{ const pv=F.v.map(P3); items.push({t:"f",d:P3(F.c)[2],pv,nv:F.v.length}); });
+  // axes (light)
+  [[1,0,0],[0,1,0],[0,0,1]].forEach((v,i)=>{ const a=P3([0,0,0]), b=P3(mul(v,ext*0.95)); items.push({t:"ax",d:-1e9,a,b,l:["kx","ky","kz"][i]}); });
+  if(T3.gpts) g.G.forEach(G=>items.push({t:"g",d:P3(G)[2],q:P3(G)}));
+  const keys=Object.keys(info.pts);
+  keys.forEach(k=>items.push({t:"p",d:P3(info.pts[k])[2]-1e-3,q:P3(info.pts[k]),k}));
+  items.sort((u,v)=>v.d-u.d);
+  items.filter(it=>it.t==="ax").forEach(it=>{ ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(it.a[0],it.a[1]); ctx.lineTo(it.b[0],it.b[1]); ctx.stroke(); label(ctx,it.l,it.b[0],it.b[1]-8,css("--muted"),12); });
+  items.forEach(it=>{
+    if(it.t==="f"){ ctx.beginPath(); it.pv.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath();
+      ctx.fillStyle=css(it.nv===6?"--teal":"--blue"); ctx.globalAlpha=0.16; ctx.fill(); ctx.globalAlpha=0.9; ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.2; ctx.stroke(); ctx.globalAlpha=1; }
+    else if(it.t==="g"){ ctx.fillStyle=css("--muted"); ctx.beginPath(); ctx.arc(it.q[0],it.q[1],4,0,TAU); ctx.fill(); }
+  });
+  if(T3.path){ const pp=info.path.map(k=>P3(info.pts[k])); ctx.strokeStyle=css("--rose"); ctx.lineWidth=2.6; ctx.globalAlpha=.9; ctx.beginPath(); pp.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); ctx.globalAlpha=1; }
+  items.filter(it=>it.t==="p").forEach(it=>{ ctx.fillStyle=css("--amber"); ctx.beginPath(); ctx.arc(it.q[0],it.q[1],5,0,TAU); ctx.fill();
+    ctx.strokeStyle=css("--panel"); ctx.lineWidth=1.5; ctx.stroke(); label(ctx,it.k,it.q[0]+12,it.q[1]-11,css("--fg"),15); });
+}
+function readouts3(){
+  const info=BZ[T3.b], g=bzGeom(T3.b), byV={}; g.faces.forEach(f=>{ byV[f.v.length]=(byV[f.v.length]||0)+1; });
+  const nm={4:"מרובעים",6:"משושים"};
+  $("bzinfo").innerHTML=`<h3>${info.name}</h3><p>${info.text}</p><p>הסריג ההופכי: ${info.recip}. פאות: ${Object.keys(byV).map(k=>byV[k]+" "+(nm[k]||k+"-גונים")).join(" + ")}.</p>`+
+    (T3.path?`<p>המסלול (באדום): <span class="num">${info.path.join(" → ")}</span></p>`:"");
+  const fr=x=>{ for(const [v,s] of [[0,"0"],[.25,"1/4"],[.5,"1/2"],[.75,"3/4"],[1,"1"]]) if(Math.abs(x-v)<1e-9) return s; return x.toFixed(3); };
+  $("pts").innerHTML="<tr><th>נקודה</th><th>קואורדינטות</th></tr>"+Object.entries(info.pts).map(([k,v])=>`<tr><td><b>${k}</b></td><td class="num">(${v.map(fr).join(", ")})</td></tr>`).join("");
+}
+
+/* ---------------- wiring ---------------- */
+function drawAll(){ draw2(); draw3D(); }
+function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
+function setPreset(p){ const [r,a]=PRESETS[p]; P.ratio=r; P.ang=a; $("ratio").value=r; $("ang").value=a; pressed("pseg","p",p); draw2(); }
+document.querySelectorAll("#pseg button").forEach(b=>b.addEventListener("click",()=>setPreset(b.dataset.p)));
+$("ratio").addEventListener("input",e=>{ P.ratio=+e.target.value; pressed("pseg","p",""); draw2(); });
+$("ang").addEventListener("input",e=>{ P.ang=+e.target.value; pressed("pseg","p",""); draw2(); });
+[["hm","h",-1],["hp","h",1],["km","k",-1],["kp","k",1]].forEach(([id,key,s])=>$(id).addEventListener("click",()=>{ P[key]=Math.max(-3,Math.min(3,P[key]+s)); draw2(); }));
+$("zones").addEventListener("change",e=>{ P.zones=e.target.checked; draw2(); });
+$("fam").addEventListener("change",e=>{ P.fam=e.target.checked; draw2(); });
+document.querySelectorAll("#bseg button").forEach(b=>b.addEventListener("click",()=>{ T3.b=b.dataset.b; pressed("bseg","b",T3.b); readouts3(); draw3D(); }));
+$("path").addEventListener("change",e=>{ T3.path=e.target.checked; readouts3(); draw3D(); });
+$("gpts").addEventListener("change",e=>{ T3.gpts=e.target.checked; draw3D(); });
+$("spin3").addEventListener("change",e=>{ T3.spin=e.target.checked; if(T3.spin){ let last=performance.now();
+  const step=t=>{ if(!T3.spin) return; T3.yaw+=(t-last)*0.00035; last=t; draw3D(); requestAnimationFrame(step); }; requestAnimationFrame(step); } });
+(function(){ const c=$("c3"); let drag=null;
+  c.addEventListener("pointerdown",e=>{ drag=[e.clientX,e.clientY]; c.setPointerCapture(e.pointerId); });
+  c.addEventListener("pointermove",e=>{ if(!drag) return; T3.yaw-=(e.clientX-drag[0])*0.008; T3.pitch=Math.max(-1.45,Math.min(1.45,T3.pitch+(e.clientY-drag[1])*0.008)); drag=[e.clientX,e.clientY]; draw3D(); });
+  const end=()=>{drag=null;}; c.addEventListener("pointerup",end); c.addEventListener("pointercancel",end); })();
+
+// When embedded in the course site (same origin), size the iframe box to the content height.
+function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
+  const pd=fe.ownerDocument, h=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
+  let st=pd.getElementById("viz-fit"); if(!st){ st=pd.createElement("style"); st.id="viz-fit"; pd.head.appendChild(st); }
+  st.textContent=`article div:has(> iframe[src*="/viz/"]){display:block!important;width:100%!important;padding-bottom:0!important;height:${h}px!important}
+article iframe[src*="/viz/"]{position:absolute;inset:0;width:100%;height:100%;border:0}`;
+}catch(e){} }
+let rt=null; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ drawAll(); fitFrame(); },60); });
+window.addEventListener("load",fitFrame);
+if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawAll);
+
+pressed("pseg","p","sq"); pressed("bseg","b",T3.b);
+draw2(); readouts3(); draw3D(); fitFrame();
+window.__recip = { P, T3, BZ, bzGeom, draw2, draw3D, readouts3, setPreset, recip, lat, zoneIndex };
+})();
+</script>
+</body>
+</html>

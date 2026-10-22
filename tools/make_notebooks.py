@@ -355,6 +355,117 @@ print(f"packing fraction eta = {eta:.4f}")
 """),
 ]
 
+# ------------------------------------------------------------------ week 5
+w5 = [
+("md", header(5, "שבוע 5 · אזורי ברילואן בדו-ממד", "הדגמה לתרגול 5 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+לסריג דו-ממדי עם וקטורים פרימיטיביים $\mathbf a_1,\mathbf a_2$ המחברת מחשבת את הסריג ההופכי מהתנאי $\mathbf a_i\cdot\mathbf b_j=2\pi\delta_{ij}$, ובונה מפה של אזורי ברילואן: נקודה $\mathbf k$ שייכת לאזור ה-$n$ אם בדיוק $n-1$ נקודות של הסריג ההופכי קרובות אליה יותר מהראשית. לבסוף היא מודדת את השטח של כל אזור על ידי ספירת נקודות רשת.
+
+**יחידות:** אורכים במרחב הישיר ביחידות של $|\mathbf a_1|$, ובמרחב ההופכי ביחידות של $1/|\mathbf a_1|$.
+
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week05-reciprocal) שמציג את הסריג ההופכי ואת האזורים בזמן אמת.
+"""),
+("code", """
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+- `a1`, `a2` – הווקטורים הפרימיטיביים של הסריג הישיר. ברירת המחדל היא סריג ריבועי.
+- `n_max` – מספר האזורים שמחשבים ומציגים.
+- `N_grid` – מספר נקודות הרשת בכל כיוון (יותר נקודות: שטחים מדויקים יותר, חישוב איטי יותר).
+"""),
+("code", """
+# ---- Parameters ----
+a1 = [1.0, 0.0]     # primitive vectors of the direct lattice
+a2 = [0.0, 1.0]
+n_max = 4           # number of Brillouin zones to compute
+N_grid = 700        # grid points per direction
+"""),
+("md", r"""
+### 1. הסריג ההופכי
+כותבים את הווקטורים הפרימיטיביים כשורות של מטריצה $A$. התנאי $\mathbf a_i\cdot\mathbf b_j=2\pi\delta_{ij}$ הוא $AB^{T}=2\pi I$, ולכן $B=2\pi\,(A^{-1})^{T}$.
+
+> 🔮 **נחשו:** אם מאריכים את $\mathbf a_2$ פי שניים, מה קורה ל-$\mathbf b_2$? ולכיוון שלו?
+"""),
+("code", """
+A = np.array([a1, a2], dtype=float)
+B = 2 * np.pi * np.linalg.inv(A).T          # rows are b1, b2
+print("b1 =", np.round(B[0], 4), "   b2 =", np.round(B[1], 4))
+print("A B^T / (2 pi) =\\n", np.round(A @ B.T / (2 * np.pi), 10))
+
+fig, axs = plt.subplots(1, 2, figsize=(9, 4.2))
+for ax, V, name, lab in [(axs[0], A, "direct lattice", "a"), (axs[1], B, "reciprocal lattice", "b")]:
+    n = np.arange(-4, 5)
+    P = np.array([i * V[0] + j * V[1] for i in n for j in n])
+    ax.plot(P[:, 0], P[:, 1], "k.", ms=5)
+    for i, c in enumerate(["C0", "C1"]):
+        ax.annotate("", xy=V[i], xytext=(0, 0), arrowprops=dict(arrowstyle="->", color=c, lw=2))
+        ax.text(*(V[i] * 1.12), f"{lab}{i+1}", color=c, fontsize=12)
+    r = 2.6 * np.abs(V).max()
+    ax.set_xlim(-r, r); ax.set_ylim(-r, r); ax.set_aspect("equal"); ax.set_title(name)
+plt.tight_layout(); plt.show()
+"""),
+("md", r"""
+### 2. מפת אזורי ברילואן
+לכל נקודה $\mathbf k$ ברשת סופרים כמה וקטורים $\mathbf G\neq0$ מקיימים $|\mathbf k-\mathbf G|<|\mathbf k|$, כלומר $\mathbf k\cdot\mathbf G>|\mathbf G|^2/2$. האזור של הנקודה הוא המספר הזה ועוד אחד.
+
+> 🔮 **נחשו:** מה הצורה של האזור הראשון בסריג הריבועי, ומכמה חתיכות נפרדות בנוי האזור השני?
+"""),
+("code", """
+bmax = np.linalg.norm(B, axis=1).max()
+L = 0.75 * np.sqrt(n_max + 2) * bmax                 # half-width of the k-grid
+x = np.linspace(-L, L, N_grid)
+KX, KY = np.meshgrid(x, x)
+K = np.column_stack([KX.ravel(), KY.ravel()])
+
+m = np.arange(-12, 13)
+G = np.array([i * B[0] + j * B[1] for i in m for j in m if (i, j) != (0, 0)])
+G = G[np.linalg.norm(G, axis=1) < 2.2 * L]            # only nearby G can matter
+
+zone = np.ones(len(K), dtype=int)
+for chunk in np.array_split(np.arange(len(K)), 20):   # count closer G points, in chunks
+    zone[chunk] += ((K[chunk] @ G.T) > 0.5 * (G ** 2).sum(axis=1)).sum(axis=1)
+zone = zone.reshape(KX.shape)
+
+cmap = ListedColormap(plt.cm.tab10.colors[:n_max])
+shown = np.where(zone <= n_max, zone, np.nan)
+plt.figure(figsize=(5.6, 5))
+plt.imshow(shown, origin="lower", extent=[-L, L, -L, L], cmap=cmap, vmin=0.5, vmax=n_max + 0.5)
+plt.colorbar(ticks=range(1, n_max + 1), label="zone")
+pts = G[np.all(np.abs(G) < L, axis=1)]
+plt.plot(pts[:, 0], pts[:, 1], "k.", ms=4); plt.plot(0, 0, "k+", ms=10)
+plt.xlabel("k_x"); plt.ylabel("k_y"); plt.title("Brillouin zones")
+plt.show()
+"""),
+("md", r"""
+### 3. השטח של כל אזור
+סופרים את נקודות הרשת בכל אזור ומכפילים בשטח של משבצת רשת. מציגים את השטח של כל אזור ביחס לשטח של האזור הראשון.
+
+> 🔮 **נחשו:** האם האזורים הרחוקים גדולים יותר מהאזור הראשון, קטנים יותר, או שווים לו?
+"""),
+("code", """
+cell = (x[1] - x[0]) ** 2
+areas = np.array([(zone == n).sum() * cell for n in range(1, n_max + 1)])
+for n, s in enumerate(areas, start=1):
+    print(f"zone {n}:  area = {s:8.4f}   area / area(zone 1) = {s / areas[0]:.3f}")
+plt.figure(figsize=(5, 3.2))
+plt.bar(range(1, n_max + 1), areas / areas[0], color="C0")
+plt.axhline(1, color="0.6", lw=0.8)
+plt.xlabel("zone n"); plt.ylabel("area / area of zone 1"); plt.ylim(0, 1.3)
+plt.show()
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. מה קורה ל-$\mathbf b_1$ ול-$\mathbf b_2$ כשמסובבים את $\mathbf a_2$ כך שהזווית בין $\mathbf a_1$ ל-$\mathbf a_2$ קטנה? מה לגבי הזווית בין $\mathbf b_1$ ל-$\mathbf b_2$?
+2. מכמה חתיכות נפרדות בנוי האזור השני בסריג הריבועי? והשלישי?
+3. נסו רשת גסה יותר (`N_grid` קטן). איך משתנים השטחים, ולמה?
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
 def build(name, cells, out):
     nb = nb_from(cells)
     # Execute a copy only to verify that every cell runs; the notebook that is saved stays
@@ -370,3 +481,4 @@ if __name__ == "__main__":
     build("w1", w1, ROOT / "week01.ipynb")
     build("w2", w2, ROOT / "week02.ipynb")
     build("w4", w4, ROOT / "week04.ipynb")
+    build("w5", w5, ROOT / "week05.ipynb")

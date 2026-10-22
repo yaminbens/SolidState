@@ -13,6 +13,8 @@ project:
     - file: week02.ipynb
     - file: week04.ipynb
     - file: week04-crystals.md
+    - file: week05.ipynb
+    - file: week05-reciprocal.md
 site:
   template: book-theme
   title: מבוא למצב מוצק תשפ״ז
