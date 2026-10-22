@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>פיזור מגביש</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course palette (same as site.css): ink, blue, teal, amber. */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --fg:#12294d; --muted:#53627a; --line:#d6dde8; --soft:#eef3fb;
+  --blue:#2563eb; --teal:#0f9d8a; --amber:#f08a24; --rose:#d6455b; --edge:#12294d;
+  --f-body:"Heebo","Segoe UI",Arial,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root.dark{
+  --bg:#0e141c; --panel:#151d28; --fg:#e8eefc; --muted:#9aa8bc; --line:#2a3646; --soft:#1b2534;
+  --blue:#6aa1ff; --teal:#2dd4bf; --amber:#f6a14a; --rose:#f07a8c; --edge:#c9d6ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{padding:14px max(14px,env(safe-area-inset-left)) 28px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
+.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+  box-shadow:0 6px 18px rgba(18,41,77,.06)}
+.card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
+.card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+.hint{color:var(--muted);font-size:12.5px;margin:6px 0 0}
+.ctl{display:flex;flex-direction:column;gap:12px}
+.lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;background:transparent;color:var(--fg);border:1px solid var(--line);
+  border-radius:999px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) 3.2em;gap:10px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.checks label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.box p{margin:3px 0}
+.num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px}
+p .num{white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
+.ok{color:var(--teal);font-weight:700}
+.no{color:var(--rose);font-weight:700}
+.ctlrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:12px}
+@media (max-width:760px){.ctlrow{grid-template-columns:minmax(0,1fr)}}
+.row{grid-template-columns:7.5em minmax(0,1fr) 3.6em}
+table.pts{border-collapse:collapse;font-size:13px;width:100%}
+table.pts td,table.pts th{padding:3px 6px;border-bottom:1px solid var(--line);text-align:center}
+table.pts th{color:var(--muted);font-weight:500}
+button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:5px 14px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>פיזור מגביש: בניית אוולד ותבנית אבקה</h1>
+    <p class="lede">שיא פיזור מתקבל כאשר <span class="num">k′ − k = G</span> ו-<span class="num">|k′| = |k|</span>. בחלק העליון רואים מתי זה קורה בגביש יחיד, בגביש מסתובב ובאבקה; בחלק התחתון רואים איך הבסיס קובע את עוצמת השיאים. אין צורך להריץ דבר.</p>
+  </header>
+
+  <!-- ================= Panel 1: Ewald construction ================= -->
+  <section class="card">
+    <h2>בניית אוולד</h2>
+    <p class="sub">הנקודות הן הסריג ההופכי (סריג ריבועי עם צלע 2π/a). הווקטור k מסתיים בראשית, והמעגל, שרדיוסו |k|, מרוכז בזנב שלו. כל נקודה הופכית שנוגעת במעגל נותנת קרן מפוזרת k′. גודל הנקודות הוא 2π/(Na), כאשר N הוא מספר התאים בגביש.</p>
+    <canvas id="ce" width="680" height="560" aria-label="בניית אוולד"></canvas>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div>
+          <div class="lab">שיטה</div>
+          <div class="seg" id="mseg"><button data-m="fixed">גביש קבוע</button><button data-m="rot">גביש מסתובב</button><button data-m="powder">אבקה</button></div>
+        </div>
+        <div class="row"><span class="lab" style="margin:0">λ / a</span><input id="lam" type="range" min="0.25" max="1.5" step="0.005" value="0.6"><output id="lamo"></output></div>
+        <div class="row"><span class="lab" style="margin:0">סיבוב הגביש</span><input id="phi" type="range" min="0" max="90" step="0.1" value="17"><output id="phio"></output></div>
+        <div class="row"><span class="lab" style="margin:0">גודל הגביש N</span><input id="nc" type="range" min="1" max="2" step="0.01" value="1.3"><output id="nco"></output></div>
+        <div><button class="act" id="sweep" type="button">סובב את הגביש</button></div>
+      </div>
+      <div class="ctl">
+        <div class="box" id="einfo"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Panel 2: powder pattern ================= -->
+  <section class="card">
+    <h2>תבנית פיזור של אבקה</h2>
+    <p class="sub">העוצמה של כל שיא היא |S(G)|² כפול מספר הווקטורים ההופכיים באותו אורך (הריבוי). גורמי הצורה האטומיים נלקחים קבועים, ומקדמים זוויתיים נוספים לא נכללים.</p>
+    <canvas id="cp" width="680" height="360" aria-label="תבנית אבקה"></canvas>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div>
+          <div class="lab">מבנה (צלע הקובייה a)</div>
+          <div class="seg" id="sseg"><button data-s="sc">SC</button><button data-s="bcc">BCC</button><button data-s="fcc">FCC</button><button data-s="cscl">מבנה CsCl</button></div>
+        </div>
+        <div class="row" id="frow"><span class="lab" style="margin:0">f<sub>B</sub> / f<sub>A</sub></span><input id="fr" type="range" min="0" max="1" step="0.01" value="0.5"><output id="fro"></output></div>
+        <div class="row"><span class="lab" style="margin:0">λ / a</span><input id="lam2" type="range" min="0.2" max="1.2" step="0.005" value="0.45"><output id="lam2o"></output></div>
+        <div class="row"><span class="lab" style="margin:0">גודל הגביש N</span><input id="nc2" type="range" min="1" max="2.5" step="0.01" value="1.7"><output id="nc2o"></output></div>
+      </div>
+      <div class="ctl"><div class="box" id="pinfo"></div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const TAU = 2*Math.PI;
+
+/* ---------------- theme: follow the course site (same origin) or the OS ---------------- */
+function applyTheme(){
+  let dark=false;
+  try{ const p=window.parent&&window.parent!==window?window.parent.document.documentElement:null; if(p) dark=p.classList.contains("dark"); else throw 0; }
+  catch(e){ dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  document.documentElement.classList.toggle("dark",dark);
+}
+applyTheme();
+try{ if(window.parent!==window) new MutationObserver(()=>{applyTheme(); drawAll();}).observe(window.parent.document.documentElement,{attributes:true,attributeFilter:["class"]}); }catch(e){}
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawAll();});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function setupCanvas(c){
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.height/c.width;
+  const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio};
+}
+function arrow(ctx,a,b,col,lw){ ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw||2.4;
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), L=10;
+  ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(b[0]-L*Math.cos(ang-.4),b[1]-L*Math.sin(ang-.4)); ctx.lineTo(b[0]-L*Math.cos(ang+.4),b[1]-L*Math.sin(ang+.4)); ctx.fill(); }
+function label(ctx,t,x,y,col,size,align){ ctx.font=`600 ${size||14}px `+css("--f-num"); ctx.fillStyle=col; ctx.textAlign=align||"center"; ctx.textBaseline="middle"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+
+/* ================= Panel 1: Ewald ================= */
+// units: a = 1, reciprocal lattice spacing g = 2 pi
+const E = { mode:"fixed", lam:0.6, phi:17, logN:1.3, hits:[], sweeping:false };
+const g = TAU;
+function ewaldGeom(){
+  const k=TAU/E.lam, N=Math.pow(10,E.logN), tol=g/N, c=Math.cos(E.phi*Math.PI/180), s=Math.sin(E.phi*Math.PI/180);
+  const M=Math.ceil(2*k/g)+1, pts=[];
+  for(let h=-M;h<=M;h++) for(let l=-M;l<=M;l++){ const x=g*(h*c-l*s), y=g*(h*s+l*c); pts.push({h,l,x,y}); }
+  return {k,N,tol,pts};
+}
+function twoTheta(G,k){ return 2*Math.asin(Math.min(1,G/(2*k)))*180/Math.PI; }
+function drawEwald(){
+  const {ctx,w,h}=setupCanvas($("ce")), G=ewaldGeom(), k=G.k;
+  ctx.clearRect(0,0,w,h);
+  // view: circle center at (-k,0); show the circle plus a margin
+  const R=k*1.12, sc=Math.min(w,h)/(2*R), cx=w/2+k*sc*0.0, X=x=>w/2+(x+k)*sc, Y=y=>h/2-y*sc;
+  const C=[X(-k),Y(0)], O=[X(0),Y(0)];
+  // powder rings
+  if(E.mode==="powder"){
+    const radii=[...new Set(G.pts.filter(p=>p.h||p.l).map(p=>Math.round(Math.hypot(p.x,p.y)*1e6)/1e6))].filter(r=>r<=2*k+1e-9).sort((a,b)=>a-b);
+    ctx.strokeStyle=css("--teal"); ctx.globalAlpha=.45; ctx.lineWidth=1.2;
+    radii.forEach(r=>{ ctx.beginPath(); ctx.arc(O[0],O[1],r*sc,0,TAU); ctx.stroke(); }); ctx.globalAlpha=1;
+  }
+  // reciprocal lattice points
+  const hits=[];
+  G.pts.forEach(p=>{
+    const px=X(p.x), py=Y(p.y); if(px<-20||px>w+20||py<-20||py>h+20) return;
+    const d=Math.abs(Math.hypot(p.x+k,p.y)-k), on=(p.h||p.l)&&d<G.tol/2;
+    if(on) hits.push(p);
+    ctx.fillStyle=css(on?"--amber":"--fg"); ctx.globalAlpha=on?1:0.75;
+    ctx.beginPath(); ctx.arc(px,py,Math.max(2,Math.min(14,(G.tol/2)*sc)),0,TAU); ctx.fill(); ctx.globalAlpha=1; });
+  // Ewald circle
+  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(C[0],C[1],k*sc,0,TAU); ctx.stroke();
+  // incident k, from C to O
+  arrow(ctx,C,O,css("--blue"),2.6); label(ctx,"k",(C[0]+O[0])/2,C[1]-12,css("--blue"));
+  // diffracted beams
+  const dirs=[];
+  if(E.mode==="powder"){
+    const radii=[...new Set(G.pts.filter(p=>p.h||p.l).map(p=>Math.round(Math.hypot(p.x,p.y)*1e6)/1e6))].filter(r=>r<=2*k+1e-9).sort((a,b)=>a-b);
+    radii.forEach(r=>{ const tt=twoTheta(r,k); dirs.push({r,tt}); [1,-1].forEach(sg=>{ const ang=sg*tt*Math.PI/180, end=[C[0]+k*sc*Math.cos(ang),C[1]-k*sc*Math.sin(ang)];
+      ctx.strokeStyle=css("--amber"); ctx.globalAlpha=.7; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(C[0],C[1]); ctx.lineTo(end[0],end[1]); ctx.stroke(); ctx.globalAlpha=1; }); });
+  } else {
+    hits.forEach(p=>{ arrow(ctx,C,[X(p.x),Y(p.y)],css("--amber"),2.2); label(ctx,`(${p.h},${p.l})`,X(p.x)+16,Y(p.y)-12,css("--amber"),12); });
+  }
+  // marks accumulated during a sweep, on a ring around C (detector)
+  if(E.mode==="rot"){ ctx.fillStyle=css("--rose"); E.hits.forEach(a=>{ const ang=a*Math.PI/180; ctx.beginPath(); ctx.arc(C[0]+(k*sc+10)*Math.cos(ang),C[1]-(k*sc+10)*Math.sin(ang),3.5,0,TAU); ctx.fill(); }); }
+  ctx.fillStyle=css("--fg"); ctx.beginPath(); ctx.arc(O[0],O[1],4,0,TAU); ctx.fill(); label(ctx,"0",O[0]+10,O[1]+12,css("--fg"),12);
+  // readouts
+  $("lamo").textContent=E.lam.toFixed(2); $("phio").textContent=E.phi.toFixed(1)+"°"; $("nco").textContent=Math.round(G.N);
+  let html="";
+  if(E.mode==="fixed"){
+    html=`<h3>גביש יחיד וקרן באורך גל אחד</h3><p>שיאים כרגע: <b>${hits.length}</b></p>`+
+      (hits.length?`<table class="pts"><tr><th>(h,k)</th><th>2θ</th></tr>${hits.map(p=>`<tr><td class="num">(${p.h}, ${p.l})</td><td class="num">${twoTheta(Math.hypot(p.x,p.y),k).toFixed(1)}°</td></tr>`).join("")}</table>`:"")+
+      `<p>בגביש גדול הנקודות קטנות, ובדרך כלל אף אחת מהן לא נוגעת במעגל. נסו לסובב מעט את הגביש.</p>`;
+  } else if(E.mode==="rot"){
+    const uniq=[...new Set(E.hits.map(a=>Math.abs(a).toFixed(1)))];
+    html=`<h3>גביש מסתובב</h3><p>לחצו "סובב את הגביש": בכל זווית שבה נקודה עוברת דרך המעגל נרשמת קרן מפוזרת (נקודות ורודות סביב המעגל).</p><p>זוויות פיזור שנרשמו: <b>${uniq.length}</b></p>`;
+  } else {
+    html=`<h3>אבקה</h3><p>באבקה יש גרגירים בכל הכיוונים, ולכן כל וקטור הופכי עם |G| ≤ 2|k| נותן פיזור, בזווית 2θ = 2 arcsin(|G|/2|k|). המעגלים הטורקיזיים הם האורכים האפשריים של G.</p>`+
+      `<table class="pts"><tr><th>|G| · a/2π</th><th>2θ</th></tr>${dirs.map(d=>`<tr><td class="num">${(d.r/g).toFixed(3)}</td><td class="num">${d.tt.toFixed(1)}°</td></tr>`).join("")}</table>`;
+  }
+  $("einfo").innerHTML=html;
+  $("phi").disabled=E.mode==="powder"; $("sweep").style.display=E.mode==="rot"?"":"none";
+}
+let sweepRaf=null;
+function sweep(){
+  if(E.sweeping){ E.sweeping=false; $("sweep").textContent="סובב את הגביש"; return; }
+  E.sweeping=true; E.hits=[]; E.phi=0; $("sweep").textContent="עצור"; let last=performance.now();
+  const step=t=>{ if(!E.sweeping) return; const dt=(t-last)/1000; last=t; E.phi+=dt*14; if(E.phi>=90){ E.phi=90; E.sweeping=false; $("sweep").textContent="סובב את הגביש"; }
+    $("phi").value=E.phi; const G=ewaldGeom();
+    G.pts.forEach(p=>{ if(!(p.h||p.l)) return; const d=Math.abs(Math.hypot(p.x+G.k,p.y)-G.k); if(d<G.tol/2){ const ang=Math.atan2(p.y,p.x+G.k)*180/Math.PI; if(!E.hits.some(a=>Math.abs(a-ang)<0.4)) E.hits.push(ang); } });
+    drawEwald(); if(E.sweeping) sweepRaf=requestAnimationFrame(step); };
+  sweepRaf=requestAnimationFrame(step);
+}
+
+/* ================= Panel 2: powder pattern ================= */
+const PS = { s:"bcc", fr:0.5, lam:0.45, logN:1.7 };
+const STR = {
+  sc:{ name:"SC", basis:[[0,0,0,"A"]] },
+  bcc:{ name:"BCC", basis:[[0,0,0,"A"],[.5,.5,.5,"A"]] },
+  fcc:{ name:"FCC", basis:[[0,0,0,"A"],[.5,.5,0,"A"],[.5,0,.5,"A"],[0,.5,.5,"A"]] },
+  cscl:{ name:"מבנה CsCl", basis:[[0,0,0,"A"],[.5,.5,.5,"B"]] }
+};
+function families(){
+  const st=STR[PS.s], fB=PS.fr, fam={};
+  const M=Math.ceil(2/PS.lam)+1;
+  for(let h=-M;h<=M;h++) for(let k=-M;k<=M;k++) for(let l=-M;l<=M;l++){
+    if(!h&&!k&&!l) continue; const s2=h*h+k*k+l*l; const sinth=PS.lam*Math.sqrt(s2)/2; if(sinth>=1) continue;
+    let re=0, im=0; st.basis.forEach(([x,y,z,sp])=>{ const f=sp==="A"?1:fB, ph=-TAU*(h*x+k*y+l*z); re+=f*Math.cos(ph); im+=f*Math.sin(ph); });
+    const S2=re*re+im*im; const key=[Math.abs(h),Math.abs(k),Math.abs(l)].sort((a,b)=>b-a).join("");
+    (fam[key]=fam[key]||{key,s2,m:0,S2,I:0}); fam[key].m++; fam[key].I+=S2;
+  }
+  return Object.values(fam).map(f=>({...f,tt:2*Math.asin(PS.lam*Math.sqrt(f.s2)/2)*180/Math.PI})).sort((a,b)=>a.tt-b.tt);
+}
+function drawPowder(){
+  const {ctx,w,h}=setupCanvas($("cp")), fam=families(), N=Math.pow(10,PS.logN);
+  ctx.clearRect(0,0,w,h);
+  const m={l:46,r:14,t:16,b:34}, pw=w-m.l-m.r, ph=h-m.t-m.b, X=t=>m.l+t/180*pw;
+  // profile: Gaussian in 2theta with Scherrer width  FWHM(2theta) = 0.9 lambda / (N a cos theta)  (radians)
+  const seen=fam.filter(f=>f.I>1e-6), Imax=Math.max(...seen.map(f=>f.I),1e-9);
+  const prof=new Float64Array(901);
+  seen.forEach(f=>{ const th=f.tt*Math.PI/360, fw=Math.min(25,0.9*PS.lam/(N*Math.cos(th))*180/Math.PI), sg=fw/2.355;
+    for(let i=0;i<=900;i++){ const t=i*0.2, d=(t-f.tt)/sg; if(Math.abs(d)<6) prof[i]+=f.I/Imax*Math.exp(-0.5*d*d); } });
+  let pmax=0; for(let i=0;i<=900;i++) pmax=Math.max(pmax,prof[i]); pmax=Math.max(pmax,1e-9);
+  const Y=v=>m.t+ph-(v/pmax)*ph*0.92;
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(m.l,m.t+ph); ctx.lineTo(w-m.r,m.t+ph); ctx.stroke();
+  [0,30,60,90,120,150,180].forEach(t=>{ label(ctx,t+"°",X(t),h-m.b+16,css("--muted"),11); ctx.globalAlpha=.4; ctx.beginPath(); ctx.moveTo(X(t),m.t); ctx.lineTo(X(t),m.t+ph); ctx.stroke(); ctx.globalAlpha=1; });
+  label(ctx,"2θ",w-m.r-10,h-8,css("--muted"),12);
+  ctx.save(); ctx.translate(14,m.t+ph/2); ctx.rotate(-Math.PI/2); label(ctx,"intensity",0,0,css("--muted"),12); ctx.restore();
+  ctx.strokeStyle=css("--blue"); ctx.lineWidth=1.8; ctx.beginPath(); for(let i=0;i<=900;i++){ const x=X(i*0.2), y=Y(prof[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); } ctx.stroke();
+  // labels (not for FCC: the HW indexes an FCC series)
+  if(PS.s!=="fcc"){ const byS={}; seen.forEach(f=>{ (byS[f.s2]=byS[f.s2]||[]).push(f); });
+    Object.values(byS).forEach(grp=>{ const f=grp[0], i=Math.round(f.tt/0.2); if(prof[i]/pmax>0.05) label(ctx,grp.map(q=>"("+q.key+")").join(" "),X(f.tt),Y(prof[i])-10,css("--fg"),11); }); }
+  // missing reflections as small marks
+  fam.filter(f=>f.I<=1e-6).forEach(f=>{ ctx.strokeStyle=css("--rose"); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(X(f.tt),m.t+ph); ctx.lineTo(X(f.tt),m.t+ph-8); ctx.stroke(); });
+  $("fro").textContent=PS.fr.toFixed(2); $("lam2o").textContent=PS.lam.toFixed(2); $("nc2o").textContent=Math.round(N);
+  $("frow").style.display=PS.s==="cscl"?"":"none";
+  const nOn=seen.length, nOff=fam.length-seen.length;
+  $("pinfo").innerHTML=`<h3>${STR[PS.s].name}</h3><p>שיאים בתבנית: <b>${nOn}</b>. משפחות שהעוצמה שלהן מתאפסת (סימון ורוד על הציר): <b>${nOff}</b>.</p>`+
+    (PS.s==="cscl"?`<p>כש-f<sub>B</sub> = f<sub>A</sub> המבנה הופך ל-BCC, והשיאים עם h+k+l אי-זוגי נעלמים. כש-f<sub>B</sub> = 0 נשאר SC.</p>`:"")+
+    `<p>הקטנת הגביש מרחיבה את השיאים: הרוחב הוא בערך 2π/(Na) במרחב ההופכי.</p>`;
+}
+
+/* ---------------- wiring ---------------- */
+function drawAll(){ drawEwald(); drawPowder(); }
+function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
+document.querySelectorAll("#mseg button").forEach(b=>b.addEventListener("click",()=>{ E.mode=b.dataset.m; E.sweeping=false; E.hits=[]; $("sweep").textContent="סובב את הגביש"; pressed("mseg","m",E.mode); drawEwald(); }));
+$("lam").addEventListener("input",e=>{ E.lam=+e.target.value; E.hits=[]; drawEwald(); });
+$("phi").addEventListener("input",e=>{ E.phi=+e.target.value; drawEwald(); });
+$("nc").addEventListener("input",e=>{ E.logN=+e.target.value; E.hits=[]; drawEwald(); });
+$("sweep").addEventListener("click",sweep);
+document.querySelectorAll("#sseg button").forEach(b=>b.addEventListener("click",()=>{ PS.s=b.dataset.s; pressed("sseg","s",PS.s); drawPowder(); }));
+$("fr").addEventListener("input",e=>{ PS.fr=+e.target.value; drawPowder(); });
+$("lam2").addEventListener("input",e=>{ PS.lam=+e.target.value; drawPowder(); });
+$("nc2").addEventListener("input",e=>{ PS.logN=+e.target.value; drawPowder(); });
+
+// When embedded in the course site (same origin), size the iframe box to the content height.
+function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
+  const pd=fe.ownerDocument, hh=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
+  let st=pd.getElementById("viz-fit"); if(!st){ st=pd.createElement("style"); st.id="viz-fit"; pd.head.appendChild(st); }
+  st.textContent=`article div:has(> iframe[src*="/viz/"]){display:block!important;width:100%!important;padding-bottom:0!important;height:${hh}px!important}
+article iframe[src*="/viz/"]{position:absolute;inset:0;width:100%;height:100%;border:0}`;
+}catch(e){} }
+let rt=null; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ drawAll(); fitFrame(); },60); });
+window.addEventListener("load",fitFrame);
+if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawAll);
+
+pressed("mseg","m",E.mode); pressed("sseg","s",PS.s);
+drawAll(); fitFrame();
+window.__diff = { E, PS, ewaldGeom, families, drawEwald, drawPowder };
+})();
+</script>
+</body>
+</html>

@@ -466,6 +466,128 @@ plt.show()
 """),
 ]
 
+# ------------------------------------------------------------------ week 6
+w6 = [
+("md", header(6, "שבוע 6 · סימולציית פיזור אבקה", "הדגמה לתרגול 6 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+המחברת מחשבת תבנית פיזור של אבקה (שיטת Debye-Scherrer) לגביש קובי. הגביש מוגדר על ידי סריג ברווה קובי (SC, BCC או FCC) ובסיס של אטומים, לכל אחד מיקום וגורם צורה $f$. לכל וקטור הופכי $\mathbf G_{hkl}=\frac{2\pi}{a}(h,k,l)$ מחשבים את גורם המבנה של התא הקובי,
+$$S(hkl)=\sum_j f_j\,e^{-2\pi i(hx_j+ky_j+lz_j)},$$
+ואת זווית הפיזור מתנאי בראג, $\sin\theta=\frac{\lambda}{2a}\sqrt{h^2+k^2+l^2}$. באבקה כל הווקטורים באותו אורך נותנים שיא באותה זווית, ולכן העוצמה של שיא היא $|S|^2$ כפול **הריבוי**: מספר הווקטורים $(h,k,l)$ במשפחה. רוחב השיא נקבע לפי גודל הגרגירים.
+
+**יחידות:** אורכים ב-nm, זוויות במעלות. גורמי הצורה $f_j$ נלקחים קבועים (לא תלויים בזווית).
+
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week06-diffraction) עם בניית אוולד ותבניות אבקה.
+"""),
+("code", """
+import itertools
+import numpy as np
+import matplotlib.pyplot as plt
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+- `lam` – אורך הגל של קרני ה-X (nm).
+- `a` – צלע הקובייה של הסריג (nm).
+- `centering` – סריג הברווה: `"SC"`, `"BCC"` או `"FCC"`.
+- `basis` – האטומים שמוצמדים לכל נקודת סריג: לכל אחד המיקום ביחידות של $a$ וגורם הצורה $f$.
+- `N_cells` – מספר התאים לאורך צלע של גרגיר (קובע את רוחב השיאים).
+"""),
+("code", """
+# ---- Parameters ----
+lam = 0.154                          # X-ray wavelength (nm)
+a = 0.40                             # cubic lattice constant (nm)
+centering = "BCC"                    # Bravais lattice: "SC", "BCC" or "FCC"
+basis = [((0.0, 0.0, 0.0), 1.0)]     # (position in units of a, form factor f) for each atom of the basis
+N_cells = 40                         # unit cells along the edge of a grain
+"""),
+("md", r"""
+### 1. גורם המבנה וטבלת השיאים
+בונים את כל האטומים בתא הקובי (הזזות הסריג בתוך הקובייה כפול הבסיס), ומחשבים את $S$ לכל $(h,k,l)$. השורות בטבלה הן משפחות: כל התמורות וכל הסימנים של אותם אינדקסים.
+
+> 🔮 **נחשו:** בסריג ברירת המחדל, אילו משפחות מבין $(100)$, $(110)$, $(111)$, $(200)$ יופיעו בתבנית?
+"""),
+("code", """
+shifts = {"SC": [(0, 0, 0)],
+          "BCC": [(0, 0, 0), (.5, .5, .5)],
+          "FCC": [(0, 0, 0), (.5, .5, 0), (.5, 0, .5), (0, .5, .5)]}[centering]
+atoms = [(np.mod(np.add(t, r), 1.0), f) for t in shifts for (r, f) in basis]   # all atoms of the cubic cell
+
+def S_of(h, k, l):
+    return sum(f * np.exp(-2j * np.pi * (h * x + k * y + l * z)) for (x, y, z), f in atoms)
+
+hmax = int(2 * a / lam) + 1
+fam = {}
+for h, k, l in itertools.product(range(-hmax, hmax + 1), repeat=3):
+    s2 = h * h + k * k + l * l
+    if s2 == 0 or lam * np.sqrt(s2) / (2 * a) >= 1:
+        continue
+    key = tuple(sorted((abs(h), abs(k), abs(l)), reverse=True))   # the family {hkl}
+    F = fam.setdefault(key, {"s2": s2, "m": 0, "I": 0.0, "S2": abs(S_of(h, k, l)) ** 2})
+    F["m"] += 1                                                    # multiplicity
+    F["I"] += abs(S_of(h, k, l)) ** 2
+rows = sorted(fam.items(), key=lambda kv: kv[1]["s2"])
+for key, F in rows:
+    F["tt"] = 2 * np.degrees(np.arcsin(lam * np.sqrt(F["s2"]) / (2 * a)))
+Imax = max(F["I"] for _, F in rows)
+peaks = [(key, F) for key, F in rows if F["I"] > 1e-9 * Imax]
+s2_first = peaks[0][1]["s2"]
+
+print(" {hkl}    h2+k2+l2   2theta    mult    |S|^2     I/Imax   sin2/sin2(first)")
+for key, F in rows[:14]:
+    hkl = "".join(map(str, key))
+    if F["I"] > 1e-9 * Imax:
+        print(f" {hkl:>5}   {F['s2']:6d}   {F['tt']:7.2f}   {F['m']:5d}   {F['S2']:7.3f}   {F['I']/Imax:7.3f}   {F['s2']/s2_first:6.3f}")
+    else:
+        print(f" {hkl:>5}   {F['s2']:6d}   {F['tt']:7.2f}   {F['m']:5d}   {F['S2']:7.3f}   (absent)")
+"""),
+("md", r"""
+### 2. תבנית הפיזור
+כל שיא מצויר כגאוסיאן ברוחב שנקבע מגודל הגרגיר: $\Delta(2\theta)\approx\frac{0.9\lambda}{N a\cos\theta}$ (נוסחת שרר). שיאים בעלי אותו $h^2+k^2+l^2$ נופלים באותה זווית ומתחברים.
+
+> 🔮 **נחשו:** איזה שיא יהיה הגבוה ביותר: זה שה-$|S|^2$ שלו הכי גדול, או זה שהריבוי שלו הכי גדול?
+"""),
+("code", """
+tt = np.linspace(10, 120, 4000)
+pattern = np.zeros_like(tt)
+for key, F in peaks:
+    th = np.radians(F["tt"] / 2)
+    fwhm = np.degrees(0.9 * lam / (N_cells * a * np.cos(th)))
+    pattern += F["I"] / Imax * np.exp(-4 * np.log(2) * ((tt - F["tt"]) / fwhm) ** 2)
+
+plt.figure(figsize=(8, 3.6))
+plt.plot(tt, pattern, lw=1.4)
+for key, F in peaks:
+    if F["tt"] < 120 and F["I"] / Imax > 0.02:
+        plt.text(F["tt"], F["I"] / Imax + 0.04, "".join(map(str, key)), ha="center", fontsize=8)
+plt.xlabel("2 theta (deg)"); plt.ylabel("intensity / max"); plt.ylim(0, 1.2)
+plt.title(f"{centering}, a = {a} nm, lambda = {lam} nm")
+plt.show()
+"""),
+("md", r"""
+### 3. רוחב השיאים וגודל הגרגירים
+מציירים את השיא הראשון עבור גרגירים בגדלים שונים. גרגיר עם $N$ תאים לאורך צלע הוא "שריג עקיפה" עם $N$ חריצים, והשיא שלו ברוחב של בערך $2\pi/(Na)$ במרחב ההופכי.
+"""),
+("code", """
+key0, F0 = peaks[0]
+th0 = np.radians(F0["tt"] / 2)
+x = np.linspace(F0["tt"] - 3, F0["tt"] + 3, 1500)
+plt.figure(figsize=(6, 3.2))
+for N, ls in [(5, ":"), (20, "--"), (80, "-")]:
+    fw = np.degrees(0.9 * lam / (N * a * np.cos(th0)))
+    plt.plot(x, np.exp(-4 * np.log(2) * ((x - F0["tt"]) / fw) ** 2), ls, label=f"N = {N}  (FWHM = {fw:.2f} deg)")
+plt.xlabel("2 theta (deg)"); plt.ylabel("intensity / peak"); plt.legend(frameon=False, fontsize=8)
+plt.title("first peak, " + "".join(map(str, key0)))
+plt.show()
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. אילו משפחות חסרות בטבלה עבור ברירת המחדל, ואיזה כלל על $h,k,l$ מתאר אותן?
+2. מדוע שני שיאים עם אותו $|S|^2$ יכולים להיות בגבהים שונים?
+3. איך אפשר להעריך מתבנית אבקה אמיתית את גודל הגרגירים באבקה?
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
 def build(name, cells, out):
     nb = nb_from(cells)
     # Execute a copy only to verify that every cell runs; the notebook that is saved stays
@@ -482,3 +604,4 @@ if __name__ == "__main__":
     build("w2", w2, ROOT / "week02.ipynb")
     build("w4", w4, ROOT / "week04.ipynb")
     build("w5", w5, ROOT / "week05.ipynb")
+    build("w6", w6, ROOT / "week06.ipynb")
