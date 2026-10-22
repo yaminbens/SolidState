@@ -11,6 +11,7 @@ project:
     - file: index.md
     - file: week01.ipynb
     - file: week02.ipynb
+    - file: week03.ipynb
     - file: week04.ipynb
     - file: week04-crystals.md
     - file: week05.ipynb

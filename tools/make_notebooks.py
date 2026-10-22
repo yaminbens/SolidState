@@ -240,6 +240,156 @@ axs[0].legend(frameon=False, fontsize=8); plt.tight_layout(); plt.show()
 """),
 ]
 
+# ------------------------------------------------------------------ week 3
+w3 = [
+("md", header(3, "שבוע 3 · קיבול החום של מתכת", "הדגמה לתרגול 3 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+קיבול החום של מתכת הוא סכום של שתי תרומות: תנודות הסריג (פונונים) והאלקטרונים. המחברת מחשבת כל אחת מהן בנפרד:
+
+- **סריג:** מודל Debye, ולשם השוואה גם מודל איינשטיין (כל האופנים באותה תדירות).
+- **אלקטרונים:** גז פרמי חופשי בשלושה ממדים. הפוטנציאל הכימי נקבע בכל טמפרטורה מהדרישה שמספר האלקטרונים קבוע, ואז מחשבים את האנרגיה ואת הנגזרת שלה לפי $T$. החישוב מדויק, ובטמפרטורות נמוכות הוא מתלכד עם התוצאה של זומרפלד, $c=\gamma T$.
+
+**יחידות:** קיבול חום למול אטומים ב-$\mathrm{J/(mol\,K)}$, וטמפרטורה בקלווין. ערך דולון-פטי הוא $3R\approx24.9\ \mathrm{J/(mol\,K)}$.
+"""),
+("code", """
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import quad
+from scipy.optimize import brentq
+from scipy.special import expit   # expit(x) = 1/(1+exp(-x)), numerically stable
+
+R = 8.314   # gas constant, J/(mol K)
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+ערכי ברירת המחדל מתאימים לנחושת.
+
+- `T_F` – טמפרטורת פרמי של האלקטרונים, $T_F=\varepsilon_F/k_B$ (קלווין).
+- `T_D` – טמפרטורת Debye של הסריג (קלווין).
+- `z` – מספר האלקטרונים החופשיים לאטום.
+- `T_E` – טמפרטורת איינשטיין, להשוואה בחלק 1 בלבד (קלווין).
+- `T_low` – הטמפרטורה הגבוהה ביותר בגרף של $c/T$ כפונקציה של $T^2$ (חלק 3).
+- `T_max` – הטמפרטורה הגבוהה ביותר בגרפים של חלקים 2 ו-4.
+"""),
+("code", """
+# ---- Parameters ----
+T_F = 8.16e4    # Fermi temperature of the electrons (K)
+T_D = 343.0     # Debye temperature (K)
+z = 1           # free electrons per atom
+T_E = 266.0     # Einstein temperature, only for the comparison in part 1 (K)
+T_low = 6.0     # highest temperature in the c/T vs T^2 plot (K)
+T_max = 300.0   # highest temperature in the plots of parts 2 and 4 (K)
+"""),
+("md", r"""
+### 1. הסריג: Debye מול איינשטיין
+בשני המודלים יש $3$ אופני תנודה לאטום, ובטמפרטורה גבוהה שניהם נותנים $3R$. ההבדל הוא בתדירויות: באיינשטיין לכולם אותה תדירות $\omega_E$, וב-Debye התדירויות פרושות מאפס עד $\omega_D$.
+
+> 🔮 **נחשו:** בגרף לוגריתמי, איזה מהמודלים יורד מהר יותר כשמקררים? מה יהיה השיפוע של עקומת Debye?
+"""),
+("code", """
+def c_debye(T, T_D):
+    # Debye heat capacity per mole of atoms (integrand written to avoid overflow)
+    f = lambda x: x**4 * np.exp(-x) / (-np.expm1(-x))**2
+    T = np.atleast_1d(np.asarray(T, dtype=float))
+    return np.array([9 * R * (t / T_D)**3 * quad(f, 0, min(T_D / t, 200.0))[0] for t in T])
+
+def c_einstein(T, T_E):
+    # all 3 modes per atom at the same frequency omega_E = k_B T_E / hbar
+    x = T_E / np.asarray(T, dtype=float)
+    return 3 * R * x**2 * np.exp(-x) / (-np.expm1(-x))**2
+
+T = np.geomspace(0.01 * T_D, 2 * T_D, 300)
+plt.loglog(T / T_D, c_debye(T, T_D) / (3 * R), "-", label="Debye")
+plt.loglog(T / T_D, c_einstein(T, T_E) / (3 * R), "--", label=f"Einstein, T_E = {T_E:g} K")
+plt.ylim(1e-6, 2)
+plt.xlabel("T / T_D"); plt.ylabel("c / 3R"); plt.legend(frameon=False)
+plt.show()
+"""),
+("md", r"""
+### 2. האלקטרונים מול הסריג
+> 🔮 **נחשו:** האלקטרונים מתנהגים כמו $T$ והסריג כמו $T^3$. באיזה צד של נקודת החיתוך כל אחד מהם שולט?
+"""),
+("code", """
+def mu_of_t(t):
+    # chemical potential (units of eps_F) of a 3D free-electron gas at t = T/T_F; g(e) = 1.5 sqrt(e)
+    def n(mu):
+        top = max(mu, 0.0) + 40 * t
+        return quad(lambda e: 1.5 * np.sqrt(e) * expit(-(e - mu) / t), 0, top, limit=200)[0]
+    return brentq(lambda mu: n(mu) - 1.0, -50 * t - 1.0, 1.5, xtol=1e-13)
+
+def u_of_t(t):
+    # energy per electron (units of eps_F)
+    mu = mu_of_t(t)
+    top = max(mu, 0.0) + 40 * t
+    return quad(lambda e: 1.5 * e**1.5 * expit(-(e - mu) / t), 0, top, limit=200)[0]
+
+# tabulate c per electron, d u / d t (units of k_B), once
+t_grid = np.geomspace(0.002, 5.0, 180)
+u_grid = np.array([u_of_t(t) for t in t_grid])
+phi_grid = np.gradient(u_grid, t_grid)
+
+def c_electrons(T, T_F, z=1):
+    # electronic heat capacity per mole of atoms; below t = 0.005 the Sommerfeld result is exact enough
+    t = np.asarray(T, dtype=float) / T_F
+    phi = np.where(t < 0.005, np.pi**2 / 2 * t, np.interp(t, t_grid, phi_grid))
+    return z * R * phi
+
+# temperature where the two contributions are equal
+T_star = brentq(lambda T: c_electrons(T, T_F, z) - c_debye(T, T_D)[0], 0.01, T_max)
+print(f"T* = {T_star:.2f} K")
+
+T = np.geomspace(0.5, T_max, 300)
+plt.loglog(T, c_electrons(T, T_F, z), "-", label="electrons")
+plt.loglog(T, c_debye(T, T_D), "--", label="lattice (Debye)")
+plt.loglog(T, c_electrons(T, T_F, z) + c_debye(T, T_D), ":", color="k", label="total")
+plt.axvline(T_star, color="0.7", lw=0.8)
+plt.xlabel("T (K)"); plt.ylabel("c (J / mol K)"); plt.legend(frameon=False)
+plt.show()
+"""),
+("md", r"""
+### 3. הגרף של $c/T$ כפונקציה של $T^2$
+בטמפרטורות נמוכות $c\approx\gamma T+\beta T^3$, ולכן $c/T\approx\gamma+\beta T^2$ הוא קו ישר כפונקציה של $T^2$. הקו המקווקו הוא הקו התיאורטי, עם $\gamma=\tfrac{\pi^2}{2}zR/T_F$ מזומרפלד ו-$\beta=\tfrac{12\pi^4}{5}R/T_D^3$ מ-Debye.
+
+> 🔮 **נחשו:** מה קובע את נקודת החיתוך עם הציר האנכי, ומה קובע את השיפוע?
+"""),
+("code", """
+gamma = np.pi**2 / 2 * z * R / T_F
+beta = 12 * np.pi**4 / 5 * R / T_D**3
+print(f"gamma = {1e3 * gamma:.4g} mJ/(mol K^2),  beta = {1e3 * beta:.4g} mJ/(mol K^4),  T* = {T_star:.2f} K")
+
+T = np.linspace(0.05 * T_low, T_low, 200)
+c_tot = c_electrons(T, T_F, z) + c_debye(T, T_D)
+plt.plot(T**2, 1e3 * c_tot / T, "-", label="computed")
+plt.plot(T**2, 1e3 * (gamma + beta * T**2), "--", label="gamma + beta T^2")
+plt.xlim(0, T_low**2); plt.ylim(0, None)
+plt.xlabel("T^2 (K^2)"); plt.ylabel("c / T (mJ / mol K^2)"); plt.legend(frameon=False)
+plt.show()
+"""),
+("md", r"""
+### 4. כל תחום הטמפרטורות
+> 🔮 **נחשו:** בטמפרטורת החדר, איזה חלק מקיבול החום הוא אלקטרוני?
+"""),
+("code", """
+T = np.linspace(1.0, T_max, 300)
+c_el, c_lat = c_electrons(T, T_F, z), c_debye(T, T_D)
+plt.plot(T, (c_el + c_lat) / (3 * R), "-", label="total")
+plt.plot(T, c_lat / (3 * R), "--", label="lattice (Debye)")
+plt.plot(T, c_el / (3 * R), ":", label="electrons")
+plt.axhline(1, color="0.7", lw=0.8)
+plt.xlabel("T (K)"); plt.ylabel("c / 3R"); plt.legend(frameon=False)
+plt.show()
+print(f"at T = {T_max:g} K: electrons / total = {c_el[-1] / (c_el[-1] + c_lat[-1]):.4f}")
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. למה קיבול החום במודל איינשטיין יורד אקספוננציאלית בקירור, ואילו ב-Debye רק כחזקה של $T$? (רמז: כמה אופנים פעילים בטמפרטורה $T$ בכל מודל?)
+2. האלקטרונים במתכת רבים כמו האטומים. למה התרומה שלהם בטמפרטורת החדר כמעט אינה נראית?
+3. איזה מידע על האלקטרונים ועל הסריג אפשר לקרוא מנקודת החיתוך ומהשיפוע בגרף של חלק 3?
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
 # ------------------------------------------------------------------ week 4
 w4 = [
 ("md", header(4, "שבוע 4 · בונים גביש: סריג ובסיס", "הדגמה לתרגול 4 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
@@ -602,6 +752,7 @@ def build(name, cells, out):
 if __name__ == "__main__":
     build("w1", w1, ROOT / "week01.ipynb")
     build("w2", w2, ROOT / "week02.ipynb")
+    build("w3", w3, ROOT / "week03.ipynb")
     build("w4", w4, ROOT / "week04.ipynb")
     build("w5", w5, ROOT / "week05.ipynb")
     build("w6", w6, ROOT / "week06.ipynb")
