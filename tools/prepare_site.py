@@ -14,11 +14,15 @@ CLOSE = re.compile(r'\s*</div>\s*\Z')
 ABSTRACT = ("הרצת הקוד באתר: לחצו על כפתור ההפעלה העגול (Start compute environment) שמתחת לטקסט זה, "
             "והמתינו לחיבור (עד כשתי דקות בהפעלה הראשונה). אפשר גם לפתוח את המחברת ב-Colab, בכפתור שבהמשך העמוד.")
 
+# Collapsible answer pointers: <details> works in Colab/Jupyter; on the site it becomes a MyST dropdown.
+DETAILS = re.compile(r'<details>\s*<summary>(.*?)</summary>\s*(.*?)\s*</details>', re.S)
+
 for path in sorted(ROOT.glob("week*.ipynb")):
     nb = nbformat.read(path, 4)
     for cell in nb.cells:
         if cell.cell_type == "markdown":
             cell.source = CLOSE.sub("", OPEN.sub("", cell.source))
+            cell.source = DETAILS.sub(lambda m: ":::{dropdown} " + m.group(1).strip() + "\n" + m.group(2) + "\n:::", cell.source)
     # Site only: a front-matter cell puts the run instructions above the run button.
     nb.cells.insert(0, nbformat.v4.new_markdown_cell("---\nsubtitle: |\n  " + ABSTRACT + "\n---"))
     nbformat.write(nb, path)
