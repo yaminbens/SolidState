@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>אלקטרונים כמעט חופשיים</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course palette (same as site.css): ink, blue, teal, amber. */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --fg:#12294d; --muted:#53627a; --line:#d6dde8; --soft:#eef3fb;
+  --blue:#2563eb; --teal:#0f9d8a; --amber:#f08a24; --rose:#d6455b; --edge:#12294d;
+  --f-body:"Heebo","Segoe UI",Arial,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root.dark{
+  --bg:#0e141c; --panel:#151d28; --fg:#e8eefc; --muted:#9aa8bc; --line:#2a3646; --soft:#1b2534;
+  --blue:#6aa1ff; --teal:#2dd4bf; --amber:#f6a14a; --rose:#f07a8c; --edge:#c9d6ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{padding:14px max(14px,env(safe-area-inset-left)) 28px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
+.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(18,41,77,.06)}
+.card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
+.card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none}
+#cb{cursor:crosshair} #cm{cursor:grab} #cm:active{cursor:grabbing}
+.ctl{display:flex;flex-direction:column;gap:12px}
+.lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button:focus-visible,input:focus-visible,button.act:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.row{display:grid;grid-template-columns:8.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.box p{margin:3px 0}
+.num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px;white-space:nowrap}
+output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
+.ctlrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:12px}
+@media (max-width:760px){.ctlrow{grid-template-columns:minmax(0,1fr)}}
+button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:5px 14px;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px;align-items:center}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+.grad{display:inline-block;width:90px;height:10px;border-radius:5px;vertical-align:-1px;background:linear-gradient(90deg,var(--amber),var(--blue))}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>אלקטרונים כמעט חופשיים בסריג ריבועי</h1>
+    <p class="lede">אלקטרונים חופשיים בסריג ריבועי עם קבוע סריג a, בתוספת פוטנציאל מחזורי חלש עם שני רכיבי פורייה: <span class="num">V₁₀</span> עבור <span class="num">G = (2π/a)(±1,0), (0,±1)</span> ו-<span class="num">V₁₁</span> עבור <span class="num">G = (2π/a)(±1,±1)</span>. הפסים מחושבים מהמשוואה המרכזית עם תשעה גלים מישוריים. אין צורך להריץ דבר.</p>
+  </header>
+
+  <section class="card">
+    <h2>הפסים לאורך מסלול סימטריה</h2>
+    <p class="sub">האנרגיה ביחידות של <span class="num">E_X = ħ²(π/a)²/2m</span>, האנרגיה של אלקטרון חופשי בנקודה X. הקווים המקווקווים הם אלקטרונים חופשיים.</p>
+    <canvas id="cb" width="680" height="360" aria-label="הפסים"></canvas>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div class="row"><span class="lab" style="margin:0">V₁₀ / E_X</span><input id="v10" type="range" min="0" max="0.3" step="0.005" value="0.12"><output id="v10o"></output></div>
+        <div class="row"><span class="lab" style="margin:0">V₁₁ / E_X</span><input id="v11" type="range" min="-0.2" max="0.2" step="0.005" value="0.05"><output id="v11o"></output></div>
+      </div>
+      <div class="box" id="binfo"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>משטח פרמי באזור ברילואן הראשון</h2>
+    <p class="sub">בכל נקודה k הצבע מראה כמה פסים מאוכלסים בה (עם שני מצבי ספין לכל פס). הגבולות בין הצבעים הם משטח פרמי; המעגל המקווקו הוא משטח פרמי של אלקטרונים חופשיים, מקופל לאזור הראשון.</p>
+    <canvas id="cf" width="680" height="560" aria-label="משטח פרמי"></canvas>
+    <div class="legend" id="fleg"></div>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div>
+          <div class="lab">אלקטרונים לאטום</div>
+          <div class="seg" id="nseg"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3">3</button><button data-n="4">4</button></div>
+        </div>
+      </div>
+      <div class="box" id="finfo"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const PI = Math.PI, TAU = 2*Math.PI;
+function applyTheme(){
+  let dark=false;
+  try{ const p=window.parent&&window.parent!==window?window.parent.document.documentElement:null; if(p) dark=p.classList.contains("dark"); else throw 0; }
+  catch(e){ dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  document.documentElement.classList.toggle("dark",dark);
+}
+applyTheme();
+try{ if(window.parent!==window) new MutationObserver(()=>{applyTheme(); drawAll(false);}).observe(window.parent.document.documentElement,{attributes:true,attributeFilter:["class"]}); }catch(e){}
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawAll(false);});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function setupCanvas(c){
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.dataset.r?+c.dataset.r:c.height/c.width;
+  c.dataset.r=ratio; const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio};
+}
+function label(ctx,t,x,y,col,size,align){ ctx.font=`500 ${size||12}px `+css("--f-num"); ctx.fillStyle=col; ctx.textAlign=align||"center"; ctx.textBaseline="middle"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+const fmt=(x,d)=>(Math.abs(x)<5e-4?0:x).toFixed(d===undefined?3:d);
+function hex2rgb(h){ h=h.replace("#",""); if(h.length===3) h=h.split("").map(c=>c+c).join(""); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); }
+
+/* ---------------- physics: units a = 1, hbar^2/2m = 1, energies in E_X = pi^2 ---------------- */
+const S = { V10:0.12, V11:0.05, n:2 };
+const Gs=[]; for(let i=-1;i<=1;i++) for(let j=-1;j<=1;j++) Gs.push([i,j]);
+function eigSym(A){ // Jacobi for small symmetric matrices, returns ascending eigenvalues
+  const n=A.length, a=A.map(r=>r.slice());
+  for(let sweep=0;sweep<60;sweep++){
+    let off=0; for(let p=0;p<n;p++) for(let q=p+1;q<n;q++) off+=Math.abs(a[p][q]); if(off<1e-12) break;
+    for(let p=0;p<n;p++) for(let q=p+1;q<n;q++){ if(Math.abs(a[p][q])<1e-15) continue;
+      const th=(a[q][q]-a[p][p])/(2*a[p][q]), t=Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1)), c=1/Math.sqrt(t*t+1), s=t*c;
+      for(let k=0;k<n;k++){ const akp=a[k][p], akq=a[k][q]; a[k][p]=c*akp-s*akq; a[k][q]=s*akp+c*akq; }
+      for(let k=0;k<n;k++){ const apk=a[p][k], aqk=a[q][k]; a[p][k]=c*apk-s*aqk; a[q][k]=s*apk+c*aqk; } } }
+  const e=[]; for(let i=0;i<n;i++) e.push(a[i][i]); return e.sort((x,y)=>x-y);
+}
+function VG(d){ const s=Math.abs(d[0])+Math.abs(d[1]); if(s===1) return S.V10; if(Math.abs(d[0])===1&&Math.abs(d[1])===1) return S.V11; return 0; }
+function bandsAt(kx,ky){ // kx,ky in units of pi/a; returns energies / E_X
+  const n=Gs.length, H=[];
+  for(let i=0;i<n;i++){ H.push(new Array(n).fill(0)); }
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+    if(i===j){ const qx=kx+2*Gs[i][0], qy=ky+2*Gs[i][1]; H[i][i]=qx*qx+qy*qy; }
+    else H[i][j]=VG([Gs[i][0]-Gs[j][0],Gs[i][1]-Gs[j][1]]); }
+  return eigSym(H);
+}
+function freeAt(kx,ky){ const e=Gs.map(g=>(kx+2*g[0])**2+(ky+2*g[1])**2); return e.sort((x,y)=>x-y); }
+
+/* ---------------- panel 1: bands ---------------- */
+const PATH=[["Γ",[0,0]],["X",[1,0]],["M",[1,1]],["Γ",[0,0]]];
+function drawBands(){
+  const {ctx,w,h}=setupCanvas($("cb")); ctx.clearRect(0,0,w,h);
+  const segs=[], ticks=[0]; let tot=0;
+  for(let i=0;i<PATH.length-1;i++){ const p=PATH[i][1], q=PATH[i+1][1], L=Math.hypot(q[0]-p[0],q[1]-p[1]); segs.push({p,q,x0:tot,L}); tot+=L; ticks.push(tot); }
+  const L=40,R=12,T=12,B=30, emax=3.2, X=x=>L+x/tot*(w-L-R), Y=e=>h-B-e/emax*(h-T-B);
+  ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
+  ticks.forEach((t,i)=>{ const x=X(t); ctx.strokeStyle=css("--muted"); ctx.globalAlpha=.3; ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,h-B); ctx.stroke(); ctx.globalAlpha=1; label(ctx,PATH[i][0],x,h-B+14,css("--fg"),13); });
+  for(let e=0;e<=3;e+=0.5) label(ctx,e.toFixed(1),L-6,Y(e),css("--muted"),11,"right");
+  const N=240, F=[], Bd=[];
+  for(let i=0;i<=N;i++){ const x=tot*i/N; let s=segs.find(s=>x<=s.x0+s.L+1e-12)||segs[segs.length-1]; const t=(x-s.x0)/s.L;
+    const kx=s.p[0]+t*(s.q[0]-s.p[0]), ky=s.p[1]+t*(s.q[1]-s.p[1]); F.push(freeAt(kx,ky)); Bd.push(bandsAt(kx,ky)); }
+  for(let j=0;j<6;j++){
+    ctx.strokeStyle=css("--muted"); ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath(); F.forEach((e,i)=>{ const x=X(tot*i/N), y=Y(Math.min(e[j],emax*1.05)); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.4; ctx.beginPath(); Bd.forEach((e,i)=>{ const x=X(tot*i/N), y=Y(Math.min(e[j],emax*1.05)); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke();
+  }
+  const eX=bandsAt(1,0), eM=bandsAt(1,1);
+  $("binfo").innerHTML=`<h3>בנקודות הסימטריה</h3>
+  <p>בנקודה X (שני מצבים חופשיים מנוונים): <span class="num">${fmt(eX[0],3)}, ${fmt(eX[1],3)}</span></p>
+  <p>בנקודה M (ארבעה מצבים חופשיים מנוונים): <span class="num">${eM.slice(0,4).map(v=>fmt(v,3)).join(", ")}</span></p>
+  <p>האנרגיות ביחידות של <span class="num">E_X</span>, מהפתרון עם תשעה גלים מישוריים; הפיצול בסדר ראשון נקבע רק מ-<span class="num">V₁₀</span> ו-<span class="num">V₁₁</span>.</p>`;
+}
+
+/* ---------------- panel 2: Fermi surface ---------------- */
+const NG=90; let cache=null;
+function computeGrid(){
+  const E=[], all=[];
+  for(let iy=0;iy<NG;iy++) for(let ix=0;ix<NG;ix++){ const kx=-1+2*(ix+0.5)/NG, ky=-1+2*(iy+0.5)/NG; const e=bandsAt(kx,ky).slice(0,5); E.push(e); for(const v of e) all.push(v); }
+  all.sort((x,y)=>x-y);
+  cache={E, all, key:S.V10+"_"+S.V11};
+}
+function drawFermi(recompute){
+  if(recompute||!cache||cache.key!==S.V10+"_"+S.V11) computeGrid();
+  const {ctx,w,h}=setupCanvas($("cf")); ctx.clearRect(0,0,w,h);
+  const nst=NG*NG, EF=cache.all[Math.min(cache.all.length-1, S.n*nst/2-1)];  // n electrons/atom, 2 spins per band state
+  const sz=Math.min(w,h)-40, ox=(w-sz)/2, oy=(h-sz)/2, cell=sz/NG;
+  const cols=[css("--soft"),css("--blue"),css("--teal"),css("--amber"),css("--rose")].map(hex2rgb);
+  const img=ctx.createImageData(Math.ceil(sz*1),Math.ceil(sz*1));
+  for(let iy=0;iy<NG;iy++) for(let ix=0;ix<NG;ix++){ const e=cache.E[iy*NG+ix]; let k=0; for(const v of e) if(v<=EF) k++;
+    const c=cols[Math.min(k,4)], a=k===0?1:0.55, bg=cols[0], m=[0,1,2].map(i=>Math.round(bg[i]+(c[i]-bg[i])*a));
+    ctx.fillStyle=`rgb(${m[0]},${m[1]},${m[2]})`; ctx.fillRect(Math.floor(ox+ix*cell), Math.floor(oy+(NG-1-iy)*cell), Math.ceil(cell)+1, Math.ceil(cell)+1); }
+  // free-electron Fermi circle (folded): radius kF with pi kF^2 = n/2 * (2pi)^2 -> in units pi/a: kF = sqrt(2 n / pi)
+  const kF=Math.sqrt(2*S.n/PI), X=x=>ox+(x+1)/2*sz, Y=y=>oy+(1-y)/2*sz;
+  ctx.save(); ctx.beginPath(); ctx.rect(ox,oy,sz,sz); ctx.clip();
+  ctx.strokeStyle=css("--fg"); ctx.lineWidth=1.4; ctx.setLineDash([5,4]);
+  for(let gx=-2;gx<=2;gx++) for(let gy=-2;gy<=2;gy++){ ctx.beginPath(); ctx.arc(X(2*gx),Y(2*gy),kF/2*sz,0,TAU); ctx.stroke(); }
+  ctx.restore(); ctx.setLineDash([]);
+  ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.6; ctx.strokeRect(ox,oy,sz,sz);
+  label(ctx,"Γ",X(0),Y(0),css("--fg"),13); label(ctx,"X",X(1)+12,Y(0),css("--fg"),13); label(ctx,"M",X(1)+12,Y(1)-10,css("--fg"),13);
+  const names=["ריק","פס 1","פסים 1, 2","פסים 1–3","פסים 1–4"];
+  const mixc=i=>i?[0,1,2].map(j=>Math.round(cols[0][j]+(cols[i][j]-cols[0][j])*0.55)):cols[0];
+  $("fleg").innerHTML=names.map((n,i)=>`<span><span class="dot" style="background:rgb(${mixc(i).join(",")});${i?"":"border:1px solid var(--line)"}"></span>${n}</span>`).join("");
+  // band occupations
+  const occ=[0,0,0,0,0]; cache.E.forEach(e=>e.forEach((v,j)=>{ if(v<=EF) occ[j]++; }));
+  const part=occ.map(o=>o/nst);
+  const partial=part.slice(0,4).filter(p=>p>0.002&&p<0.998).length;
+  $("finfo").innerHTML=`<h3>מילוי הפסים</h3><p>אנרגיית פרמי <span class="num">ε_F = ${fmt(EF,3)} E_X</span></p>
+  ${part.slice(0,4).map((p,j)=>p>0.002?`<p>פס ${j+1}: <span class="num">${fmt(100*p,1)}%</span> מלא</p>`:"").join("")}
+  <p>${partial?"יש פסים מלאים חלקית: מתכת.":"כל הפסים מלאים או ריקים: מבודד."}</p>`;
+}
+
+function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
+function drawAll(recompute){ $("v10o").textContent=S.V10.toFixed(3); $("v11o").textContent=S.V11.toFixed(3); pressed("nseg","n",S.n); drawBands(); drawFermi(recompute); }
+let tmr=null; const later=()=>{ clearTimeout(tmr); tmr=setTimeout(()=>drawFermi(true),120); };
+$("v10").addEventListener("input",e=>{ S.V10=+e.target.value; $("v10o").textContent=S.V10.toFixed(3); drawBands(); later(); });
+$("v11").addEventListener("input",e=>{ S.V11=+e.target.value; $("v11o").textContent=S.V11.toFixed(3); drawBands(); later(); });
+document.querySelectorAll("#nseg button").forEach(b=>b.addEventListener("click",()=>{ S.n=+b.dataset.n; pressed("nseg","n",S.n); drawFermi(false); }));
+
+function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
+  const pd=fe.ownerDocument, hh=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
+  let st=pd.getElementById("viz-fit"); if(!st){ st=pd.createElement("style"); st.id="viz-fit"; pd.head.appendChild(st); }
+  st.textContent=`article div:has(> iframe[src*="/viz/"]){display:block!important;width:100%!important;padding-bottom:0!important;height:${hh}px!important}
+article iframe[src*="/viz/"]{position:absolute;inset:0;width:100%;height:100%;border:0}`;
+}catch(e){} }
+let rt=null; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ drawAll(false); fitFrame(); },60); });
+window.addEventListener("load",fitFrame);
+if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>drawAll(false));
+$("v10").value=S.V10; $("v11").value=S.V11;
+drawAll(true); fitFrame();
+window.__nfe = { S, bandsAt, freeAt, drawAll };
+})();
+</script>
+</body>
+</html>

@@ -1306,6 +1306,131 @@ plt.show()
 """),
 ]
 
+# ------------------------------------------------------------------ week 10
+w10 = [
+("md", header(10, "שבוע 10 · אלקטרונים כמעט חופשיים: המשוואה המרכזית", "הדגמה לתרגול 10 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+אלקטרון בשרשרת חד-ממדית עם קבוע סריג $a$ ופוטנציאל מחזורי של מחסומים מלבניים ברוחב $b$ ובגובה $v_0$ (מודל קרוניג-פני). כמו בתרגול, כותבים את פונקציית הגל כצירוף של גלים מישוריים $e^{i(k+G)x}$ עם $G=2\pi n/a$, ואז משוואת שרדינגר הופכת למשוואה מטריצית במרחב ה-$G$, "המשוואה המרכזית":
+$$\left[\frac{\hbar^2}{2m}(k+G)^2-\varepsilon\right]c_{k+G}+\sum_{G'}V_{G-G'}\,c_{k+G'}=0 .$$
+המחברת בונה את המטריצה הזו עם מספר סופי של גלים מישוריים ומלכסנת אותה לכל $k$, כלומר פותרת את הבעיה בלי תורת הפרעות, ומשווה את הפערים שמתקבלים לניבוי של תורת ההפרעות, $2|V_G|$.
+
+**יחידות:** אורכים ב-nm ואנרגיות ב-eV, עם מסת אלקטרון חופשי: $\hbar^2/2m=0.0381\ \mathrm{eV\cdot nm^2}$.
+
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week10-nfe) עם אלקטרונים כמעט חופשיים בסריג ריבועי.
+"""),
+("code", """
+import numpy as np
+import matplotlib.pyplot as plt
+
+C = 0.0381          # hbar^2 / (2 m_e) in eV nm^2
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+- `a` – קבוע הסריג (nm).
+- `b` – רוחב המחסום (nm).
+- `v0` – גובה המחסום (eV).
+- `n_G` – מספר הגלים המישוריים בבסיס (מספר אי-זוגי; יותר: מדויק יותר, איטי יותר).
+- `n_gaps` – מספר הפערים שמחשבים ומציגים.
+"""),
+("code", """
+# ---- Parameters ----
+a = 1.0        # lattice constant (nm)
+b = 0.3        # barrier width (nm)
+v0 = 0.05      # barrier height (eV)
+n_G = 41       # number of plane waves in the basis (odd)
+n_gaps = 6     # number of gaps to compute
+"""),
+("md", r"""
+### 1. רכיבי הפורייה של הפוטנציאל
+עבור מחסום מלבני שמרכזו בראשית, $V_G=\frac1a\int_{-b/2}^{b/2}v_0\,e^{-iGx}dx$. מחשבים ומציירים את $|V_G|$ עבור $G=2\pi n/a$.
+
+> 🔮 **נחשו:** האם $|V_G|$ קטן באופן מונוטוני כש-$n$ גדל?
+"""),
+("code", """
+def V_G(n):
+    # Fourier coefficient of a box barrier (height v0, width b, centred at 0) for G = 2 pi n / a
+    if n == 0:
+        return v0 * b / a
+    G = 2 * np.pi * n / a
+    return v0 * np.sin(G * b / 2) / (G * a / 2)
+
+ns = np.arange(1, 13)
+plt.figure(figsize=(6, 3))
+plt.bar(ns, [abs(V_G(n)) * 1000 for n in ns], color="C0")
+plt.xlabel("n  (G = 2 pi n / a)"); plt.ylabel("|V_G| (meV)"); plt.xticks(ns)
+plt.title(f"b = {b} nm,  v0 = {v0} eV")
+plt.show()
+"""),
+("md", r"""
+### 2. פתרון המשוואה המרכזית
+לכל $k$ באזור ברילואן הראשון בונים את המטריצה בגודל $n_G\times n_G$: על האלכסון $\frac{\hbar^2}{2m}(k+G)^2$, ומחוץ לאלכסון $V_{G-G'}$. הערכים העצמיים הם הפסים.
+
+> 🔮 **נחשו:** היכן יחס הנפיצה ייראה שונה במיוחד מזה של אלקטרון חופשי?
+"""),
+("code", """
+nlist = np.arange(-(n_G // 2), n_G // 2 + 1)
+Vmat = np.array([[V_G(n - m) for m in nlist] for n in nlist])
+
+def bands(k, nb=6):
+    H = Vmat + np.diag(C * (k + 2 * np.pi * nlist / a) ** 2)
+    return np.linalg.eigvalsh(H)[:nb]
+
+ks = np.linspace(-np.pi / a, np.pi / a, 301)
+E = np.array([bands(k) for k in ks])
+
+plt.figure(figsize=(5.5, 4))
+for j in range(E.shape[1]):
+    plt.plot(ks * a / np.pi, E[:, j], color="C0")
+for n in range(-3, 4):
+    plt.plot(ks * a / np.pi, C * (ks + 2 * np.pi * n / a) ** 2, "--", color="C1", lw=0.8)
+plt.ylim(0, E[:, -1].max()); plt.xlim(-1, 1)
+plt.xlabel("k a / pi"); plt.ylabel("energy (eV)"); plt.title("bands (dashed: free electron, folded)")
+plt.show()
+"""),
+("md", r"""
+### 3. הפערים לעומת תורת ההפרעות
+הפער ה-$n$, בין הפס ה-$n$ לפס ה-$n+1$, נפתח בקצה האזור ($k=\pi/a$) כאשר $n$ אי-זוגי ובמרכז האזור ($k=0$) כאשר $n$ זוגי. מחשבים אותו מהפתרון המלא ומשווים ל-$2|V_G|$ עם $G=2\pi n/a$.
+
+> 🔮 **נחשו:** האם הפער המדויק יהיה תמיד קרוב ל-$2|V_G|$?
+"""),
+("code", """
+E_zone_edge = bands(np.pi / a, n_gaps + 2)
+E_zone_centre = bands(0.0, n_gaps + 2)
+exact, predicted = [], []
+print("  n     exact gap (meV)     2|V_G| (meV)")
+for n in range(1, n_gaps + 1):
+    e = E_zone_edge if n % 2 == 1 else E_zone_centre
+    exact.append(e[n] - e[n - 1]); predicted.append(2 * abs(V_G(n)))
+    print(f"  {n}       {1000 * exact[-1]:9.4f}          {1000 * predicted[-1]:9.4f}")
+
+plt.figure(figsize=(6, 3.2))
+nn = np.arange(1, n_gaps + 1)
+plt.plot(nn, 1000 * np.array(exact), "o", label="exact (central equation)")
+plt.plot(nn, 1000 * np.array(predicted), "_", ms=18, mew=2, label="2 |V_G|")
+plt.xlabel("gap number n"); plt.ylabel("gap (meV)"); plt.xticks(nn); plt.legend(frameon=False)
+plt.show()
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. למה הפער ה-$n$ נפתח בקצה האזור כאשר $n$ אי-זוגי ובמרכזו כאשר $n$ זוגי?
+2. מתי ההתאמה בין הפער המדויק ל-$2|V_G|$ טובה, ומתי היא פחות טובה?
+3. מה היה קורה לפערים אם הפוטנציאל היה סכום של פונקציות דלתא?
+
+<details>
+<summary>🗝️ הכוונה לתשובות (לחצו לפתיחה)</summary>
+
+1. תרגול 10, סעיף 1 (תנאי הניוון $|k|=|k+G|$ והקיפול לאזור הראשון), ותרגול 9, סעיף 4.
+2. תרגול 10, סעיף 1 (התנאי לתקפות תורת ההפרעות, $|V_G|\ll$ ההפרש בין האנרגיות החופשיות).
+3. תרגיל הבית, שאלה 3.
+
+אם אינכם יודעים לענות על אחת השאלות, חזרו לסעיף המתאים בתרגול.
+
+</details>
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
 def build(name, cells, out):
     nb = nb_from(cells)
     # Execute a copy only to verify that every cell runs; the notebook that is saved stays
@@ -1327,3 +1452,4 @@ if __name__ == "__main__":
     build("w7", w7, ROOT / "week07.ipynb")
     build("w8", w8, ROOT / "week08.ipynb")
     build("w9", w9, ROOT / "week09.ipynb")
+    build("w10", w10, ROOT / "week10.ipynb")

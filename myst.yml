@@ -24,6 +24,8 @@ project:
     - file: week08-phonons.md
     - file: week09.ipynb
     - file: week09-kp.md
+    - file: week10.ipynb
+    - file: week10-nfe.md
 site:
   template: book-theme
   title: מבוא למצב מוצק תשפ״ז
