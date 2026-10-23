@@ -804,6 +804,171 @@ plt.show()
 """),
 ]
 
+# ------------------------------------------------------------------ week 7
+w7 = [
+("md", header(7, "שבוע 7 · שרשרת הרמונית: ממטריצת הכוחות ליחס הנפיצה", "הדגמה לתרגול 7 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+שרשרת סגורה (טבעת) של $N$ אטומים זהים במסה $m$, במרחק $a$ זה מזה. כל אטום קשור בקפיץ $K_1$ לשכנים הקרובים ביותר, ובקפיץ $K_2$ לשכנים מסדר שני. בקירוב ההרמוני משוואות התנועה הן
+$$m\ddot u_n=-\sum_{n'}\Phi_{n n'}\,u_{n'} ,$$
+כאשר $\Phi$ היא מטריצת הכוחות, מטריצה בגודל $N\times N$. המחברת עושה שני דברים שונים ומשווה ביניהם:
+1. מלכסנת את $\Phi$ ישירות, כמו כל בעיית מתנדים צמודים, ומקבלת $N$ תדירויות;
+2. משתמשת בסימטריית ההזזה: כיוון ש-$\Phi_{nn'}$ תלוי רק ב-$n-n'$, התמרת פורייה של שורה אחת של $\Phi$ נותנת את כל התדירויות, כל אחת עם וקטור גל $k$ משלה.
+
+אחר כך היא בונה מהתדירויות את צפיפות המצבים ואת קיבול החום.
+
+**יחידות:** $m=K_1=a=1$, ולכן תדירויות נמדדות ביחידות של $\sqrt{K_1/m}$. בחלק 4 גם $\hbar=k_B=1$.
+
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week07-chain) שמראה את תנועת האטומים בכל אופן תנודה של שרשרת עם בסיס.
+"""),
+("code", """
+import numpy as np
+import matplotlib.pyplot as plt
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+- `K1` – קבוע הקפיץ בין שכנים קרובים ביותר.
+- `K2` – קבוע הקפיץ בין שכנים מסדר שני.
+- `m` – מסת כל אטום.
+- `N` – מספר האטומים בטבעת בחלק 1 (הלכסון הישיר).
+"""),
+("code", """
+# ---- Parameters ----
+K1 = 1.0     # nearest-neighbour spring
+K2 = 0.0     # second-neighbour spring
+m = 1.0      # mass of every atom
+N = 60       # atoms in the ring of part 1
+"""),
+("md", r"""
+### 1. אותן תדירויות בשתי דרכים
+בונים את $\Phi$ מהאנרגיה $U=\frac{K_1}{2}\sum_n(u_n-u_{n+1})^2+\frac{K_2}{2}\sum_n(u_n-u_{n+2})^2$: כל קפיץ בין אטום $i$ לאטום $j$ תורם $+K$ לאיברים $\Phi_{ii},\Phi_{jj}$ ו-$-K$ לאיברים $\Phi_{ij},\Phi_{ji}$. אחר כך משווים את $N$ הערכים העצמיים של $\Phi/m$ להתמרת הפורייה של השורה הראשונה של $\Phi/m$.
+
+> 🔮 **נחשו:** כמה מהתדירויות יוצאות אפס, ולאיזו תנועה של השרשרת הן מתאימות?
+"""),
+("code", """
+def force_matrix(N, K1, K2):
+    # N x N force-constant matrix of a ring: each spring adds +K on the diagonal and -K off it
+    Phi = np.zeros((N, N))
+    for j, K in [(1, K1), (2, K2)]:
+        for i in range(N):
+            p = (i + j) % N
+            Phi[i, i] += K; Phi[p, p] += K
+            Phi[i, p] -= K; Phi[p, i] -= K
+    return Phi
+
+Phi = force_matrix(N, K1, K2)
+print("row sums of Phi (should all vanish):", np.abs(Phi.sum(axis=1)).max())
+
+w2_direct = np.sort(np.linalg.eigvalsh(Phi / m))      # omega^2 from the full N x N problem
+D_k = np.real(np.fft.fft(Phi[0] / m))                 # omega^2(k) from one row, k = 2 pi j / (N a)
+w2_fourier = np.sort(D_k)
+print("largest difference between the two lists:", np.abs(w2_direct - w2_fourier).max())
+
+plt.figure(figsize=(6, 3.2))
+plt.plot(w2_direct, "o", ms=5, mfc="none", label="eigenvalues of Phi / m")
+plt.plot(w2_fourier, ".", ms=4, label="Fourier transform of one row")
+plt.xlabel("mode index (sorted)"); plt.ylabel("omega^2"); plt.legend(frameon=False)
+plt.show()
+"""),
+("md", r"""
+### 2. יחס הנפיצה
+מאחר שהתמרת הפורייה נותנת את $\omega^2$ לכל $k$, אפשר לקחת טבעת ארוכה מאוד ולקבל עקומה רציפה באזור ברילואן הראשון, $-\pi/a\le k<\pi/a$. אם $\omega^2(k)<0$ עבור $k$ כלשהו, השרשרת אינה יציבה: המחברת מציינת זאת ומציירת רק את התחום היציב.
+
+> 🔮 **נחשו:** היכן ביחס הנפיצה מהירות החבורה $v_g=d\omega/dk$ מתאפסת?
+"""),
+("code", """
+N_big = 20000
+Phi_row = np.zeros(N_big)                              # first row of Phi for a long ring
+Phi_row[0] = 2 * K1 + 2 * K2
+Phi_row[[1, -1]] -= K1
+Phi_row[[2, -2]] -= K2
+w2_k = np.real(np.fft.fft(Phi_row / m))
+k = 2 * np.pi * np.fft.fftfreq(N_big)                  # k in units of 1/a, inside [-pi, pi)
+order = np.argsort(k)
+k, w2_k = k[order], w2_k[order]
+if w2_k.min() < -1e-9:
+    print(f"unstable chain: omega^2 reaches {w2_k.min():.3f} at k a = {k[np.argmin(w2_k)]:.3f}")
+w_k = np.sqrt(np.clip(w2_k, 0, None))
+v_g = np.gradient(w_k, k)
+
+fig, axs = plt.subplots(1, 2, figsize=(9, 3.4))
+axs[0].plot(k / np.pi, w_k)
+axs[0].set_xlabel("k a / pi"); axs[0].set_ylabel("omega"); axs[0].set_title("dispersion")
+axs[1].plot(k / np.pi, v_g, color="C1"); axs[1].axhline(0, color="0.6", lw=0.8)
+axs[1].set_xlabel("k a / pi"); axs[1].set_ylabel("v_g = d omega / dk"); axs[1].set_title("group velocity")
+plt.tight_layout(); plt.show()
+print(f"sound velocity (slope near k = 0): {w_k[N_big // 2 + 5] / k[N_big // 2 + 5]:.4f}")
+print(f"highest frequency: {w_k.max():.4f}")
+"""),
+("md", r"""
+### 3. צפיפות המצבים
+צפיפות המצבים $g(\omega)$ סופרת כמה אופני תנודה יש בכל תחום תדירויות. בונים היסטוגרמה של כל $N$ התדירויות של הטבעת הארוכה, מנורמלת כך שהשטח מתחתיה הוא אופן תנודה אחד לכל אטום.
+
+> 🔮 **נחשו:** באילו תדירויות $g(\omega)$ יהיה גדול במיוחד? היעזרו בגרף מהירות החבורה מחלק 2.
+"""),
+("code", """
+hist, edges = np.histogram(w_k, bins=600, density=True)
+centers = 0.5 * (edges[1:] + edges[:-1])
+plt.figure(figsize=(6, 3.2))
+plt.plot(centers, hist)
+plt.xlabel("omega"); plt.ylabel("g(omega) per atom"); plt.ylim(0, 3)
+plt.title("density of states")
+plt.show()
+"""),
+("md", r"""
+### 4. מהתדירויות לקיבול החום
+כל אופן תנודה הוא מתנד הרמוני קוונטי, ולכן קיבול החום לאטום הוא ממוצע על כל האופנים של $c(x)=\frac{x^2e^x}{(e^x-1)^2}$ עם $x=\hbar\omega/k_BT$. משווים לקירוב Debye בממד אחד: יחס נפיצה לינארי עם מהירות הקול מחלק 2, עד תדירות קיטעון שנקבעת מכך שיש אופן תנודה אחד לכל אטום.
+
+> 🔮 **נחשו:** בטמפרטורות נמוכות, האם קיבול החום של השרשרת יהיה קרוב לזה של Debye? ובטמפרטורות גבוהות?
+"""),
+("code", """
+def c_mode(x):
+    # heat capacity of one harmonic oscillator (units of k_B); written to avoid overflow at large x
+    x = np.asarray(x, dtype=float)
+    out = np.zeros_like(x)
+    ok = (x > 1e-8) & (x < 300)
+    e = np.exp(-x[ok])
+    out[ok] = x[ok] ** 2 * e / (1 - e) ** 2
+    out[x <= 1e-8] = 1.0
+    return out
+
+c_s = w_k[N_big // 2 + 5] / k[N_big // 2 + 5]         # sound velocity from part 2
+w_D = np.pi * c_s                                     # Debye cutoff: one mode per atom in 1D
+w_debye = np.linspace(0, w_D, 4000)[1:]
+w_modes = w_k[w_k > 1e-9]
+
+Ts = np.linspace(0.02, 3, 150)
+c_chain = [c_mode(w_modes / T).mean() for T in Ts]
+c_debye = [c_mode(w_debye / T).mean() for T in Ts]
+plt.figure(figsize=(6, 3.2))
+plt.plot(Ts, c_chain, label="chain (all modes)")
+plt.plot(Ts, c_debye, "--", label="Debye, same sound velocity")
+plt.axhline(1, color="0.6", lw=0.8)
+plt.xlabel("k_B T / (hbar sqrt(K1/m))"); plt.ylabel("c per atom / k_B"); plt.legend(frameon=False)
+plt.show()
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. למה בחלק 1 מתקבלת תדירות אפס, ומה היה קורה לו סכומי השורות של $\Phi$ לא היו מתאפסים?
+2. מדוע מספיקה שורה אחת של $\Phi$ כדי לקבל את כל $N$ התדירויות?
+3. איך קשורים השיאים של $g(\omega)$ למהירות החבורה?
+4. למה Debye ו"השרשרת האמיתית" מסכימים בטמפרטורות נמוכות וגבוהות, ונבדלים ביניהן?
+
+<details>
+<summary>🗝️ הכוונה לתשובות (לחצו לפתיחה)</summary>
+
+1. תרגול 7, סעיף 1 (כלל הסכום: הזזה אחידה של כל השרשרת אינה עולה אנרגיה).
+2. תרגול 7, סעיף 1 (סימטריית ההזזה והצבת גל מישורי), והרמז בתיאור ההדגמה.
+3. תרגול 7, סעיף 2 (מהירות החבורה בקצה אזור ברילואן), ותרגול 1, סעיף 3 (צפיפות מצבים מיחס נפיצה).
+4. תרגול 7, סעיף 2 (ההשוואה ל-Debye), ותרגול 3 (קיבול החום כספירה של אופנים פעילים).
+
+אם אינכם יודעים לענות על אחת השאלות, חזרו לסעיף המתאים בתרגול.
+
+</details>
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
 def build(name, cells, out):
     nb = nb_from(cells)
     # Execute a copy only to verify that every cell runs; the notebook that is saved stays
@@ -822,3 +987,4 @@ if __name__ == "__main__":
     build("w4", w4, ROOT / "week04.ipynb")
     build("w5", w5, ROOT / "week05.ipynb")
     build("w6", w6, ROOT / "week06.ipynb")
+    build("w7", w7, ROOT / "week07.ipynb")

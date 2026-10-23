@@ -18,6 +18,8 @@ project:
     - file: week05-reciprocal.md
     - file: week06.ipynb
     - file: week06-diffraction.md
+    - file: week07.ipynb
+    - file: week07-chain.md
 site:
   template: book-theme
   title: מבוא למצב מוצק תשפ״ז

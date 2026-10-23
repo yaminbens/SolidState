@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>שרשרת הרמונית</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course palette (same as site.css): ink, blue, teal, amber. */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --fg:#12294d; --muted:#53627a; --line:#d6dde8; --soft:#eef3fb;
+  --blue:#2563eb; --teal:#0f9d8a; --amber:#f08a24; --rose:#d6455b; --edge:#12294d;
+  --f-body:"Heebo","Segoe UI",Arial,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root.dark{
+  --bg:#0e141c; --panel:#151d28; --fg:#e8eefc; --muted:#9aa8bc; --line:#2a3646; --soft:#1b2534;
+  --blue:#6aa1ff; --teal:#2dd4bf; --amber:#f6a14a; --rose:#f07a8c; --edge:#c9d6ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{padding:14px max(14px,env(safe-area-inset-left)) 28px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
+.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+  box-shadow:0 6px 18px rgba(18,41,77,.06)}
+.card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
+.card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none}
+#cd{cursor:crosshair}
+.hint{color:var(--muted);font-size:12.5px;margin:6px 0 0}
+.ctl{display:flex;flex-direction:column;gap:12px}
+.lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;background:transparent;color:var(--fg);border:1px solid var(--line);
+  border-radius:999px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button:focus-visible,input:focus-visible,button.act:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.row{display:grid;grid-template-columns:8.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center}
+.row.off{opacity:.4}
+input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.checks label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.box p{margin:3px 0}
+.num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px}
+p .num{white-space:nowrap}
+output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
+.ctlrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:12px}
+@media (max-width:760px){.ctlrow{grid-template-columns:minmax(0,1fr)}}
+button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:5px 14px;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>שרשרת הרמונית: ענפים ואופני תנודה</h1>
+    <p class="lede">בוחרים נקודה על יחס הנפיצה ורואים את תנועת האטומים באופן התנודה המתאים. בשרשרת עם בסיס יש שני אטומים בתא היחידה, מחוברים לסירוגין בקפיץ K<sub>2</sub> (בתוך התא) ובקפיץ K<sub>1</sub> (בין התאים). אין צורך להריץ דבר.</p>
+  </header>
+
+  <!-- ================= Panel 1: dispersion ================= -->
+  <section class="card">
+    <h2>יחס הנפיצה</h2>
+    <p class="sub">לחצו או גררו על הגרף כדי לבחור וקטור גל וענף. היחידות: <span class="num">a = K₁ = m₁ = 1</span>, כאשר a הוא אורך תא היחידה.</p>
+    <canvas id="cd" width="680" height="400" aria-label="יחס הנפיצה"></canvas>
+    <div class="legend" id="dleg"></div>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div>
+          <div class="lab">מבנה</div>
+          <div class="seg" id="sseg"><button data-s="mono">שרשרת חד-אטומית</button><button data-s="di">שרשרת עם בסיס</button></div>
+        </div>
+        <div class="row" id="rk"><span class="lab" style="margin:0">K<sub>2</sub> / K<sub>1</sub></span><input id="kr" type="range" min="-1.386" max="1.386" step="0.001" value="0.693"><output id="kro"></output></div>
+        <div class="row" id="rm"><span class="lab" style="margin:0">m<sub>2</sub> / m<sub>1</sub></span><input id="mr" type="range" min="-1.386" max="1.386" step="0.001" value="0"><output id="mro"></output></div>
+        <div>
+          <div class="lab">הצגה</div>
+          <div class="seg" id="zseg"><button data-z="red">אזור ברילואן ראשון</button><button data-z="ext">אזור מורחב</button></div>
+        </div>
+      </div>
+      <div class="ctl"><div class="box" id="dinfo"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= Panel 2: atomic motion ================= -->
+  <section class="card">
+    <h2>תנועת האטומים</h2>
+    <p class="sub">בשורה העליונה האטומים זזים לאורך השרשרת (התזוזה מוגדלת). בגרף התחתון אותה תזוזה u<sub>n</sub> מצוירת כלפי מעלה, כדי שיהיה קל לראות את צורת הגל.</p>
+    <canvas id="cm" width="680" height="300" aria-label="תנועת האטומים"></canvas>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div><button class="act" id="play" type="button">עצור</button></div>
+        <div class="checks">
+          <label><input type="checkbox" id="wave"> גל רציף דרך האטומים</label>
+          <label><input type="checkbox" id="alias"> אותה תנועה עם k + 2π/a</label>
+        </div>
+      </div>
+      <div class="ctl"><div class="box" id="minfo"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= Panel 3: density of states ================= -->
+  <section class="card">
+    <h2>צפיפות המצבים</h2>
+    <p class="sub">היסטוגרמה של התדירויות של כל אופני התנודה, לאטום. הקו האנכי מסמן את התדירות שנבחרה; תחום מוצלל הוא פער תדירויות שבו אין אופני תנודה כלל.</p>
+    <canvas id="cg" width="680" height="240" aria-label="צפיפות המצבים"></canvas>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const PI = Math.PI, TAU = 2*Math.PI;
+
+/* ---------------- theme: follow the course site (same origin) or the OS ---------------- */
+function applyTheme(){
+  let dark=false;
+  try{ const p=window.parent&&window.parent!==window?window.parent.document.documentElement:null; if(p) dark=p.classList.contains("dark"); else throw 0; }
+  catch(e){ dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  document.documentElement.classList.toggle("dark",dark);
+}
+applyTheme();
+try{ if(window.parent!==window) new MutationObserver(()=>{applyTheme(); drawStatic();}).observe(window.parent.document.documentElement,{attributes:true,attributeFilter:["class"]}); }catch(e){}
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawStatic();});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function setupCanvas(c){
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.dataset.r?+c.dataset.r:c.height/c.width;
+  c.dataset.r=ratio;
+  const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio};
+}
+function label(ctx,t,x,y,col,size,align,base){ ctx.font=`500 ${size||13}px `+css("--f-num"); ctx.fillStyle=col; ctx.textAlign=align||"center"; ctx.textBaseline=base||"middle"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+const fmt = (x,d) => (Math.abs(x)<5e-4?0:x).toFixed(d===undefined?3:d);
+
+/* ---------------- physics ---------------- */
+// State. Cell length a = 1. Monoatomic: spacing 1, spring K1 = 1, mass 1.
+// Diatomic: atom A (mass 1) at x = n, atom B (mass m2) at x = n + 1/2; spring K2 inside the cell (A_n-B_n), K1 = 1 between cells (B_n-A_{n+1}).
+const S = { s:"di", K2:2, m2:1, zone:"red", k:0.35*PI, br:0, playing:true, t:0, wave:false, alias:false };
+
+// 2x2 mass-weighted dynamical matrix [[al, be],[be*, ga]] with be complex: returns {w:[w-,w+], v:[[A,B]-,[A,B]+]} (A,B complex as [re,im])
+function eig(k){
+  if(S.s==="mono"){ const w=2*Math.abs(Math.sin(k/2)); return {w:[w], v:[[[1,0],[0,0]]]}; }
+  const K1=1, K2=S.K2, m1=1, m2=S.m2;
+  const al=(K1+K2)/m1, ga=(K1+K2)/m2, s=1/Math.sqrt(m1*m2);
+  const bre=-(K2+K1*Math.cos(k))*s, bim=K1*Math.sin(k)*s;     // be = -(K2 + K1 e^{-ik}) / sqrt(m1 m2)
+  const b2=bre*bre+bim*bim, mid=(al+ga)/2, rad=Math.sqrt(((al-ga)/2)**2+b2);
+  const lams=[mid-rad, mid+rad], ws=[], vs=[];
+  lams.forEach(l=>{
+    ws.push(Math.sqrt(Math.max(0,l)));
+    // mass-weighted eigenvector (x, y): (al - l) x + be y = 0  ->  (x, y) = (be, l - al), or (l - ga, be*) if that one is tiny
+    let x=[bre,bim], y=[l-al,0];
+    if(Math.hypot(x[0],x[1])+Math.abs(y[0])<1e-9){ x=[l-ga,0]; y=[bre,-bim]; }
+    if(Math.hypot(x[0],x[1])+Math.hypot(y[0],y[1])<1e-9){ x=[1,0]; y=[0,0]; }
+    let A=[x[0]/Math.sqrt(m1),x[1]/Math.sqrt(m1)], B=[y[0]/Math.sqrt(m2),y[1]/Math.sqrt(m2)];
+    // fix the global phase so that the larger amplitude is real and positive
+    const big=Math.hypot(A[0],A[1])>=Math.hypot(B[0],B[1])?A:B, ph=Math.atan2(big[1],big[0]), n=Math.hypot(big[0],big[1]);
+    const rot=z=>[(z[0]*Math.cos(-ph)-z[1]*Math.sin(-ph))/n,(z[0]*Math.sin(-ph)+z[1]*Math.cos(-ph))/n];
+    vs.push([rot(A),rot(B)]);
+  });
+  return {w:ws, v:vs};
+}
+const reduce = k => { let r=((k+PI)%TAU+TAU)%TAU-PI; return r; };
+function omegaAt(k,br){ return eig(reduce(k)).w[br]; }
+function groupVel(k,br){ const h=1e-4; return (omegaAt(k+h,br)-omegaAt(k-h,br))/(2*h); }
+function gapInfo(){ if(S.s==="mono") return null; const e=eig(PI).w; const lo=Math.max(e[0],eig(PI).w[0]), top=Math.min(...[0,1].map(i=>i));
+  // acoustic max and optical min (both at the zone edge for this chain)
+  let amax=0, omin=1e9; for(let i=0;i<=400;i++){ const k=-PI+TAU*i/400, w=eig(k).w; amax=Math.max(amax,w[0]); omin=Math.min(omin,w[1]); }
+  return {amax, omin, gap:Math.max(0,omin-amax)}; }
+
+// DoS: sample k uniformly in the BZ, all branches, normalised per atom
+function dos(nb){
+  const nk=8000, ws=[]; for(let i=0;i<nk;i++){ const k=-PI+TAU*(i+0.5)/nk; eig(k).w.forEach(w=>ws.push(w)); }
+  const wmax=Math.max(...ws)*1.04, h=new Float64Array(nb), dw=wmax/nb;
+  ws.forEach(w=>{ const j=Math.min(nb-1,Math.floor(w/dw)); h[j]+=1; });
+  for(let j=0;j<nb;j++) h[j]/= ws.length*dw;          // integral = 1 mode per atom
+  return {h, dw, wmax};
+}
+
+/* ---------------- panel 1: dispersion ---------------- */
+let D = null;     // cached geometry of the dispersion plot
+function drawDisp(){
+  const {ctx,w,h}=setupCanvas($("cd")); ctx.clearRect(0,0,w,h);
+  const ext=S.zone==="ext", kmax=ext?TAU:PI;
+  let wmax=0; for(let i=0;i<=200;i++){ const e=eig(-PI+TAU*i/200).w; wmax=Math.max(wmax,...e); }
+  wmax=Math.max(wmax*1.12,0.5);
+  const L=46,R=14,T=14,B=38, X=k=>L+(k+kmax)/(2*kmax)*(w-L-R), Y=o=>h-B-o/wmax*(h-T-B);
+  D={X,Y,kmax,wmax,L,R,T,B,w,h};
+  // gap shading
+  const g=gapInfo();
+  if(g&&g.gap>1e-6){ ctx.fillStyle=css("--amber"); ctx.globalAlpha=.13; ctx.fillRect(L,Y(g.omin),w-L-R,Y(g.amax)-Y(g.omin)); ctx.globalAlpha=1; }
+  // axes, zone boundaries
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
+  const ticks=ext?[-2,-1,0,1,2]:[-1,-0.5,0,0.5,1];
+  const tl=t=>t===0?"0":(t===1?"π":t===-1?"−π":(t<0?"−":"")+Math.abs(t)+"π");
+  ticks.forEach(t=>{ const x=X(t*PI); label(ctx,tl(t),x,h-B+14,css("--muted"),12); });
+  [-1,1].forEach(t=>{ const x=X(t*PI); ctx.setLineDash([4,4]); ctx.strokeStyle=css("--muted"); ctx.globalAlpha=.5; ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,h-B); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; });
+  label(ctx,"k  (units of 1/a)",(L+w-R)/2,h-8,css("--muted"),12);
+  ctx.save(); ctx.translate(13,(T+h-B)/2); ctx.rotate(-PI/2); label(ctx,"ω",0,0,css("--muted"),13); ctx.restore();
+  for(let o=0;o<=wmax;o+=0.5){ const y=Y(o); if(y<T) break; label(ctx,o.toFixed(1),L-6,y,css("--muted"),11,"right"); }
+  // branches
+  const nb=S.s==="mono"?1:2, cols=[css("--blue"),css("--rose")];
+  for(let b=0;b<nb;b++){
+    ctx.strokeStyle=cols[b]; ctx.lineWidth=2.4; ctx.setLineDash(b?[7,5]:[]);
+    if(!ext){ ctx.beginPath(); for(let i=0;i<=400;i++){ const k=-PI+TAU*i/400, y=Y(eig(k).w[b]); i?ctx.lineTo(X(k),y):ctx.moveTo(X(k),y);} ctx.stroke(); }
+    else{
+      // extended zone: monoatomic repeats; diatomic: lower branch in |k|<pi, upper branch in pi<|k|<2pi
+      const segs = S.s==="mono" ? [[-TAU,TAU]] : (b===0?[[-PI,PI]]:[[-TAU,-PI],[PI,TAU]]);
+      segs.forEach(([a,c])=>{ ctx.beginPath(); for(let i=0;i<=300;i++){ const k=a+(c-a)*i/300, y=Y(omegaAt(k,b)); i?ctx.lineTo(X(k),y):ctx.moveTo(X(k),y);} ctx.stroke(); });
+      // faint: the other copies (reduced-zone picture) for orientation
+      ctx.globalAlpha=.18; ctx.beginPath(); for(let i=0;i<=600;i++){ const k=-TAU+2*TAU*i/600, y=Y(omegaAt(k,b)); i?ctx.lineTo(X(k),y):ctx.moveTo(X(k),y);} ctx.stroke(); ctx.globalAlpha=1;
+    }
+  }
+  ctx.setLineDash([]);
+  // selected point
+  const ws=omegaAt(S.k,S.br), px=X(S.k), py=Y(ws);
+  ctx.fillStyle=css("--amber"); ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(px,py,7,0,TAU); ctx.fill(); ctx.stroke();
+  // legend
+  $("dleg").innerHTML = S.s==="mono" ? `<span><span class="dot" style="background:${cols[0]}"></span>ענף יחיד (אקוסטי)</span>`
+    : `<span><span class="dot" style="background:${cols[0]}"></span>ענף אקוסטי</span><span><span class="dot" style="background:${cols[1]}"></span>ענף אופטי</span>` + (g&&g.gap>1e-6?`<span><span class="dot" style="background:${css("--amber")};opacity:.5"></span>פער</span>`:"");
+}
+function pick(ev){
+  if(!D) return; const r=$("cd").getBoundingClientRect(), x=ev.clientX-r.left, y=ev.clientY-r.top;
+  let k=-D.kmax+(x-D.L)/(D.w-D.L-D.R)*2*D.kmax; k=Math.max(-D.kmax,Math.min(D.kmax,k));
+  const o=(D.h-D.B-y)/(D.h-D.T-D.B)*D.wmax;
+  if(S.s==="mono"){ S.br=0; }
+  else if(S.zone==="ext"){ S.br = Math.abs(k)<=PI?0:1; }
+  else{ const e=eig(k).w; S.br = Math.abs(o-e[0])<=Math.abs(o-e[1])?0:1; }
+  S.k=k; drawStatic();
+}
+let dragging=false;
+$("cd").addEventListener("pointerdown",e=>{ dragging=true; $("cd").setPointerCapture(e.pointerId); pick(e); });
+$("cd").addEventListener("pointermove",e=>{ if(dragging) pick(e); });
+$("cd").addEventListener("pointerup",()=>{ dragging=false; });
+
+function info(){
+  const kr=reduce(S.k), e=eig(kr), w=e.w[S.br], vg=groupVel(S.k,S.br);
+  let s=`<h3>הנקודה שנבחרה</h3>
+  <p><span class="num">k a/π = ${fmt(S.k/PI)}</span>${Math.abs(S.k-kr)>1e-9?` (שקול ל-<span class="num">${fmt(kr/PI)}</span> באזור הראשון)`:""}</p>
+  <p><span class="num">ω = ${fmt(w)}</span>, ומהירות החבורה <span class="num">v_g = dω/dk = ${fmt(vg)}</span></p>`;
+  if(S.s==="di"){
+    const [A,B]=e.v[S.br], rA=Math.hypot(...A), rB=Math.hypot(...B);
+    const dph=(Math.atan2(B[1],B[0])-Math.atan2(A[1],A[0]))*180/PI, dphn=((dph+540)%360)-180;
+    s+=`<p>יחס האמפליטודות <span class="num">|B/A| = ${rA>1e-9?fmt(rB/rA,3):"∞"}</span>, הפרש פאזה <span class="num">${rA>1e-9&&rB>1e-9?fmt(dphn,0)+"°":"–"}</span></p>`;
+    const g=gapInfo();
+    s+=`<p>${g.gap>1e-6?`פער בין <span class="num">${fmt(g.amax)}</span> ל-<span class="num">${fmt(g.omin)}</span>`:"אין פער: שני הענפים נוגעים בקצה האזור"}</p>`;
+  } else {
+    s+=`<p>תדירות מרבית <span class="num">2.000</span>, בקצה אזור ברילואן</p>`;
+  }
+  $("dinfo").innerHTML=s;
+}
+
+/* ---------------- panel 2: atomic motion ---------------- */
+function drawMotion(){
+  const {ctx,w,h}=setupCanvas($("cm")); ctx.clearRect(0,0,w,h);
+  const ncell=S.s==="mono"?12:8, L=22, R=22, sx=(w-L-R)/ncell, X=x=>L+(x+0.5)*sx;
+  const kr=reduce(S.k), e=eig(kr), om=e.w[S.br], [A,B]=e.v[S.br];
+  const ph=om*S.t;
+  const disp=(amp,n)=>amp[0]*Math.cos(kr*n-ph)-amp[1]*Math.sin(kr*n-ph);   // Re(amp e^{i(k n - w t)})
+  const atoms=[];
+  for(let n=0;n<ncell;n++){
+    atoms.push({x:n, u:disp(A,n), c:css("--blue"), r:S.s==="mono"?8:(9)});
+    if(S.s==="di") atoms.push({x:n+0.5, u:disp(B,n), c:css("--teal"), r:9*Math.cbrt(S.m2)});
+  }
+  const amp=0.28*sx*(S.s==="mono"?1:0.5);
+  // top row: longitudinal motion
+  const y1=58;
+  ctx.lineWidth=2;
+  for(let i=0;i<atoms.length-1;i++){ const a=atoms[i], b=atoms[i+1];
+    const strong = S.s==="di" && (i%2===0);       // A_n - B_n: K2 inside the cell
+    ctx.strokeStyle= S.s==="mono"?css("--muted"):(strong?css("--edge"):css("--muted"));
+    ctx.lineWidth= S.s==="mono"?1.6:(strong?Math.min(5,1.4+1.2*S.K2):1.4);
+    ctx.beginPath(); ctx.moveTo(X(a.x)+a.u*amp,y1); ctx.lineTo(X(b.x)+b.u*amp,y1); ctx.stroke(); }
+  atoms.forEach(a=>{ ctx.fillStyle=a.c; ctx.beginPath(); ctx.arc(X(a.x)+a.u*amp,y1,a.r,0,TAU); ctx.fill(); });
+  label(ctx,"longitudinal motion (exaggerated)",w/2,18,css("--muted"),12);
+  // bottom: transverse picture u_n vs x
+  const y0=200, ay=70;
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(L,y0); ctx.lineTo(w-R,y0); ctx.stroke();
+  label(ctx,"u_n plotted upward",w/2,y0-ay-26,css("--muted"),12);
+  // continuous waves through the atoms (monoatomic, or the A sublattice of the basis chain)
+  const cont=(kk,col,dash)=>{ ctx.strokeStyle=col; ctx.lineWidth=1.4; ctx.setLineDash(dash); ctx.beginPath();
+    for(let i=0;i<=600;i++){ const x=-0.5+ncell*i/600, u=A[0]*Math.cos(kk*x-ph)-A[1]*Math.sin(kk*x-ph), yy=y0-u*ay; i?ctx.lineTo(X(x),yy):ctx.moveTo(X(x),yy); } ctx.stroke(); ctx.setLineDash([]); };
+  if(S.wave) cont(kr,css("--blue"),[]);
+  if(S.alias) cont(kr+TAU,css("--rose"),[5,4]);
+  atoms.forEach(a=>{ const yy=y0-a.u*ay; ctx.strokeStyle=a.c; ctx.globalAlpha=.6; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(X(a.x),y0); ctx.lineTo(X(a.x),yy); ctx.stroke(); ctx.globalAlpha=1;
+    ctx.fillStyle=a.c; ctx.beginPath(); ctx.arc(X(a.x),yy,6,0,TAU); ctx.fill(); });
+  // info
+  let s=`<h3>מה רואים</h3>`;
+  const ka=Math.abs(kr/PI);
+  if(om<1e-6) s+=`<p>ω = 0: כל השרשרת זזה יחד, הזזה אחידה שאינה עולה אנרגיה.</p>`;
+  else if(S.s==="mono") s+= ka>0.999?`<p>קצה אזור ברילואן: שכנים זזים בדיוק בניגוד פאזה, u<sub>n</sub> ∝ (−1)<sup>n</sup>. זה גל עומד ו-v<sub>g</sub> = 0.</p>`:`<p>גל נע, באורך גל <span class="num">λ = ${fmt(TAU/Math.max(1e-9,Math.abs(kr)),2)} a</span>.</p>`;
+  else s+= S.br===0?`<p>ענף אקוסטי: בגלים ארוכים שני האטומים בתא זזים יחד, כמו גל קול.</p>`:`<p>ענף אופטי: שני האטומים בתא זזים זה כנגד זה; מרכז המסה של התא כמעט לא זז.</p>`;
+  if(S.alias) s+=`<p>הקו המקווקו הוא גל עם k + 2π/a: הוא עובר דרך אותן נקודות, כי האטומים נמצאים רק בכפולות של a.</p>`;
+  $("minfo").innerHTML=s;
+}
+
+/* ---------------- panel 3: DoS ---------------- */
+let DOS=null;
+function drawDos(){
+  const {ctx,w,h}=setupCanvas($("cg")); ctx.clearRect(0,0,w,h);
+  if(!DOS) DOS=dos(150);
+  const {h:hist,dw,wmax}=DOS, L=46,R=14,T=12,B=34;
+  const ymax=Math.min(3, Math.max(...hist)*1.05), X=o=>L+o/wmax*(w-L-R), Y=v=>h-B-Math.min(v,ymax)/ymax*(h-T-B);
+  const g=gapInfo();
+  if(g&&g.gap>1e-6){ ctx.fillStyle=css("--amber"); ctx.globalAlpha=.13; ctx.fillRect(X(g.amax),T,X(g.omin)-X(g.amax),h-T-B); ctx.globalAlpha=1; }
+  ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
+  ctx.fillStyle=css("--blue"); ctx.globalAlpha=.75;
+  for(let j=0;j<hist.length;j++){ const x0=X(j*dw), x1=X((j+1)*dw); ctx.fillRect(x0,Y(hist[j]),Math.max(1,x1-x0-0.5),h-B-Y(hist[j])); }
+  ctx.globalAlpha=1;
+  for(let o=0;o<=wmax;o+=0.5) label(ctx,o.toFixed(1),X(o),h-B+13,css("--muted"),11);
+  label(ctx,"ω",w-R-6,h-B-10,css("--muted"),13);
+  ctx.save(); ctx.translate(13,(T+h-B)/2); ctx.rotate(-PI/2); label(ctx,"g(ω) per atom",0,0,css("--muted"),12); ctx.restore();
+  const ws=omegaAt(S.k,S.br); ctx.strokeStyle=css("--amber"); ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(X(ws),T); ctx.lineTo(X(ws),h-B); ctx.stroke();
+}
+
+/* ---------------- wiring ---------------- */
+function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
+function syncCtl(){
+  const mono=S.s==="mono";
+  $("rk").classList.toggle("off",mono); $("rm").classList.toggle("off",mono);
+  $("kr").disabled=mono; $("mr").disabled=mono;
+  $("kro").textContent=S.K2.toFixed(2); $("mro").textContent=S.m2.toFixed(2);
+  pressed("sseg","s",S.s); pressed("zseg","z",S.zone);
+  if(S.s==="mono") S.br=0;
+}
+function drawStatic(){ syncCtl(); drawDisp(); info(); drawDos(); drawMotion(); }
+document.querySelectorAll("#sseg button").forEach(b=>b.addEventListener("click",()=>{ S.s=b.dataset.s; DOS=null; drawStatic(); }));
+document.querySelectorAll("#zseg button").forEach(b=>b.addEventListener("click",()=>{ S.zone=b.dataset.z; if(S.zone==="red") S.k=reduce(S.k); drawStatic(); }));
+$("kr").addEventListener("input",e=>{ S.K2=Math.exp(+e.target.value); DOS=null; drawStatic(); });
+$("mr").addEventListener("input",e=>{ S.m2=Math.exp(+e.target.value); DOS=null; drawStatic(); });
+$("wave").addEventListener("change",e=>{ S.wave=e.target.checked; drawMotion(); });
+$("alias").addEventListener("change",e=>{ S.alias=e.target.checked; drawMotion(); });
+$("play").addEventListener("click",()=>{ S.playing=!S.playing; $("play").textContent=S.playing?"עצור":"הפעל"; if(S.playing) loop(); });
+
+let last=null;
+function loop(ts){
+  if(!S.playing){ last=null; return; }
+  if(ts!==undefined){ if(last!==null) S.t+=Math.min(0.05,(ts-last)/1000)*1.6; last=ts; drawMotion(); }
+  requestAnimationFrame(loop);
+}
+
+// When embedded in the course site (same origin), size the iframe box to the content height.
+function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
+  const pd=fe.ownerDocument, hh=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
+  let st=pd.getElementById("viz-fit"); if(!st){ st=pd.createElement("style"); st.id="viz-fit"; pd.head.appendChild(st); }
+  st.textContent=`article div:has(> iframe[src*="/viz/"]){display:block!important;width:100%!important;padding-bottom:0!important;height:${hh}px!important}
+article iframe[src*="/viz/"]{position:absolute;inset:0;width:100%;height:100%;border:0}`;
+}catch(e){} }
+let rt=null; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ drawStatic(); fitFrame(); },60); });
+window.addEventListener("load",fitFrame);
+if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawStatic);
+
+$("kr").value=Math.log(S.K2); $("mr").value=Math.log(S.m2);
+drawStatic(); fitFrame(); loop();
+window.__chain = { S, eig, dos, gapInfo, omegaAt, groupVel, reduce, drawStatic, drawMotion };
+})();
+</script>
+</body>
+</html>
