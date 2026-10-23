@@ -20,6 +20,8 @@ project:
     - file: week06-diffraction.md
     - file: week07.ipynb
     - file: week07-chain.md
+    - file: week08.ipynb
+    - file: week08-phonons.md
 site:
   template: book-theme
   title: מבוא למצב מוצק תשפ״ז

@@ -969,6 +969,162 @@ plt.show()
 """),
 ]
 
+# ------------------------------------------------------------------ week 8
+w8 = [
+("md", header(8, "שבוע 8 · פונונים בגביש תלת-ממדי", "הדגמה לתרגול 8 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+גביש קובי (SC או FCC) של אטומים זהים במסה $m$, עם קפיצים מרכזיים בין שכנים קרובים ביותר בלבד. לקפיץ שני קבועים: $\kappa_L$ למתיחה לאורך הקשר ו-$\kappa_T$ להזזה בניצב לו. כמו בתרגול, לכל וקטור גל $\mathbf k$ המטריצה הדינמית היא
+$$D(\mathbf k)=\sum_{\mathbf R}2\sin^2\!\left(\tfrac12\mathbf k\cdot\mathbf R\right)\left[\kappa_T\,\mathbb{I}+(\kappa_L-\kappa_T)\,\hat{\mathbf R}\hat{\mathbf R}^{T}\right],$$
+כאשר הסכום הוא על השכנים הקרובים ביותר. הערכים העצמיים של $D(\mathbf k)/m$ הם $\omega_s^2(\mathbf k)$, והווקטורים העצמיים הם וקטורי הקיטוב. המחברת:
+1. מציירת את שלושת הענפים לאורך מסלול בין נקודות סימטריה, צבועים לפי הקיטוב;
+2. מגרילה מאות אלפי וקטורי גל באזור ברילואן ובונה מהם את צפיפות המצבים;
+3. מחשבת מהתדירויות את קיבול החום.
+
+**יחידות:** $a=m=\kappa_L=1$ ($a$ צלע הקובייה), ולכן תדירויות ביחידות של $\sqrt{\kappa_L/m}$. בחלק 3 גם $\hbar=k_B=1$.
+
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week08-phonons) שמראה את תנועת האטומים בכל אופן תנודה.
+"""),
+("code", """
+import itertools
+import numpy as np
+import matplotlib.pyplot as plt
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+- `structure` – סריג הברווה: `"SC"` או `"FCC"`.
+- `kT_over_kL` – היחס $\kappa_T/\kappa_L$ בין הקשיחות הרוחבית לקשיחות האורכית של קשר.
+- `n_samples` – מספר וקטורי הגל שמוגרלים לצפיפות המצבים (יותר: היסטוגרמה חלקה יותר, חישוב איטי יותר).
+"""),
+("code", """
+# ---- Parameters ----
+structure = "FCC"     # Bravais lattice: "SC" or "FCC"
+kT_over_kL = 0.3      # transverse / longitudinal bond stiffness
+n_samples = 200000    # random k vectors for the density of states
+"""),
+("md", r"""
+### 1. השכנים והמטריצה הדינמית
+בונים את רשימת השכנים הקרובים ביותר, ופונקציה שמחשבת את $D(\mathbf k)$ לכל וקטור גל. בדיקה ראשונה: ב-$\mathbf k=0$ המטריצה מתאפסת (כלל הסכום מהתרגול), ולכן שלוש תדירויות מתאפסות.
+"""),
+("code", """
+kL, kT = 1.0, kT_over_kL
+if structure == "SC":
+    R = np.array([v for v in itertools.product([-1, 0, 1], repeat=3) if sum(map(abs, v)) == 1], float)
+    A = np.eye(3)                                            # primitive vectors (rows)
+    sym_points = {"Γ": (0, 0, 0), "X": (0.5, 0, 0), "M": (0.5, 0.5, 0), "R": (0.5, 0.5, 0.5)}
+    route = ["Γ", "X", "M", "Γ", "R"]
+elif structure == "FCC":
+    R = 0.5 * np.array([v for v in itertools.product([-1, 0, 1], repeat=3) if sum(map(abs, v)) == 2], float)
+    A = 0.5 * np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]], float)
+    sym_points = {"Γ": (0, 0, 0), "X": (1, 0, 0), "X'": (1, 1, 0), "K": (0.75, 0.75, 0), "L": (0.5, 0.5, 0.5)}
+    route = ["Γ", "X", "X'", "K", "Γ", "L"]
+else:
+    raise ValueError("structure must be 'SC' or 'FCC'")
+Rhat = R / np.linalg.norm(R, axis=1)[:, None]
+B = 2 * np.pi * np.linalg.inv(A).T                           # reciprocal primitive vectors (rows)
+print(f"{structure}: {len(R)} nearest neighbours at distance {np.linalg.norm(R[0]):.4f} a")
+
+def dyn_matrix(K):
+    # K: array of shape (n, 3). Returns D(k) for every row, shape (n, 3, 3).
+    K = np.atleast_2d(K)
+    D = np.zeros((len(K), 3, 3))
+    for r, rh in zip(R, Rhat):
+        s = 2 * np.sin(K @ r / 2) ** 2
+        D += s[:, None, None] * (kT * np.eye(3) + (kL - kT) * np.outer(rh, rh))[None]
+    return D
+
+print("D(k=0) =\\n", dyn_matrix(np.zeros(3))[0])
+"""),
+("md", r"""
+### 2. הענפים לאורך מסלול בין נקודות סימטריה
+הצבע של כל נקודה הוא החלק האורכי של הקיטוב, $|\hat{\mathbf k}\cdot\mathbf e|^2$: כחול לגמרי לגל אורכי, כתום לגמרי לגל רוחבי.
+
+> 🔮 **נחשו:** לאורך איזה קטע של המסלול שני הענפים הרוחביים יתלכדו לקו אחד?
+"""),
+("code", """
+def route_k(names, n=150):
+    ks, xs, ticks, x = [], [], [0.0], 0.0
+    for a, b in zip(names[:-1], names[1:]):
+        p, q = 2 * np.pi * np.array(sym_points[a], float), 2 * np.pi * np.array(sym_points[b], float)
+        L = np.linalg.norm(q - p)
+        for t in np.linspace(0, 1, n, endpoint=False):
+            ks.append(p + t * (q - p)); xs.append(x + t * L)
+        x += L; ticks.append(x)
+    ks.append(2 * np.pi * np.array(sym_points[names[-1]], float)); xs.append(x)
+    return np.array(ks), np.array(xs), ticks
+
+Kp, xp, ticks = route_k(route)
+w2, vecs = np.linalg.eigh(dyn_matrix(Kp))                    # eigenvalues and polarisation vectors
+wp = np.sqrt(np.clip(w2, 0, None))
+khat = Kp / np.maximum(np.linalg.norm(Kp, axis=1), 1e-12)[:, None]
+long_frac = np.abs(np.einsum("ni,nij->nj", khat, vecs)) ** 2
+
+plt.figure(figsize=(7.5, 3.8))
+for j in range(3):
+    sc = plt.scatter(xp, wp[:, j], c=long_frac[:, j], cmap="coolwarm_r", vmin=0, vmax=1, s=4)
+for t in ticks: plt.axvline(t, color="0.8", lw=0.7)
+plt.xticks(ticks, route); plt.xlim(ticks[0], ticks[-1])
+plt.ylabel("omega"); plt.title(f"{structure},  kT/kL = {kT_over_kL}")
+plt.colorbar(sc, label="longitudinal fraction")
+plt.show()
+"""),
+("md", r"""
+### 3. צפיפות המצבים וקיבול החום
+מגרילים וקטורי גל באופן אחיד בתא פרימיטיבי של הסריג ההופכי (שקול לאזור ברילואן, כי התדירויות מחזוריות), ומלכסנים את $D(\mathbf k)$ בכל אחד. ההיסטוגרמה של כל התדירויות היא צפיפות המצבים, מנורמלת לשלושה אופנים לאטום. מאותן תדירויות מחשבים את קיבול החום לאטום, $c=\langle\sum_s c(\hbar\omega_s/k_BT)\rangle$ עם $c(x)=x^2e^x/(e^x-1)^2$, ומציירים אותו בסקלה לוגריתמית.
+
+> 🔮 **נחשו:** איך צפיפות המצבים מתנהגת בתדירויות נמוכות, ומה צריך להיות השיפוע של $c(T)$ בסקלה לוגריתמית בטמפרטורות נמוכות?
+"""),
+("code", """
+rng = np.random.default_rng(0)
+K = rng.random((n_samples, 3)) @ B                           # uniform in a primitive cell of the reciprocal lattice
+w = np.sqrt(np.clip(np.linalg.eigvalsh(dyn_matrix(K)), 0, None)).ravel()
+
+def c_mode(x):
+    # heat capacity of one harmonic oscillator, in units of k_B
+    x = np.asarray(x, float)
+    out = np.ones_like(x)
+    ok = x > 1e-8
+    e = np.exp(-np.minimum(x[ok], 700))
+    out[ok] = x[ok] ** 2 * e / (1 - e) ** 2
+    return out
+
+Ts = np.logspace(-1.7, 0.6, 50)
+c = np.array([3 * c_mode(w / T).mean() for T in Ts])        # 3 modes per atom
+
+fig, axs = plt.subplots(1, 2, figsize=(10, 3.6))
+h, edges = np.histogram(w, bins=240, density=True)
+axs[0].plot(0.5 * (edges[1:] + edges[:-1]), 3 * h)
+axs[0].set_xlabel("omega"); axs[0].set_ylabel("g(omega) per atom"); axs[0].set_title("density of states")
+axs[1].loglog(Ts, c, label="all modes")
+axs[1].axhline(3, color="0.6", lw=0.8, ls=":")
+axs[1].set_xlabel("k_B T"); axs[1].set_ylabel("c per atom / k_B"); axs[1].set_title("heat capacity")
+plt.tight_layout(); plt.show()
+
+slope = np.polyfit(np.log(Ts[:8]), np.log(c[:8]), 1)[0]
+print(f"low-temperature slope of log c vs log T: {slope:.2f}")
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. למה בכל סריג ברווה מתקבלים בדיוק שלושה ענפים, ולמה שלושתם מתאפסים ב-$\mathbf k=0$?
+2. לאורך אילו כיוונים שני הענפים הרוחביים מתלכדים, ומה מיוחד בכיוונים האלה?
+3. מאיפה מגיעים השיאים והשבירות בצפיפות המצבים?
+4. מה צריך להיות השיפוע של $c(T)$ בטמפרטורות נמוכות בגביש תלת-ממדי, ומה קובע אותו?
+
+<details>
+<summary>🗝️ הכוונה לתשובות (לחצו לפתיחה)</summary>
+
+1. תרגול 8, סעיף 1 (ספירת הענפים וכלל הסכום), ותרגול 7, סעיף 1.
+2. תרגול 8, סעיף 3 (ניוון של הענפים הרוחביים לאורך ציר סימטריה).
+3. תרגול 7, סעיף 2 (צפיפות המצבים פרופורציונית ל-$1/|v_g|$), ותרגול 1, סעיף 3.
+4. תרגול 3 (קיבול החום כספירה של אופנים פעילים) ותרגול 1 (צפיפות מצבים בממד $d$).
+
+אם אינכם יודעים לענות על אחת השאלות, חזרו לסעיף המתאים בתרגול.
+
+</details>
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
 def build(name, cells, out):
     nb = nb_from(cells)
     # Execute a copy only to verify that every cell runs; the notebook that is saved stays
@@ -988,3 +1144,4 @@ if __name__ == "__main__":
     build("w5", w5, ROOT / "week05.ipynb")
     build("w6", w6, ROOT / "week06.ipynb")
     build("w7", w7, ROOT / "week07.ipynb")
+    build("w8", w8, ROOT / "week08.ipynb")

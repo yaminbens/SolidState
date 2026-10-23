@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>פונונים בתלת-ממד</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course palette (same as site.css): ink, blue, teal, amber. */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --fg:#12294d; --muted:#53627a; --line:#d6dde8; --soft:#eef3fb;
+  --blue:#2563eb; --teal:#0f9d8a; --amber:#f08a24; --rose:#d6455b; --edge:#12294d;
+  --f-body:"Heebo","Segoe UI",Arial,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root.dark{
+  --bg:#0e141c; --panel:#151d28; --fg:#e8eefc; --muted:#9aa8bc; --line:#2a3646; --soft:#1b2534;
+  --blue:#6aa1ff; --teal:#2dd4bf; --amber:#f6a14a; --rose:#f07a8c; --edge:#c9d6ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{padding:14px max(14px,env(safe-area-inset-left)) 28px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
+.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(18,41,77,.06)}
+.card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
+.card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none}
+#cb{cursor:crosshair} #cm{cursor:grab} #cm:active{cursor:grabbing}
+.ctl{display:flex;flex-direction:column;gap:12px}
+.lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button:focus-visible,input:focus-visible,button.act:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.row{display:grid;grid-template-columns:8.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.box p{margin:3px 0}
+.num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px;white-space:nowrap}
+output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
+.ctlrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:12px}
+@media (max-width:760px){.ctlrow{grid-template-columns:minmax(0,1fr)}}
+button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:5px 14px;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px;align-items:center}
+.grad{display:inline-block;width:90px;height:10px;border-radius:5px;vertical-align:-1px;background:linear-gradient(90deg,var(--amber),var(--blue))}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>פונונים בתלת-ממד: ענפים, קיטוב וסימטריה</h1>
+    <p class="lede">גביש קובי של אטומים זהים עם קפיצים מרכזיים בין שכנים קרובים ביותר: קשיחות <span class="num">κ_L</span> לאורך הקשר ו-<span class="num">κ_T</span> בניצב לו. בוחרים נקודה על הענפים ורואים את תנועת האטומים באופן התנודה המתאים. אין צורך להריץ דבר.</p>
+  </header>
+
+  <section class="card">
+    <h2>הענפים לאורך מסלול בין נקודות סימטריה</h2>
+    <p class="sub">הצבע הוא החלק האורכי של הקיטוב, <span class="num">|k̂·e|²</span>. לחצו או גררו על הגרף כדי לבחור וקטור גל וענף. היחידות: <span class="num">a = m = κ_L = 1</span>, כאשר a הוא צלע הקובייה.</p>
+    <canvas id="cb" width="680" height="380" aria-label="ענפי הפונונים"></canvas>
+    <div class="legend"><span>אורכי</span><span class="grad"></span><span>רוחבי</span></div>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div>
+          <div class="lab">סריג ברווה</div>
+          <div class="seg" id="sseg"><button data-s="SC">SC</button><button data-s="FCC">FCC</button></div>
+        </div>
+        <div class="row"><span class="lab" style="margin:0">κ_T / κ_L</span><input id="kt" type="range" min="0.2" max="1" step="0.01" value="0.3"><output id="kto"></output></div>
+      </div>
+      <div class="ctl"><div class="box" id="binfo"></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>תנועת האטומים</h2>
+    <p class="sub">גררו כדי לסובב. החץ הכתום הוא כיוון וקטור הגל, והחץ הכחול הוא כיוון הקיטוב (התזוזה מוגדלת). האטומים בצבע כהה יותר קרובים יותר אליכם.</p>
+    <canvas id="cm" width="680" height="440" aria-label="תנועת האטומים"></canvas>
+    <div class="ctlrow">
+      <div class="ctl"><div><button class="act" id="play" type="button">עצור</button></div></div>
+      <div class="ctl"><div class="box" id="minfo"></div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const PI = Math.PI, TAU = 2*Math.PI;
+
+/* ---------------- theme ---------------- */
+function applyTheme(){
+  let dark=false;
+  try{ const p=window.parent&&window.parent!==window?window.parent.document.documentElement:null; if(p) dark=p.classList.contains("dark"); else throw 0; }
+  catch(e){ dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  document.documentElement.classList.toggle("dark",dark);
+}
+applyTheme();
+try{ if(window.parent!==window) new MutationObserver(()=>{applyTheme(); drawStatic();}).observe(window.parent.document.documentElement,{attributes:true,attributeFilter:["class"]}); }catch(e){}
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawStatic();});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function setupCanvas(c){
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.dataset.r?+c.dataset.r:c.height/c.width;
+  c.dataset.r=ratio;
+  const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio};
+}
+function label(ctx,t,x,y,col,size,align){ ctx.font=`500 ${size||13}px `+css("--f-num"); ctx.fillStyle=col; ctx.textAlign=align||"center"; ctx.textBaseline="middle"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+const fmt=(x,d)=>(Math.abs(x)<5e-4?0:x).toFixed(d===undefined?3:d);
+function hex2rgb(h){ h=h.replace("#",""); if(h.length===3) h=h.split("").map(c=>c+c).join(""); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); }
+function mix(a,b,t){ const A=hex2rgb(a),B=hex2rgb(b); return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(",")})`; }
+
+/* ---------------- lattices ---------------- */
+const LAT = {
+  SC:  { nb: [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]],
+         pts: {"Γ":[0,0,0],"X":[.5,0,0],"M":[.5,.5,0],"R":[.5,.5,.5]}, route:["Γ","X","M","Γ","R"] },
+  FCC: { nb: [], pts: {"Γ":[0,0,0],"X":[1,0,0],"X'":[1,1,0],"K":[.75,.75,0],"L":[.5,.5,.5]}, route:["Γ","X","X'","K","Γ","L"] }
+};
+for(const a of [-1,1]) for(const b of [-1,1]){ LAT.FCC.nb.push([a/2,b/2,0],[a/2,0,b/2],[0,a/2,b/2]); }
+
+const S = { s:"FCC", kt:0.3, sel:{x:0.3, br:2}, playing:true, t:0, yaw:-0.6, pitch:0.45 };
+
+function dyn(k){
+  const D=[[0,0,0],[0,0,0],[0,0,0]], nb=LAT[S.s].nb;
+  for(const r of nb){
+    const n=Math.hypot(...r), rh=r.map(v=>v/n), s=2*Math.sin((k[0]*r[0]+k[1]*r[1]+k[2]*r[2])/2)**2;
+    for(let i=0;i<3;i++) for(let j=0;j<3;j++) D[i][j]+=s*((i===j?S.kt:0)+(1-S.kt)*rh[i]*rh[j]);
+  }
+  return D;
+}
+// Jacobi eigen-decomposition of a symmetric 3x3 matrix: returns {w:[ascending], v:[columns as arrays]}
+function eig3(A){
+  const a=A.map(r=>r.slice()), V=[[1,0,0],[0,1,0],[0,0,1]];
+  for(let sweep=0;sweep<50;sweep++){
+    let off=Math.abs(a[0][1])+Math.abs(a[0][2])+Math.abs(a[1][2]); if(off<1e-14) break;
+    for(const [p,q] of [[0,1],[0,2],[1,2]]){
+      if(Math.abs(a[p][q])<1e-16) continue;
+      const th=(a[q][q]-a[p][p])/(2*a[p][q]), t=Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1)), c=1/Math.sqrt(t*t+1), s=t*c;
+      for(let k=0;k<3;k++){ const akp=a[k][p], akq=a[k][q]; a[k][p]=c*akp-s*akq; a[k][q]=s*akp+c*akq; }
+      for(let k=0;k<3;k++){ const apk=a[p][k], aqk=a[q][k]; a[p][k]=c*apk-s*aqk; a[q][k]=s*apk+c*aqk; }
+      for(let k=0;k<3;k++){ const vkp=V[k][p], vkq=V[k][q]; V[k][p]=c*vkp-s*vkq; V[k][q]=s*vkp+c*vkq; }
+    }
+  }
+  const idx=[0,1,2].sort((i,j)=>a[i][i]-a[j][j]);
+  return {w:idx.map(i=>a[i][i]), v:idx.map(i=>[V[0][i],V[1][i],V[2][i]])};
+}
+function routeData(n){
+  const L=LAT[S.s], segs=[], ticks=[0]; let x=0;
+  for(let i=0;i<L.route.length-1;i++){ const p=L.pts[L.route[i]].map(v=>TAU*v), q=L.pts[L.route[i+1]].map(v=>TAU*v);
+    const len=Math.hypot(q[0]-p[0],q[1]-p[1],q[2]-p[2]); segs.push({p,q,x0:x,len}); x+=len; ticks.push(x); }
+  return {segs,ticks,total:x};
+}
+function kAt(x){ const R=routeData(); for(const s of R.segs){ if(x<=s.x0+s.len+1e-12){ const t=Math.max(0,Math.min(1,(x-s.x0)/s.len)); return s.p.map((v,i)=>v+t*(s.q[i]-v)); } } const s=R.segs[R.segs.length-1]; return s.q.slice(); }
+function modes(k){
+  const e=eig3(dyn(k)), kn=Math.hypot(...k);
+  return e.w.map((w2,j)=>({w:Math.sqrt(Math.max(0,w2)), e:e.v[j], L: kn>1e-9? (e.v[j][0]*k[0]+e.v[j][1]*k[1]+e.v[j][2]*k[2])**2/(kn*kn) : 0.5 }));
+}
+
+/* ---------------- panel 1: bands ---------------- */
+let G=null;
+function drawBands(){
+  const {ctx,w,h}=setupCanvas($("cb")); ctx.clearRect(0,0,w,h);
+  const R=routeData(), N=360, data=[];
+  let wmax=0;
+  for(let i=0;i<=N;i++){ const x=R.total*i/N, m=modes(kAt(x)); data.push({x,m}); wmax=Math.max(wmax,...m.map(o=>o.w)); }
+  wmax*=1.1;
+  const Lm=44,Rm=14,T=14,B=34, X=x=>Lm+x/R.total*(w-Lm-Rm), Y=o=>h-B-o/wmax*(h-T-B);
+  G={X,Y,R,wmax,Lm,Rm,T,B,w,h};
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(Lm,T); ctx.lineTo(Lm,h-B); ctx.lineTo(w-Rm,h-B); ctx.stroke();
+  R.ticks.forEach((t,i)=>{ const x=X(t); ctx.strokeStyle=css("--muted"); ctx.globalAlpha=.35; ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,h-B); ctx.stroke(); ctx.globalAlpha=1;
+    label(ctx,LAT[S.s].route[i],x,h-B+14,css("--fg"),13); });
+  for(let o=0;o<=wmax;o+=0.5){ if(Y(o)<T) break; label(ctx,o.toFixed(1),Lm-6,Y(o),css("--muted"),11,"right"); }
+  ctx.save(); ctx.translate(12,(T+h-B)/2); ctx.rotate(-PI/2); label(ctx,"ω",0,0,css("--muted"),13); ctx.restore();
+  const cT=css("--amber"), cL=css("--blue");
+  for(let j=0;j<3;j++){
+    for(let i=0;i<data.length-1;i++){ const a=data[i], b=data[i+1];
+      ctx.strokeStyle=mix(cT,cL,(a.m[j].L+b.m[j].L)/2); ctx.lineWidth=2.6;
+      ctx.beginPath(); ctx.moveTo(X(a.x),Y(a.m[j].w)); ctx.lineTo(X(b.x),Y(b.m[j].w)); ctx.stroke(); }
+  }
+  const m=modes(kAt(S.sel.x))[S.sel.br];
+  ctx.fillStyle=css("--rose"); ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(X(S.sel.x),Y(m.w),7,0,TAU); ctx.fill(); ctx.stroke();
+}
+function pick(ev){
+  if(!G) return; const r=$("cb").getBoundingClientRect(), x=ev.clientX-r.left, y=ev.clientY-r.top;
+  const xx=Math.max(0,Math.min(G.R.total,(x-G.Lm)/(G.w-G.Lm-G.Rm)*G.R.total)), o=(G.h-G.B-y)/(G.h-G.T-G.B)*G.wmax;
+  const m=modes(kAt(xx)); let best=0; m.forEach((q,j)=>{ if(Math.abs(q.w-o)<Math.abs(m[best].w-o)) best=j; });
+  S.sel={x:xx,br:best}; drawStatic();
+}
+let drag=false;
+$("cb").addEventListener("pointerdown",e=>{ drag=true; $("cb").setPointerCapture(e.pointerId); pick(e); });
+$("cb").addEventListener("pointermove",e=>{ if(drag) pick(e); });
+$("cb").addEventListener("pointerup",()=>{ drag=false; });
+
+function info(){
+  const k=kAt(S.sel.x), m=modes(k), q=m[S.sel.br];
+  const deg=m.filter(o=>Math.abs(o.w-q.w)<1e-6*Math.max(1,q.w)).length;
+  const kk=k.map(v=>v/TAU);
+  $("binfo").innerHTML=`<h3>האופן שנבחר</h3>
+  <p>וקטור הגל <span class="num">k = (2π/a)(${kk.map(v=>fmt(v,2)).join(", ")})</span></p>
+  <p>תדירות <span class="num">ω = ${fmt(q.w)}</span>, וחלק אורכי <span class="num">|k̂·e|² = ${Math.hypot(...k)>1e-9?fmt(q.L,2):"–"}</span></p>
+  <p>${deg>1?`האופן מנוון: <span class="num">${deg}</span> ענפים בתדירות הזו.`:"האופן אינו מנוון."}</p>`;
+}
+
+/* ---------------- panel 2: atoms in 3D ---------------- */
+function sites(){
+  const out=[];
+  if(S.s==="SC"){ for(let x=0;x<=3;x++) for(let y=0;y<=3;y++) for(let z=0;z<=3;z++) out.push([x,y,z]); }
+  else { for(let x=0;x<=4;x++) for(let y=0;y<=4;y++) for(let z=0;z<=4;z++) if((x+y+z)%2===0) out.push([x/2,y/2,z/2]); }
+  const c=S.s==="SC"?1.5:1; return out.map(p=>p.map(v=>v-c));
+}
+function rot(p){ const cy=Math.cos(S.yaw), sy=Math.sin(S.yaw), cp=Math.cos(S.pitch), sp=Math.sin(S.pitch);
+  const x=cy*p[0]+sy*p[1], y=-sy*p[0]+cy*p[1], z=p[2];
+  return [x, cp*y-sp*z, sp*y+cp*z]; }   // returns screen-x, depth, screen-y(up)
+function drawMotion(){
+  const {ctx,w,h}=setupCanvas($("cm")); ctx.clearRect(0,0,w,h);
+  const k=kAt(S.sel.x), q=modes(k)[S.sel.br], sc=Math.min(w,h)/(S.s==="SC"?6.2:4.6), cx=w*0.46, cy=h*0.52;
+  const amp=0.22, ph=q.w*S.t, P=[];
+  for(const r of sites()){
+    const c=Math.cos(k[0]*r[0]+k[1]*r[1]+k[2]*r[2]-ph);
+    const p=r.map((v,i)=>v+amp*q.e[i]*c), s=rot(p);
+    P.push({sx:cx+s[0]*sc, sy:cy-s[2]*sc, d:s[1]});
+  }
+  // wireframe of the bounding cube (static) as a depth cue
+  const hc=S.s==="SC"?1.5:1, C=[];
+  for(const x of [-hc,hc]) for(const y of [-hc,hc]) for(const z of [-hc,hc]) C.push([x,y,z]);
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1.2;
+  for(let i=0;i<8;i++) for(let j=i+1;j<8;j++){ const d=C[i].reduce((s,v,n)=>s+(v!==C[j][n]?1:0),0); if(d!==1) continue;
+    const a=rot(C[i]), b=rot(C[j]); ctx.beginPath(); ctx.moveTo(cx+a[0]*sc,cy-a[2]*sc); ctx.lineTo(cx+b[0]*sc,cy-b[2]*sc); ctx.stroke(); }
+  P.sort((a,b)=>b.d-a.d);
+  const dmin=Math.min(...P.map(p=>p.d)), dmax=Math.max(...P.map(p=>p.d));
+  for(const p of P){ const t=(p.d-dmin)/Math.max(1e-9,dmax-dmin);
+    ctx.fillStyle=mix(css("--teal"),css("--muted"),t); ctx.globalAlpha=1-0.45*t;
+    ctx.beginPath(); ctx.arc(p.sx,p.sy,(S.s==="SC"?7.5:7)*(1.25-0.5*t),0,TAU); ctx.fill(); }
+  ctx.globalAlpha=1;
+  // arrows: k direction and polarisation, drawn in the corner
+  const ox=w-70, oy=h-70, Lr=48;
+  const arr=(v,col,lab)=>{ const n=Math.hypot(...v); if(n<1e-9) return; const s=rot(v.map(x=>x/n)); const ex=ox+s[0]*Lr, ey=oy-s[2]*Lr;
+    ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ex,ey); ctx.stroke();
+    const an=Math.atan2(ey-oy,ex-ox); ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ex-9*Math.cos(an-.4),ey-9*Math.sin(an-.4)); ctx.lineTo(ex-9*Math.cos(an+.4),ey-9*Math.sin(an+.4)); ctx.fill();
+    label(ctx,lab,ex+12*Math.cos(an),ey+12*Math.sin(an),col,13); };
+  // axes
+  [[1,0,0,"x"],[0,1,0,"y"],[0,0,1,"z"]].forEach(([a,b,c,l])=>{ const s=rot([a,b,c]); ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+s[0]*30,oy-s[2]*30); ctx.stroke(); label(ctx,l,ox+s[0]*36,oy-s[2]*36,css("--muted"),11); });
+  arr(k,css("--amber"),"k"); arr(q.e,css("--blue"),"e");
+  const kn=Math.hypot(...k);
+  let s=`<h3>מה רואים</h3>`;
+  if(kn<1e-9) s+=`<p>במרכז אזור ברילואן כל האטומים זזים יחד: הזזה של הגביש כולו, בתדירות אפס.</p>`;
+  else if(q.L>0.98) s+=`<p>גל אורכי: האטומים זזים לאורך כיוון ההתקדמות, ונוצרים אזורי דחיסה ומתיחה.</p>`;
+  else if(q.L<0.02) s+=`<p>גל רוחבי: האטומים זזים בניצב לכיוון ההתקדמות, ומישורי אטומים מחליקים זה על זה.</p>`;
+  else s+=`<p>הקיטוב מעורב: לאורך כיוון זה אין סימטריה שמפרידה בין גל אורכי לגל רוחבי.</p>`;
+  $("minfo").innerHTML=s;
+}
+let rdrag=null;
+$("cm").addEventListener("pointerdown",e=>{ rdrag={x:e.clientX,y:e.clientY,yaw:S.yaw,pitch:S.pitch}; $("cm").setPointerCapture(e.pointerId); });
+$("cm").addEventListener("pointermove",e=>{ if(!rdrag) return; S.yaw=rdrag.yaw+(e.clientX-rdrag.x)*0.01; S.pitch=Math.max(-1.4,Math.min(1.4,rdrag.pitch+(e.clientY-rdrag.y)*0.01)); if(!S.playing) drawMotion(); });
+$("cm").addEventListener("pointerup",()=>{ rdrag=null; });
+
+/* ---------------- wiring ---------------- */
+function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
+function drawStatic(){ pressed("sseg","s",S.s); $("kto").textContent=S.kt.toFixed(2); drawBands(); info(); drawMotion(); }
+document.querySelectorAll("#sseg button").forEach(b=>b.addEventListener("click",()=>{ S.s=b.dataset.s; const R=routeData(); S.sel={x:Math.min(S.sel.x,R.total), br:S.sel.br}; drawStatic(); }));
+$("kt").addEventListener("input",e=>{ S.kt=+e.target.value; drawStatic(); });
+$("play").addEventListener("click",()=>{ S.playing=!S.playing; $("play").textContent=S.playing?"עצור":"הפעל"; if(S.playing) requestAnimationFrame(loop); });
+let last=null;
+function loop(ts){ if(!S.playing){ last=null; return; } if(last!==null) S.t+=Math.min(0.05,(ts-last)/1000)*1.4; last=ts; drawMotion(); requestAnimationFrame(loop); }
+
+function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
+  const pd=fe.ownerDocument, hh=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
+  let st=pd.getElementById("viz-fit"); if(!st){ st=pd.createElement("style"); st.id="viz-fit"; pd.head.appendChild(st); }
+  st.textContent=`article div:has(> iframe[src*="/viz/"]){display:block!important;width:100%!important;padding-bottom:0!important;height:${hh}px!important}
+article iframe[src*="/viz/"]{position:absolute;inset:0;width:100%;height:100%;border:0}`;
+}catch(e){} }
+let rt=null; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ drawStatic(); fitFrame(); },60); });
+window.addEventListener("load",fitFrame);
+if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawStatic);
+
+$("kt").value=S.kt;
+drawStatic(); fitFrame(); requestAnimationFrame(loop);
+window.__ph = { S, dyn, eig3, modes, kAt, routeData, drawStatic };
+})();
+</script>
+</body>
+</html>
