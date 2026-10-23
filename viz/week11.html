@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>קשירה הדוקה</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course palette (same as site.css): ink, blue, teal, amber. */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --fg:#12294d; --muted:#53627a; --line:#d6dde8; --soft:#eef3fb;
+  --blue:#2563eb; --teal:#0f9d8a; --amber:#f08a24; --rose:#d6455b; --edge:#12294d;
+  --f-body:"Heebo","Segoe UI",Arial,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root.dark{
+  --bg:#0e141c; --panel:#151d28; --fg:#e8eefc; --muted:#9aa8bc; --line:#2a3646; --soft:#1b2534;
+  --blue:#6aa1ff; --teal:#2dd4bf; --amber:#f6a14a; --rose:#f07a8c; --edge:#c9d6ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{padding:14px max(14px,env(safe-area-inset-left)) 28px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
+.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(18,41,77,.06)}
+.card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
+.card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none}
+#cb{cursor:crosshair} #cm{cursor:grab} #cm:active{cursor:grabbing}
+.ctl{display:flex;flex-direction:column;gap:12px}
+.lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button:focus-visible,input:focus-visible,button.act:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.row{display:grid;grid-template-columns:8.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.box p{margin:3px 0}
+.num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px;white-space:nowrap}
+output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
+.ctlrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:12px}
+@media (max-width:760px){.ctlrow{grid-template-columns:minmax(0,1fr)}}
+button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:5px 14px;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px;align-items:center}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+.grad{display:inline-block;width:90px;height:10px;border-radius:5px;vertical-align:-1px;background:linear-gradient(90deg,var(--amber),var(--blue))}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>קשירה הדוקה: סריג ריבועי ושרשרת מדומרת</h1>
+    <p class="lede">אלקטרונים בקירוב הקשירה ההדוקה, עם רמה אחת בכל אטום. האנרגיות נמדדות מ-<span class="num">ε₀</span> וביחידות של איבר המעבר לשכנים הקרובים, <span class="num">t</span>. אין צורך להריץ דבר.</p>
+  </header>
+
+  <section class="card">
+    <h2>סריג ריבועי: קווים שווי אנרגיה וצפיפות המצבים</h2>
+    <p class="sub">יחס הנפיצה <span class="num">ε(k) = −2t(cos kₓa + cos k_ya) − 4t′ cos kₓa cos k_ya</span>, עם איבר מעבר <span class="num">t′</span> לשכנים באלכסון. השטח המאוכלס באזור ברילואן הראשון צבוע, והקו העבה הוא משטח פרמי.</p>
+    <canvas id="cz" width="680" height="520" aria-label="אזור ברילואן"></canvas>
+    <canvas id="cg" width="680" height="300" aria-label="צפיפות המצבים" style="margin-top:12px"></canvas>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div class="row"><span class="lab" style="margin:0">t′ / t</span><input id="tp" type="range" min="-0.4" max="0.4" step="0.01" value="0"><output id="tpo"></output></div>
+        <div class="row"><span class="lab" style="margin:0">אלקטרונים לאטום</span><input id="ne" type="range" min="0.05" max="1.95" step="0.05" value="1"><output id="neo"></output></div>
+      </div>
+      <div class="box" id="sinfo"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>שרשרת מדומרת: המעבר של פיירלס</h2>
+    <p class="sub">שרשרת שבה איברי המעבר מתחלפים, <span class="num">t + δ</span> ו-<span class="num">t − δ</span>, עם אלקטרון אחד לאטום. למעלה: שני הפסים באזור ברילואן של התא הכפול (הקו המנוקד: <span class="num">δ = 0</span>), והפס התחתון מאוכלס. למטה: האנרגיה לאטום, יחסית לשרשרת האחידה, של האלקטרונים ושל הסריג (מחיר אלסטי <span class="num">κ (δ/t)² t</span>).</p>
+    <canvas id="cp" width="680" height="300" aria-label="פסים של שרשרת מדומרת"></canvas>
+    <canvas id="ce" width="680" height="300" aria-label="אנרגיה כתלות בדימור" style="margin-top:12px"></canvas>
+    <div class="ctlrow">
+      <div class="ctl">
+        <div class="row"><span class="lab" style="margin:0">δ / t</span><input id="dl" type="range" min="0" max="0.4" step="0.005" value="0.15"><output id="dlo"></output></div>
+        <div class="row"><span class="lab" style="margin:0">κ (קשיחות)</span><input id="ka" type="range" min="0.8" max="3" step="0.05" value="1.7"><output id="kao"></output></div>
+      </div>
+      <div class="box" id="pinfo"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const PI = Math.PI, TAU = 2*Math.PI;
+function applyTheme(){
+  let dark=false;
+  try{ const p=window.parent&&window.parent!==window?window.parent.document.documentElement:null; if(p) dark=p.classList.contains("dark"); else throw 0; }
+  catch(e){ dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  document.documentElement.classList.toggle("dark",dark);
+}
+applyTheme();
+try{ if(window.parent!==window) new MutationObserver(()=>{applyTheme(); drawAll(false);}).observe(window.parent.document.documentElement,{attributes:true,attributeFilter:["class"]}); }catch(e){}
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawAll(false);});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function setupCanvas(c){
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.dataset.r?+c.dataset.r:c.height/c.width;
+  c.dataset.r=ratio; const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio};
+}
+function label(ctx,t,x,y,col,size,align){ ctx.font=`500 ${size||12}px `+css("--f-num"); ctx.fillStyle=col; ctx.textAlign=align||"center"; ctx.textBaseline="middle"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+const fmt=(x,d)=>(Math.abs(x)<5e-4?0:x).toFixed(d===undefined?3:d);
+function hex2rgb(h){ h=h.replace("#",""); if(h.length===3) h=h.split("").map(c=>c+c).join(""); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); }
+function mix(a,b,f){ return a.map((v,i)=>Math.round(v*(1-f)+b[i]*f)); }
+
+/* ---------------- physics ---------------- */
+const S = { tp:0, ne:1, dl:0.15, ka:1.7 };
+function epsSq(kx,ky,tp){ const cx=Math.cos(kx), cy=Math.cos(ky); return -2*(cx+cy)-4*tp*cx*cy; }   // units t, a = 1
+const NS=600;   // DoS sampling grid per direction (one BZ)
+let sqc=null;
+function dosSq(tp){
+  const E=new Float64Array(NS*NS); let lo=1e9, hi=-1e9;
+  for(let i=0;i<NS;i++){ const kx=-PI+TAU*(i+0.31)/NS, cx=Math.cos(kx);
+    for(let j=0;j<NS;j++){ const ky=-PI+TAU*(j+0.53)/NS, cy=Math.cos(ky), e=-2*(cx+cy)-4*tp*cx*cy; E[i*NS+j]=e; if(e<lo) lo=e; if(e>hi) hi=e; } }
+  const nb=160, h=new Float64Array(nb), de=(hi-lo)/nb;
+  for(let i=0;i<E.length;i++){ let b=Math.floor((E[i]-lo)/de); if(b>=nb) b=nb-1; h[b]++; }
+  const g=Array.from(h,v=>2*v/(E.length*de)), c=Array.from(h,(v,i)=>lo+(i+0.5)*de);
+  const sorted=E.slice().sort();
+  return {E:sorted, lo, hi, g, c, tp};
+}
+function fermi(d,ne){ const i=Math.min(d.E.length-1,Math.max(0,Math.round(ne/2*d.E.length)-1)); return d.E[i]; }
+function ellE(dl){ // integral_0^{pi/2} sqrt(cos^2 x + dl^2 sin^2 x) dx (Simpson)
+  const n=400, h=(PI/2)/n; let s=0;
+  for(let i=0;i<=n;i++){ const x=i*h, f=Math.sqrt(Math.cos(x)**2+dl*dl*Math.sin(x)**2); s+=f*(i===0||i===n?1:(i%2?4:2)); }
+  return s*h/3;
+}
+function peierls(dl){ return -(4/PI)*(ellE(dl)-1); }    // E_d - E_0 per atom, both spins, units t
+
+/* marching squares for one level on a grid Z[i][j] (i: x, j: y) */
+function isoline(ctx,Z,n,level,X,Y){
+  const xs=i=>X(-PI+TAU*i/(n-1)), ys=j=>Y(-PI+TAU*j/(n-1));
+  ctx.beginPath();
+  for(let i=0;i<n-1;i++) for(let j=0;j<n-1;j++){
+    const a=Z[i][j]-level, b=Z[i+1][j]-level, c=Z[i+1][j+1]-level, d=Z[i][j+1]-level;
+    const pts=[];
+    const ed=(p,q,x1,y1,x2,y2)=>{ if((p<0)!==(q<0)){ const f=p/(p-q); pts.push([x1+f*(x2-x1), y1+f*(y2-y1)]); } };
+    ed(a,b,xs(i),ys(j),xs(i+1),ys(j)); ed(b,c,xs(i+1),ys(j),xs(i+1),ys(j+1)); ed(c,d,xs(i+1),ys(j+1),xs(i),ys(j+1)); ed(d,a,xs(i),ys(j+1),xs(i),ys(j));
+    if(pts.length===2){ ctx.moveTo(pts[0][0],pts[0][1]); ctx.lineTo(pts[1][0],pts[1][1]); }
+    else if(pts.length===4){ ctx.moveTo(pts[0][0],pts[0][1]); ctx.lineTo(pts[1][0],pts[1][1]); ctx.moveTo(pts[2][0],pts[2][1]); ctx.lineTo(pts[3][0],pts[3][1]); }
+  }
+  ctx.stroke();
+}
+
+/* ---------------- panel 1: square lattice ---------------- */
+function drawZone(eF){
+  const {ctx,w,h}=setupCanvas($("cz")); ctx.clearRect(0,0,w,h);
+  const sz=Math.min(w,h)-44, ox=(w-sz)/2, oy=(h-sz)/2, X=x=>ox+(x+PI)/TAU*sz, Y=y=>oy+(PI-y)/TAU*sz;
+  const n=161, Z=[]; for(let i=0;i<n;i++){ Z.push([]); for(let j=0;j<n;j++) Z[i].push(epsSq(-PI+TAU*i/(n-1),-PI+TAU*j/(n-1),S.tp)); }
+  // occupied region: opaque mixed colors on integer rects
+  const occ=mix(hex2rgb(css("--soft")),hex2rgb(css("--blue")),0.28), emp=hex2rgb(css("--soft"));
+  const m=120, cell=sz/m;
+  for(let i=0;i<m;i++) for(let j=0;j<m;j++){ const kx=-PI+TAU*(i+0.5)/m, ky=PI-TAU*(j+0.5)/m, c=epsSq(kx,ky,S.tp)<=eF?occ:emp;
+    ctx.fillStyle=`rgb(${c.join(",")})`; const x0=Math.floor(ox+i*cell), y0=Math.floor(oy+j*cell); ctx.fillRect(x0,y0,Math.floor(ox+(i+1)*cell)-x0+1,Math.floor(oy+(j+1)*cell)-y0+1); }
+  ctx.strokeStyle=css("--blue"); ctx.globalAlpha=0.55; ctx.lineWidth=1;
+  for(let L=-5;L<=5;L+=1){ if(Math.abs(L-eF)<1e-9) continue; isoline(ctx,Z,n,L,X,Y); }
+  ctx.globalAlpha=1; ctx.strokeStyle=css("--amber"); ctx.lineWidth=3; isoline(ctx,Z,n,eF,X,Y);
+  ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.6; ctx.strokeRect(ox,oy,sz,sz);
+  const dot=(x,y,s,dx,dy)=>{ ctx.fillStyle=css("--fg"); ctx.beginPath(); ctx.arc(X(x),Y(y),3.5,0,TAU); ctx.fill(); label(ctx,s,X(x)+dx,Y(y)+dy,css("--fg"),13); };
+  dot(0,0,"Γ",12,-10); dot(PI,0,"X",-12,-12); dot(0,PI,"X",12,12); dot(-PI,0,"X",12,-12); dot(0,-PI,"X",12,-12); dot(PI,PI,"M",-14,12);
+  label(ctx,"kₓ",ox+sz/2,oy+sz+18,css("--muted"),12); label(ctx,"π/a",ox+sz,oy+sz+18,css("--muted"),11); label(ctx,"−π/a",ox,oy+sz+18,css("--muted"),11);
+}
+function drawDos(d,eF){
+  const {ctx,w,h}=setupCanvas($("cg")); ctx.clearRect(0,0,w,h);
+  const L=46,R=14,T=12,B=34, e0=-5.8, e1=5.8, gmax=0.75, X=e=>L+(e-e0)/(e1-e0)*(w-L-R), Y=g=>h-B-Math.min(g,gmax)/gmax*(h-T-B);
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
+  for(let e=-4;e<=4;e+=2) label(ctx,String(e),X(e),h-B+14,css("--muted"),11);
+  label(ctx,"(ε − ε₀)/t",w-R-40,h-B+28,css("--muted"),11);
+  for(let g=0;g<=0.6;g+=0.2) label(ctx,g.toFixed(1),L-8,Y(g),css("--muted"),11,"right");
+  // occupied fill
+  ctx.fillStyle=css("--blue"); ctx.globalAlpha=0.18; ctx.beginPath(); ctx.moveTo(X(d.c[0]),Y(0));
+  for(let i=0;i<d.c.length&&d.c[i]<=eF;i++) ctx.lineTo(X(d.c[i]),Y(d.g[i]));
+  ctx.lineTo(X(Math.min(eF,d.hi)),Y(0)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.2; ctx.beginPath(); d.c.forEach((e,i)=>{ const x=X(e), y=Y(d.g[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke();
+  const eX=4*S.tp;
+  ctx.strokeStyle=css("--muted"); ctx.setLineDash([3,4]); ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(X(eX),T); ctx.lineTo(X(eX),h-B); ctx.stroke(); ctx.setLineDash([]);
+  label(ctx,"ε(X)",X(eX)+22,h-B-10,css("--muted"),11);
+  ctx.strokeStyle=css("--amber"); ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(X(eF),T); ctx.lineTo(X(eF),h-B); ctx.stroke();
+  label(ctx,"ε_F",X(eF)-18,T+24,css("--amber"),12);
+  label(ctx,"g [1/t per atom]",L+58,T+4,css("--muted"),11);
+}
+function drawSquare(recompute){
+  if(recompute||!sqc||sqc.tp!==S.tp) sqc=dosSq(S.tp);
+  const eF=fermi(sqc,S.ne);
+  drawZone(eF); drawDos(sqc,eF);
+  let gF=0; for(let i=0;i<sqc.c.length;i++) if(Math.abs(sqc.c[i]-eF)<=(sqc.c[1]-sqc.c[0])/2) gF=sqc.g[i];
+  $("sinfo").innerHTML=`<h3>הפס והמילוי</h3>
+  <p>תחתית הפס (Γ): <span class="num">${fmt(-4-4*S.tp,2)} t</span>, פסגת הפס (M): <span class="num">${fmt(4-4*S.tp,2)} t</span></p>
+  <p>נקודות האוכף X: <span class="num">ε(X) = ${fmt(4*S.tp,2)} t</span></p>
+  <p>אנרגיית פרמי: <span class="num">ε_F = ${fmt(eF,3)} t</span></p><p>צפיפות המצבים בה: <span class="num">g(ε_F) ≈ ${fmt(gF,2)} / t</span> לאטום</p>`;
+}
+
+/* ---------------- panel 2: Peierls ---------------- */
+let pc=null;
+function peierlsCurve(){ const ds=[]; for(let i=0;i<=160;i++) ds.push(0.4*i/160); pc={ds, el:ds.map(d=>d>0?peierls(d):0)}; }
+function drawPBands(){
+  const {ctx,w,h}=setupCanvas($("cp")); ctx.clearRect(0,0,w,h);
+  const L=46,R=14,T=12,B=34, X=k=>L+(k+PI/2)/PI*(w-L-R), Y=e=>h-B-(e+2.4)/4.8*(h-T-B);
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
+  [[-PI/2,"−π/2a"],[0,"0"],[PI/2,"π/2a"]].forEach(([k,s])=>label(ctx,s,X(k),h-B+14,css("--muted"),11));
+  for(let e=-2;e<=2;e+=1) label(ctx,String(e),L-8,Y(e),css("--muted"),11,"right");
+  const N=300, ks=[]; for(let i=0;i<=N;i++) ks.push(-PI/2+PI*i/N);
+  const ep=ks.map(k=>2*Math.sqrt(Math.cos(k)**2+S.dl*S.dl*Math.sin(k)**2));
+  ctx.fillStyle=css("--blue"); ctx.globalAlpha=0.16; ctx.beginPath(); ctx.moveTo(X(ks[0]),Y(-2.4)); ks.forEach((k,i)=>ctx.lineTo(X(k),Y(-ep[i]))); ctx.lineTo(X(ks[N]),Y(-2.4)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+  ctx.strokeStyle=css("--muted"); ctx.lineWidth=1.3; ctx.setLineDash([2,3]);
+  [1,-1].forEach(s=>{ ctx.beginPath(); ks.forEach((k,i)=>{ const y=Y(s*2*Math.abs(Math.cos(k))); i?ctx.lineTo(X(k),y):ctx.moveTo(X(k),y); }); ctx.stroke(); }); ctx.setLineDash([]);
+  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.4;
+  [1,-1].forEach(s=>{ ctx.beginPath(); ks.forEach((k,i)=>{ const y=Y(s*ep[i]); i?ctx.lineTo(X(k),y):ctx.moveTo(X(k),y); }); ctx.stroke(); });
+  label(ctx,"(ε − ε₀)/t",L+34,T+4,css("--muted"),11);
+}
+function drawPEnergy(){
+  if(!pc) peierlsCurve();
+  const {ctx,w,h}=setupCanvas($("ce")); ctx.clearRect(0,0,w,h);
+  const L=58,R=14,T=12,B=34, ymax=0.03, X=d=>L+d/0.4*(w-L-R), Y=e=>h-B-(e+ymax)/(2*ymax)*(h-T-B);
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(L,Y(0)); ctx.lineTo(w-R,Y(0)); ctx.stroke();
+  for(let d=0;d<=0.4001;d+=0.1) label(ctx,d.toFixed(1),X(d),h-B+14,css("--muted"),11);
+  label(ctx,"δ/t",w-R-14,h-B+28,css("--muted"),11);
+  for(let e=-0.03;e<=0.0301;e+=0.01) label(ctx,e.toFixed(2),L-8,Y(e),css("--muted"),11,"right");
+  const el=pc.el, la=pc.ds.map(d=>S.ka*d*d), tot=el.map((v,i)=>v+la[i]);
+  const line=(arr,col,dash,lw)=>{ ctx.strokeStyle=col; ctx.setLineDash(dash); ctx.lineWidth=lw; ctx.beginPath(); pc.ds.forEach((d,i)=>{ const y=Y(arr[i]); i?ctx.lineTo(X(d),y):ctx.moveTo(X(d),y); }); ctx.stroke(); ctx.setLineDash([]); };
+  ctx.save(); ctx.beginPath(); ctx.rect(L,T,w-L-R,h-T-B); ctx.clip();
+  line(el,css("--blue"),[],2.2); line(la,css("--amber"),[6,4],1.8); line(tot,css("--teal"),[9,3,2,3],2.4); ctx.restore();
+  let im=0; tot.forEach((v,i)=>{ if(v<tot[im]) im=i; });
+  ctx.fillStyle=css("--teal"); ctx.beginPath(); ctx.arc(X(pc.ds[im]),Y(tot[im]),4.5,0,TAU); ctx.fill();
+  ctx.strokeStyle=css("--fg"); ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(X(S.dl),T); ctx.lineTo(X(S.dl),h-B); ctx.stroke(); ctx.setLineDash([]);
+  const lg=[["אלקטרונים",css("--blue")],["סריג",css("--amber")],["סך הכל",css("--teal")]];
+  ctx.font="500 12px "+css("--f-body"); ctx.direction="rtl"; ctx.textAlign="right"; ctx.textBaseline="middle";
+  lg.forEach(([s,c],i)=>{ const y=T+10+i*17; ctx.fillStyle=c; ctx.fillRect(w-R-14,y-2,12,4); ctx.fillStyle=css("--fg"); ctx.fillText(s,w-R-20,y); });
+  return {dstar:pc.ds[im], emin:tot[im]};
+}
+function drawPeierls(){
+  drawPBands(); const m=drawPEnergy();
+  const e=S.dl>0?peierls(S.dl):0;
+  $("pinfo").innerHTML=`<h3>הפער והאנרגיה</h3>
+  <p>הפער בקצה האזור: <span class="num">4δ = ${fmt(4*S.dl,3)} t</span></p>
+  <p>שינוי האנרגיה של האלקטרונים: <span class="num">${fmt(e,4)} t</span> לאטום</p>
+  <p>המינימום של האנרגיה הכוללת: <span class="num">δ* = ${fmt(m.dstar,3)} t</span>, פער <span class="num">${fmt(4*m.dstar,3)} t</span></p>`;
+}
+
+function drawAll(recompute){ $("tpo").textContent=S.tp.toFixed(2); $("neo").textContent=S.ne.toFixed(2); $("dlo").textContent=S.dl.toFixed(3); $("kao").textContent=S.ka.toFixed(2); drawSquare(recompute); drawPeierls(); }
+let tmr=null;
+$("tp").addEventListener("input",e=>{ S.tp=+e.target.value; $("tpo").textContent=S.tp.toFixed(2); clearTimeout(tmr); tmr=setTimeout(()=>drawSquare(true),40); });
+$("ne").addEventListener("input",e=>{ S.ne=+e.target.value; $("neo").textContent=S.ne.toFixed(2); drawSquare(false); });
+$("dl").addEventListener("input",e=>{ S.dl=+e.target.value; $("dlo").textContent=S.dl.toFixed(3); drawPeierls(); });
+$("ka").addEventListener("input",e=>{ S.ka=+e.target.value; $("kao").textContent=S.ka.toFixed(2); drawPeierls(); });
+
+function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
+  const pd=fe.ownerDocument, hh=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
+  let st=pd.getElementById("viz-fit"); if(!st){ st=pd.createElement("style"); st.id="viz-fit"; pd.head.appendChild(st); }
+  st.textContent=`article div:has(> iframe[src*="/viz/"]){display:block!important;width:100%!important;padding-bottom:0!important;height:${hh}px!important}
+article iframe[src*="/viz/"]{position:absolute;inset:0;width:100%;height:100%;border:0}`;
+}catch(e){} }
+let rt=null; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ drawAll(false); fitFrame(); },60); });
+window.addEventListener("load",fitFrame);
+if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>drawAll(false));
+$("tp").value=S.tp; $("ne").value=S.ne; $("dl").value=S.dl; $("ka").value=S.ka;
+drawAll(true); fitFrame();
+window.__tb = { S, epsSq, dosSq, fermi, peierls, drawAll };
+})();
+</script>
+</body>
+</html>

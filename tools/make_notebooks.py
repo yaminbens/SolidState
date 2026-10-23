@@ -1431,6 +1431,150 @@ plt.show()
 """),
 ]
 
+# ------------------------------------------------------------------ week 11
+w11 = [
+("md", header(11, "שבוע 11 · קשירה הדוקה: צפיפות המצבים", "הדגמה לתרגול 11 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+בקירוב הקשירה ההדוקה עם רמה אחת בכל אטום של סריג ברווה, יחס הנפיצה הוא טור פורייה של איברי המעבר:
+$$\varepsilon(\mathbf k)=\varepsilon_0-t\sum_{\mathbf R}e^{i\mathbf k\cdot\mathbf R},$$
+כאשר הסכום הוא על השכנים $\mathbf R$ שאליהם האלקטרון יכול לקפוץ, כולם עם אותו איבר מעבר $t$. המחברת מקבלת רשימה של וקטורי השכנים (ביחידות של $a$), מחשבת את $\varepsilon(\mathbf k)$ על רשת צפופה של נקודות $\mathbf k$, ובונה מהן את צפיפות המצבים $g(\varepsilon)$ כהיסטוגרמה. ממנה מוצאים את אנרגיית פרמי עבור מספר נתון של אלקטרונים לאטום, ומשווים לצפיפות המצבים של אלקטרון חופשי עם המסה האפקטיבית של תחתית הפס.
+
+**יחידות:** אורכים ביחידות של $a$, אנרגיות ביחידות של $t$, ו-$\varepsilon_0=0$. צפיפות המצבים היא למצבים לאטום, כולל שני מצבי ספין, כך שהשטח מתחת לגרף הוא 2.
+
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week11-tb) עם סריג ריבועי ושרשרת מדומרת.
+"""),
+("code", """
+import numpy as np
+import matplotlib.pyplot as plt
+from itertools import combinations
+from math import gamma
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+- `neighbours` – רשימת וקטורי השכנים $\mathbf R$ ביחידות של $a$ (כל וקטור הוא tuple; מספר הרכיבים קובע את הממד). כל וקטור צריך להופיע יחד עם הנגדי לו.
+- `t` – איבר המעבר.
+- `electrons_per_atom` – מספר אלקטרוני ההולכה לאטום (בין 0 ל-2).
+- `n_points` – מספר נקודות $\mathbf k$ בסך הכל (יותר: חלק יותר, איטי יותר).
+- `bins` – מספר העמודות בהיסטוגרמה.
+"""),
+("code", """
+# ---- Parameters ----
+neighbours = [(1, 0), (-1, 0), (0, 1), (0, -1)]   # vectors R in units of a
+t = 1.0                     # hopping (energy unit)
+electrons_per_atom = 1.0    # conduction electrons per atom (0 to 2)
+n_points = 1_000_000        # total number of k points
+bins = 120                  # histogram bins
+"""),
+("md", r"""
+### 1. יחס הנפיצה
+מחשבים את $\varepsilon(\mathbf k)$ על רשת אחידה בקובייה $0\le k_i<4\pi/a$, שמכילה מספר שלם של אזורי ברילואן לכל סריג שהשכנים שלו בעלי רכיבים שלמים או חצאי שלמים. בממד אחד מציירים את $\varepsilon(k)$, בשני ממדים קווים שווי אנרגיה, ובשלושה ממדים חתך ב-$k_z=0$. הקו העבה הוא משטח פרמי.
+
+> 🔮 **נחשו:** היכן נמצאות תחתית הפס והפסגה שלו, ומה רוחב הפס?
+"""),
+("code", """
+R = np.array(neighbours, float)
+d = R.shape[1]
+nk = int(round(n_points ** (1 / d)))
+offsets = [0.31, 0.53, 0.71][:d]          # shifted grid avoids accidental degeneracies
+axes = [(np.arange(nk) + o) * 4 * np.pi / nk for o in offsets]
+K = np.stack(np.meshgrid(*axes, indexing="ij"), -1).reshape(-1, d)
+E = -t * np.cos(K @ R.T).sum(axis=1)       # eps(k) - eps0; the sum over +R and -R is real
+
+E_sorted = np.sort(E)
+i_F = int(round(electrons_per_atom / 2 * len(E))) - 1
+eF = E_sorted[min(max(i_F, 0), len(E) - 1)]
+print(f"dimension d = {d},  {len(R)} neighbours,  {len(E)} k points")
+print(f"band bottom = {E.min():.3f} t,  band top = {E.max():.3f} t,  width = {E.max() - E.min():.3f} t")
+print(f"Fermi energy for {electrons_per_atom} electrons per atom: eF - eps0 = {eF:.3f} t")
+
+def eps(kvecs):
+    return -t * np.cos(np.asarray(kvecs) @ R.T).sum(axis=-1)
+
+k1 = np.linspace(-2 * np.pi, 2 * np.pi, 301)
+plt.figure(figsize=(5, 4))
+if d == 1:
+    plt.plot(k1 / np.pi, eps(k1[:, None]), color="C0")
+    plt.axhline(eF, color="C1", lw=2, label="Fermi energy"); plt.legend(frameon=False)
+    plt.xlabel("k a / pi"); plt.ylabel("energy / t")
+else:
+    KX, KY = np.meshgrid(k1, k1)
+    pts = np.stack([KX, KY] + [np.zeros_like(KX)] * (d - 2), -1)
+    Z = eps(pts)
+    plt.contour(KX / np.pi, KY / np.pi, Z, levels=14, colors="C0", linewidths=0.8, linestyles="solid")
+    plt.contour(KX / np.pi, KY / np.pi, Z, levels=[eF], colors="C1", linewidths=2.2)
+    plt.gca().set_aspect("equal")
+    plt.xlabel("kx a / pi"); plt.ylabel("ky a / pi")
+    plt.title("constant energy lines" + (" (cut at kz = 0)" if d == 3 else "") + ", thick: Fermi energy")
+plt.show()
+"""),
+("md", r"""
+### 2. צפיפות המצבים
+ההיסטוגרמה של כל הערכים $\varepsilon(\mathbf k)$, מנורמלת כך שהשטח מתחתיה הוא 2 מצבים לאטום. המצבים מתחת לאנרגיית פרמי מאוכלסים.
+
+> 🔮 **נחשו:** האם צפיפות המצבים תהיה גדולה יותר בקצות הפס או באמצעו?
+"""),
+("code", """
+h, edges = np.histogram(E, bins=bins, range=(E.min(), E.max()))
+de = edges[1] - edges[0]
+centres = 0.5 * (edges[1:] + edges[:-1])
+g = 2 * h / (len(E) * de)                 # states per atom per unit energy, both spins
+
+plt.figure(figsize=(6, 3.4))
+plt.plot(centres, g, color="C0", lw=1.8, label="tight binding")
+plt.fill_between(centres, 0, g, where=centres <= eF, color="C0", alpha=0.2, label="occupied")
+plt.axvline(eF, color="C1", lw=1.5, ls="-.", label="Fermi energy")
+plt.xlabel("(energy - eps0) / t"); plt.ylabel("g  [states per atom per t]")
+plt.ylim(0, 1.15 * np.percentile(g, 99)); plt.legend(frameon=False)
+plt.show()
+print(f"g at the Fermi energy: {np.interp(eF, centres, g):.3f} per atom per t")
+"""),
+("md", r"""
+### 3. השוואה לאלקטרון חופשי עם מסה אפקטיבית
+ליד תחתית הפס, $\mathbf k=0$, אפשר לפתח $\varepsilon(\mathbf k)\approx\varepsilon_{\min}+\frac12\sum_{ij}M_{ij}k_ik_j$ עם $M_{ij}=t\sum_{\mathbf R}R_iR_j$ (זו מטריצת $\hbar^2/m^*$). צפיפות המצבים של אלקטרון חופשי עם אותה מסה היא הקו המקווקו. לשם כך צריך גם את הנפח לאטום, $v$; המחברת מוצאת אותו כנפח הקטן ביותר של תא שנפרש על ידי $d$ מהשכנים.
+
+> 🔮 **נחשו:** בכמה מרוחב הפס, מעל התחתית, הקירוב הזה עדיין טוב?
+"""),
+("code", """
+M = t * R.T @ R                                            # hbar^2 / m*  (units t a^2)
+v = min(abs(np.linalg.det(R[list(c)])) for c in combinations(range(len(R)), d)
+        if abs(np.linalg.det(R[list(c)])) > 1e-9)           # volume per atom (units a^d)
+Vd = np.pi ** (d / 2) / gamma(d / 2 + 1)                    # volume of the unit ball in d dimensions
+D = centres - E.min()
+g_free = np.where(D > 0, 2 * v * Vd * (d / 2) * 2 ** (d / 2) * np.abs(D) ** (d / 2 - 1)
+                  / (np.sqrt(np.linalg.det(M)) * (2 * np.pi) ** d), 0.0)
+print("hbar^2/m* tensor (units t a^2):"); print(M)
+print(f"volume per atom v = {v:.3f} a^{d}")
+
+lower = centres < 0.5 * (E.min() + E.max())
+plt.figure(figsize=(6, 3.4))
+plt.plot(centres, g, color="C0", lw=1.8, label="tight binding")
+plt.plot(centres[lower], g_free[lower], "--", color="C1", lw=1.6, label="effective mass")
+plt.xlabel("(energy - eps0) / t"); plt.ylabel("g  [states per atom per t]")
+plt.ylim(0, 1.15 * np.percentile(g, 99)); plt.legend(frameon=False)
+plt.show()
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. מדוע צפיפות המצבים של הסריג הריבועי מתבדרת באמצע הפס, ומה מיוחד בקווים שווי האנרגיה באנרגיה זו?
+2. מדוע צפיפות המצבים סימטרית סביב $\varepsilon_0$ בסריג הריבועי? האם זה נכון לכל סריג?
+3. כיצד מתנהגת צפיפות המצבים בקצות הפס בממד אחד, בשניים ובשלושה, ומדוע?
+
+<details>
+<summary>🗝️ הכוונה לתשובות (לחצו לפתיחה)</summary>
+
+1. תרגול 11, סעיף 2 (תרגיל 1) וסעיף 3 (נקודות אוכף).
+2. תרגול 11, סעיף 2, ותרגיל הבית, שאלה 3(ד).
+3. תרגול 11, סעיף 3, ותרגול 1 (צפיפות המצבים בממד $d$).
+
+אם אינכם יודעים לענות על אחת השאלות, חזרו לסעיף המתאים בתרגול.
+
+</details>
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
+
 def build(name, cells, out):
     nb = nb_from(cells)
     # Execute a copy only to verify that every cell runs; the notebook that is saved stays
@@ -1453,3 +1597,4 @@ if __name__ == "__main__":
     build("w8", w8, ROOT / "week08.ipynb")
     build("w9", w9, ROOT / "week09.ipynb")
     build("w10", w10, ROOT / "week10.ipynb")
+    build("w11", w11, ROOT / "week11.ipynb")

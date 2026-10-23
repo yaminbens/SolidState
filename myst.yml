@@ -26,6 +26,8 @@ project:
     - file: week09-kp.md
     - file: week10.ipynb
     - file: week10-nfe.md
+    - file: week11.ipynb
+    - file: week11-tb.md
 site:
   template: book-theme
   title: מבוא למצב מוצק תשפ״ז
