@@ -1125,6 +1125,187 @@ print(f"low-temperature slope of log c vs log T: {slope:.2f}")
 """),
 ]
 
+# ------------------------------------------------------------------ week 9
+w9 = [
+("md", header(9, "שבוע 9 · פסים בפוטנציאל מחזורי: מטריצת המעבר", "הדגמה לתרגול 9 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+## תיאור ההדגמה
+אלקטרון בשרשרת חד-ממדית של בארות פוטנציאל: בכל תא יחידה באר ברוחב $w$ (פוטנציאל 0) ומחסום ברוחב $b$ ובגובה $v_0$, כך שקבוע הסריג הוא $a=w+b$. כמו בתרגול, לכל אנרגיה $\varepsilon$ מחשבים את מטריצת המעבר $M(\varepsilon)$, שמעבירה את $(\psi,\psi')$ מתחילת תא לתחילת התא הבא, ומשפט בלוך נותן
+$$\cos ka=\tfrac12\,\mathrm{Tr}\,M(\varepsilon).$$
+אנרגיות שבהן $|\tfrac12\mathrm{Tr}\,M|\le1$ שייכות לפסים, והשאר הן פערים. המחברת:
+1. בונה את $M(\varepsilon)$ ובודקת ש-$\det M=1$;
+2. מציירת את $\tfrac12\mathrm{Tr}\,M(\varepsilon)$ ומוצאת את הפסים;
+3. מציירת את יחס הנפיצה $\varepsilon(k)$ לעומת אלקטרון חופשי;
+4. מחשבת את הרוחב של הפס הנמוך ביותר כתלות בעובי המחסום.
+
+**יחידות:** אורכים ב-nm ואנרגיות ב-eV, עם מסת אלקטרון חופשי: $\hbar^2/2m=0.0381\ \mathrm{eV\cdot nm^2}$.
+
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week09-kp) עם מודל קרוניג-פני של פונקציות דלתא.
+"""),
+("code", """
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+
+C = 0.0381          # hbar^2 / (2 m_e) in eV nm^2
+"""),
+("md", r"""
+### ⚙️ פרמטרים
+- `v0` – גובה המחסום (eV).
+- `w` – רוחב הבאר (nm).
+- `b` – עובי המחסום (nm), בחלקים 1 עד 3.
+- `E_max` – האנרגיה הגבוהה ביותר בגרפים (eV).
+- `b_values` – עוביי המחסום שעבורם מחשבים בחלק 4 את רוחב הפס הנמוך ביותר.
+"""),
+("code", """
+# ---- Parameters ----
+v0 = 0.5                              # barrier height (eV)
+w = 1.0                               # well width (nm)
+b = 0.3                               # barrier thickness (nm), parts 1-3
+E_max = 1.5                           # highest energy shown (eV)
+b_values = np.linspace(0.2, 1.0, 9)   # barrier thicknesses for part 4 (nm)
+"""),
+("md", r"""
+### 1. מטריצת המעבר
+בתחום שבו הפוטנציאל קבוע $V$, הפתרון של משוואת שרדינגר באנרגיה $\varepsilon$ הוא צירוף של $\cos qx$ ו-$\sin qx$ עם $q^2=(\varepsilon-V)/(\hbar^2/2m)$, או של $\cosh$ ו-$\sinh$ כאשר $\varepsilon<V$. המטריצה של תחום אחד מעבירה את $(\psi,\psi')$ מקצה אחד שלו לקצה השני; המטריצה של תא שלם היא המכפלה של המטריצות של הבאר ושל המחסום.
+
+> 🔮 **נחשו:** מה צריכה להיות הדטרמיננטה של $M$ לכל אנרגיה, ולמה?
+"""),
+("code", """
+def region(E, V, L):
+    # transfer matrix of a region of length L with constant potential V: (psi, psi') -> (psi, psi')
+    q2 = (E - V) / C
+    if q2 > 0:
+        q = np.sqrt(q2)
+        return np.array([[np.cos(q * L), np.sin(q * L) / q], [-q * np.sin(q * L), np.cos(q * L)]])
+    if q2 < 0:
+        k = np.sqrt(-q2)
+        return np.array([[np.cosh(k * L), np.sinh(k * L) / k], [k * np.sinh(k * L), np.cosh(k * L)]])
+    return np.array([[1.0, L], [0.0, 1.0]])
+
+def cell(E, v0=v0, w=w, b=b):
+    # one unit cell: well (V = 0, width w) followed by a barrier (V = v0, width b)
+    return region(E, v0, b) @ region(E, 0.0, w)
+
+def half_trace(E, v0=v0, w=w, b=b):
+    return 0.5 * np.trace(cell(E, v0, w, b))
+
+a = w + b
+print(f"lattice constant a = {a:.3f} nm")
+for E in [0.05, 0.3, 0.9]:
+    print(f"E = {E:4.2f} eV:   det M = {np.linalg.det(cell(E)):.12f}   (1/2) Tr M = {half_trace(E):+.4f}")
+"""),
+("md", r"""
+### 2. הפסים
+מציירים את $\tfrac12\mathrm{Tr}\,M(\varepsilon)$. התחומים שבהם הגרף בתוך הרצועה $[-1,1]$ הם הפסים (מסומנים בפס כחול בתחתית), ומודפסות הקצוות והרוחב של כל פס.
+
+> 🔮 **נחשו:** האם הפסים יהיו רחבים יותר באנרגיות נמוכות או גבוהות? למה?
+"""),
+("code", """
+E = np.linspace(1e-5, E_max, 30000)
+f = np.array([half_trace(e) for e in E])
+allowed = np.abs(f) <= 1
+
+def band_edges(E, f, v0=v0, w=w, b=b):
+    # contiguous allowed intervals, with edges refined by root finding on (1/2) Tr M = +-1
+    ok = np.abs(f) <= 1
+    out, i = [], 0
+    while i < len(E):
+        if ok[i]:
+            j = i
+            while j + 1 < len(E) and ok[j + 1]:
+                j += 1
+            g = lambda e, s: half_trace(e, v0, w, b) - s
+            lo = brentq(g, E[i - 1], E[i], args=(np.sign(f[i]),)) if i > 0 else E[0]
+            hi = brentq(g, E[j], E[j + 1], args=(np.sign(f[j]),)) if j + 1 < len(E) else E[-1]
+            out.append((lo, hi))
+            i = j + 1
+        else:
+            i += 1
+    return out
+
+bands = band_edges(E, f)
+for n, (lo, hi) in enumerate(bands, start=1):
+    note = "   (continues above E_max)" if hi >= E[-1] else ""
+    print(f"band {n}:  {lo:.4f} eV  to  {hi:.4f} eV   width {hi - lo:.4f} eV{note}")
+
+plt.figure(figsize=(7, 3.4))
+plt.plot(E, f)
+plt.axhspan(-1, 1, color="C2", alpha=0.12)
+plt.axvline(v0, color="0.6", ls=":", lw=1)
+for lo, hi in bands:
+    plt.plot([lo, hi], [-1.9, -1.9], lw=6, color="C0", solid_capstyle="butt")
+plt.ylim(-2.2, 3); plt.xlabel("energy (eV)"); plt.ylabel("(1/2) Tr M")
+plt.title(f"v0 = {v0} eV,  w = {w} nm,  b = {b} nm")
+plt.show()
+"""),
+("md", r"""
+### 3. יחס הנפיצה
+בכל אנרגיה מותרת $k=\frac1a\arccos\left(\tfrac12\mathrm{Tr}\,M\right)$. משווים לאלקטרון חופשי, $\varepsilon=\frac{\hbar^2}{2m}(k+G)^2$, מקופל לאזור ברילואן הראשון.
+
+> 🔮 **נחשו:** היכן יחס הנפיצה ייבדל הכי הרבה מזה של אלקטרון חופשי?
+"""),
+("code", """
+k = np.arccos(np.clip(f[allowed], -1, 1)) / a
+plt.figure(figsize=(5.5, 4))
+plt.scatter(k * a / np.pi, E[allowed], s=1, color="C0")
+plt.scatter(-k * a / np.pi, E[allowed], s=1, color="C0")
+kk = np.linspace(-np.pi / a, np.pi / a, 300)
+for n in range(-3, 4):
+    plt.plot(kk * a / np.pi, C * (kk + 2 * np.pi * n / a) ** 2, "--", color="C1", lw=0.8)
+plt.axhline(v0, color="0.6", ls=":", lw=1)
+plt.ylim(0, E_max); plt.xlim(-1, 1)
+plt.xlabel("k a / pi"); plt.ylabel("energy (eV)"); plt.title("band structure (dashed: free electron, folded)")
+plt.show()
+"""),
+("md", r"""
+### 4. רוחב הפס הנמוך ביותר
+לכל עובי מחסום ברשימה `b_values` מוצאים את הפס הנמוך ביותר (מתחת לגובה המחסום) ומודדים את הרוחב שלו. הגרף בסקלה לוגריתמית.
+
+> 🔮 **נחשו:** איך הרוחב יקטן כשהמחסום מתעבה: כמו חזקה של $b$, או אקספוננציאלית?
+"""),
+("code", """
+def lowest_band(v0, w, b):
+    Es = np.linspace(1e-5, 0.995 * v0, 20000)
+    fs = np.array([half_trace(e, v0, w, b) for e in Es])
+    found = band_edges(Es, fs, v0, w, b)
+    return found[0] if found else (np.nan, np.nan)
+
+widths, centres = [], []
+print("   b (nm)    width (eV)    band centre (eV)")
+for bb in b_values:
+    lo, hi = lowest_band(v0, w, bb)
+    widths.append(hi - lo); centres.append(0.5 * (lo + hi))
+    print(f"   {bb:5.2f}     {hi - lo:.5f}       {0.5 * (lo + hi):.4f}")
+
+plt.figure(figsize=(5.5, 3.4))
+plt.semilogy(b_values, widths, "o-")
+plt.xlabel("barrier thickness b (nm)"); plt.ylabel("width of lowest band (eV)")
+plt.title(f"v0 = {v0} eV,  w = {w} nm")
+plt.show()
+"""),
+("md", r"""
+### 💬 שאלות לדיון
+1. למה הדטרמיננטה של מטריצת המעבר שווה ל-1 בכל אנרגיה?
+2. מה קורה ל-$\tfrac12\mathrm{Tr}\,M$ בדיוק בקצוות הפסים, ולאילו ערכים של $k$ זה מתאים?
+3. למה הפסים הנמוכים צרים יותר, והפערים בין הפסים הגבוהים קטנים יותר?
+4. מה הקשר בין רוחב הפס הנמוך ביותר לבין מודל הקשירה ההדוקה?
+
+<details>
+<summary>🗝️ הכוונה לתשובות (לחצו לפתיחה)</summary>
+
+1. תרגול 9, סעיף 3 (הוורונסקיאן של שני פתרונות אינו משתנה לאורך התא).
+2. תרגול 9, סעיף 3 (קצוות הפסים ב-$\mathrm{Tr}\,M=\pm2$).
+3. תרגול 9, סעיף 4, והאיור של מודל הדלתא; תרגיל הבית, שאלה 3.
+4. תרגול 9, סעיף 2 (פס של קשירה הדוקה ברוחב $4t$), ותרגיל הבית, שאלה 3.
+
+אם אינכם יודעים לענות על אחת השאלות, חזרו לסעיף המתאים בתרגול.
+
+</details>
+
+> ✅ **סיימתם?** תשובות לשאלות הדיון אינן להגשה. הסעיף החישובי בתרגיל הבית נשען על המחברת הזו. בהצלחה!
+"""),
+]
+
 def build(name, cells, out):
     nb = nb_from(cells)
     # Execute a copy only to verify that every cell runs; the notebook that is saved stays
@@ -1145,3 +1326,4 @@ if __name__ == "__main__":
     build("w6", w6, ROOT / "week06.ipynb")
     build("w7", w7, ROOT / "week07.ipynb")
     build("w8", w8, ROOT / "week08.ipynb")
+    build("w9", w9, ROOT / "week09.ipynb")

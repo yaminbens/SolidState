@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>מודל קרוניג-פני</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course palette (same as site.css): ink, blue, teal, amber. */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --fg:#12294d; --muted:#53627a; --line:#d6dde8; --soft:#eef3fb;
+  --blue:#2563eb; --teal:#0f9d8a; --amber:#f08a24; --rose:#d6455b; --edge:#12294d;
+  --f-body:"Heebo","Segoe UI",Arial,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+:root.dark{
+  --bg:#0e141c; --panel:#151d28; --fg:#e8eefc; --muted:#9aa8bc; --line:#2a3646; --soft:#1b2534;
+  --blue:#6aa1ff; --teal:#2dd4bf; --amber:#f6a14a; --rose:#f07a8c; --edge:#c9d6ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{padding:14px max(14px,env(safe-area-inset-left)) 28px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
+.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(18,41,77,.06)}
+.card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
+.card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none}
+#ce{cursor:crosshair}
+.lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.row{display:grid;grid-template-columns:8.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.box p{margin:3px 0}
+.num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px;white-space:nowrap}
+output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
+.ctlrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:12px}
+@media (max-width:760px){.ctlrow{grid-template-columns:minmax(0,1fr)}}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>מודל קרוניג-פני: פסים ממטריצת המעבר</h1>
+    <p class="lede">אלקטרון בשרשרת של מחסומי דלתא, <span class="num">U(x) = V₀ Σ δ(x − na)</span>. משפט בלוך נותן <span class="num">cos ka = ½ Tr M(ε) = cos αa + P sin(αa)/(αa)</span>, כאשר <span class="num">ε = ħ²α²/2m</span> ו-<span class="num">P = mV₀a/ħ²</span> הוא החוזק של המחסומים. אין צורך להריץ דבר.</p>
+  </header>
+
+  <section class="card">
+    <h2>התנאי לפסים</h2>
+    <p class="sub">הגרף הוא <span class="num">½ Tr M</span> כפונקציה של <span class="num">αa</span>. אנרגיות שבהן הוא בתוך הרצועה המוצללת שייכות לפסים (הקווים הכחולים בתחתית); השאר הן פערים.</p>
+    <canvas id="ct" width="680" height="300" aria-label="חצי העקבה של מטריצת המעבר"></canvas>
+    <div class="ctlrow">
+      <div><div class="row"><span class="lab" style="margin:0">חוזק המחסומים P</span><input id="P" type="range" min="0" max="3" step="0.01" value="1.5"><output id="Po"></output></div></div>
+      <div class="box" id="tinfo"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>יחס הנפיצה</h2>
+    <p class="sub">האנרגיה ביחידות של <span class="num">ħ²/2ma²</span>. הקו המקווקו הוא אלקטרון חופשי, מקופל לאזור ברילואן הראשון. לחצו על נקודה כדי לראות את פונקציית הגל שלה.</p>
+    <canvas id="ce" width="680" height="420" aria-label="יחס הנפיצה"></canvas>
+    <div class="legend"><span><span class="dot" style="background:var(--blue)"></span>קרוניג-פני</span><span><span class="dot" style="background:var(--amber)"></span>אלקטרון חופשי</span></div>
+  </section>
+
+  <section class="card">
+    <h2>פונקציית בלוך</h2>
+    <p class="sub">החלק הממשי של ψ(x) לאורך חמישה תאים, והמעטפת |ψ(x)|. הקווים האנכיים הם מיקומי המחסומים.</p>
+    <canvas id="cw" width="680" height="260" aria-label="פונקציית הגל"></canvas>
+    <div class="box" id="winfo" style="margin-top:12px"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const PI = Math.PI, TAU = 2*Math.PI;
+function applyTheme(){
+  let dark=false;
+  try{ const p=window.parent&&window.parent!==window?window.parent.document.documentElement:null; if(p) dark=p.classList.contains("dark"); else throw 0; }
+  catch(e){ dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  document.documentElement.classList.toggle("dark",dark);
+}
+applyTheme();
+try{ if(window.parent!==window) new MutationObserver(()=>{applyTheme(); drawAll();}).observe(window.parent.document.documentElement,{attributes:true,attributeFilter:["class"]}); }catch(e){}
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawAll();});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function setupCanvas(c){
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.dataset.r?+c.dataset.r:c.height/c.width;
+  c.dataset.r=ratio; const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio};
+}
+function label(ctx,t,x,y,col,size,align){ ctx.font=`500 ${size||12}px `+css("--f-num"); ctx.fillStyle=col; ctx.textAlign=align||"center"; ctx.textBaseline="middle"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+const fmt=(x,d)=>(Math.abs(x)<5e-4?0:x).toFixed(d===undefined?3:d);
+
+/* ---------------- physics (a = 1, energy = x^2 with x = alpha a) ---------------- */
+const XMAX = 4*PI;
+const S = { P:1.5, sel:{ x:0.8*PI, sgn:1 } };
+const f = x => Math.cos(x) + S.P*Math.sin(x)/x;
+function edge(a,b){ // bisection for |f| = 1 between an allowed and a forbidden point
+  const okA=Math.abs(f(a))<=1; for(let i=0;i<50;i++){ const m=0.5*(a+b); if((Math.abs(f(m))<=1)===okA) a=m; else b=m; } return 0.5*(a+b); }
+function bandsList(){
+  const n=4000, out=[]; let inBand=false, lo=0, prev=1e-6;
+  for(let i=1;i<=n;i++){ const x=XMAX*i/n, ok=Math.abs(f(x))<=1;
+    if(ok&&!inBand){ lo=edge(x,prev); inBand=true; } if(!ok&&inBand){ out.push([lo,edge(prev,x)]); inBand=false; } prev=x; }
+  if(inBand) out.push([lo,XMAX]);
+  return out;
+}
+function bandIndex(x){ const B=bandsList(); for(let i=0;i<B.length;i++) if(x>=B[i][0]-1e-9&&x<=B[i][1]+1e-9) return i; return -1; }
+// transfer matrix of one cell: free propagation over a = 1, then the delta kink (psi' jumps by 2P psi)
+function cellM(x){ const c=Math.cos(x), s=Math.sin(x), g=2*S.P;
+  const F=[[c, s/x],[-x*s, c]]; return [[F[0][0],F[0][1]],[g*F[0][0]+F[1][0], g*F[0][1]+F[1][1]]]; }
+function blochState(x, sgn){
+  const M=cellM(x), fv=Math.max(-1,Math.min(1,f(x))), k=sgn*Math.acos(fv), lr=Math.cos(k), li=Math.sin(k);
+  // eigenvector (M - lambda) v = 0:  v = (M01, lambda - M00)
+  let v=[[M[0][1],0],[lr-M[0][0],li]];
+  if(Math.hypot(...v[0])+Math.hypot(...v[1])<1e-9) v=[[lr-M[1][1],li],[M[1][0],0]];
+  return {k, v};
+}
+const cmul=(a,b)=>[a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]];
+function psiAt(X, st, x){
+  const n=Math.floor(X), y=X-n, c=Math.cos(x*y), s=Math.sin(x*y);
+  const p=[c*st.v[0][0]+(s/x)*st.v[1][0], c*st.v[0][1]+(s/x)*st.v[1][1]];
+  const ph=[Math.cos(st.k*n), Math.sin(st.k*n)];
+  return cmul(ph,p);
+}
+
+/* ---------------- panel 1: half-trace ---------------- */
+function drawTrace(){
+  const {ctx,w,h}=setupCanvas($("ct")); ctx.clearRect(0,0,w,h);
+  const L=40,R=14,T=12,B=40, ymin=-2.4, ymax=Math.max(2.6, 1+S.P+0.3);
+  const X=x=>L+x/XMAX*(w-L-R), Y=y=>T+(ymax-y)/(ymax-ymin)*(h-T-B);
+  ctx.fillStyle=css("--teal"); ctx.globalAlpha=.12; ctx.fillRect(L,Y(1),w-L-R,Y(-1)-Y(1)); ctx.globalAlpha=1;
+  ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
+  [1,-1,0].forEach(v=>{ ctx.strokeStyle=css("--muted"); ctx.globalAlpha=v?0.6:0.25; ctx.beginPath(); ctx.moveTo(L,Y(v)); ctx.lineTo(w-R,Y(v)); ctx.stroke(); ctx.globalAlpha=1; label(ctx,String(v),L-8,Y(v),css("--muted"),11,"right"); });
+  for(let n=0;n<=4;n++) label(ctx,n===0?"0":n===1?"π":n+"π",X(n*PI),h-B+14,css("--muted"),12);
+  label(ctx,"α a",(L+w-R)/2,h-8,css("--muted"),12);
+  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.2; ctx.beginPath();
+  for(let i=1;i<=800;i++){ const x=XMAX*i/800, y=Math.max(ymin,Math.min(ymax,f(x))); i===1?ctx.moveTo(X(x),Y(y)):ctx.lineTo(X(x),Y(y)); } ctx.stroke();
+  ctx.fillStyle=css("--blue"); bandsList().forEach(([a,b])=>ctx.fillRect(X(a),Y(-2.15),X(b)-X(a),8));
+  ctx.fillStyle=css("--rose"); ctx.beginPath(); ctx.arc(X(S.sel.x),Y(f(S.sel.x)),6,0,TAU); ctx.fill();
+  const Bs=bandsList(); let s=`<h3>הפסים</h3>`;
+  Bs.forEach((b,i)=>{ s+=`<p>פס ${i+1}: <span class="num">αa/π = ${fmt(b[0]/PI,3)} – ${fmt(Math.min(b[1],XMAX)/PI,3)}</span></p>`; });
+  s+=`<p>כל פס מסתיים ב-<span class="num">αa = nπ</span>, ושם <span class="num">½ Tr M = ±1</span>.</p>`;
+  $("tinfo").innerHTML=s;
+}
+
+/* ---------------- panel 2: band structure ---------------- */
+let E2=null;
+function drawBands(){
+  const {ctx,w,h}=setupCanvas($("ce")); ctx.clearRect(0,0,w,h);
+  const L=52,R=14,T=12,B=36, emax=XMAX*XMAX;
+  const X=k=>L+(k+PI)/TAU*(w-L-R), Y=e=>h-B-e/emax*(h-T-B);
+  E2={X,Y,L,R,T,B,w,h,emax};
+  ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
+  [-1,-0.5,0,0.5,1].forEach(t=>label(ctx,t===0?"0":(t<0?"−":"")+(Math.abs(t)===1?"π":"π/2"),X(t*PI),h-B+14,css("--muted"),12));
+  for(let e=0;e<=emax;e+=25){ label(ctx,String(e),L-6,Y(e),css("--muted"),11,"right"); }
+  label(ctx,"k a",(L+w-R)/2,h-6,css("--muted"),12);
+  // gaps shading
+  const Bs=bandsList(); ctx.fillStyle=css("--amber"); ctx.globalAlpha=.10;
+  let prev=0; Bs.forEach(([a,b])=>{ ctx.fillRect(L,Y(a*a),w-L-R,Y(prev*prev)-Y(a*a)); prev=b; }); ctx.globalAlpha=1;
+  // free electron folded
+  ctx.strokeStyle=css("--amber"); ctx.lineWidth=1.2; ctx.setLineDash([5,4]);
+  for(let n=-3;n<=3;n++){ ctx.beginPath(); for(let i=0;i<=200;i++){ const k=-PI+TAU*i/200, e=(k+TAU*n)**2; if(e>emax*1.02){ continue; } i===0?ctx.moveTo(X(k),Y(e)):ctx.lineTo(X(k),Y(e)); } ctx.stroke(); }
+  ctx.setLineDash([]);
+  // KP bands
+  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.6;
+  Bs.forEach(([a,b])=>{ for(const sg of [1,-1]){ ctx.beginPath(); for(let i=0;i<=300;i++){ const x=a+(b-a)*i/300, k=sg*Math.acos(Math.max(-1,Math.min(1,f(x)))); i===0?ctx.moveTo(X(k),Y(x*x)):ctx.lineTo(X(k),Y(x*x)); } ctx.stroke(); } });
+  const st=blochState(S.sel.x,S.sel.sgn);
+  ctx.fillStyle=css("--rose"); ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(X(st.k),Y(S.sel.x**2),7,0,TAU); ctx.fill(); ctx.stroke();
+}
+function pick(ev){
+  if(!E2) return; const r=$("ce").getBoundingClientRect(), px=ev.clientX-r.left, py=ev.clientY-r.top;
+  let best=null, bd=1e9;
+  bandsList().forEach(([a,b])=>{ for(let i=0;i<=400;i++){ const x=a+(b-a)*i/400, k=Math.acos(Math.max(-1,Math.min(1,f(x))));
+    for(const sg of [1,-1]){ const d=Math.hypot(E2.X(sg*k)-px, E2.Y(x*x)-py); if(d<bd){ bd=d; best={x, sgn:sg}; } } } });
+  if(best){ S.sel=best; drawAll(); }
+}
+let drag=false;
+$("ce").addEventListener("pointerdown",e=>{ drag=true; $("ce").setPointerCapture(e.pointerId); pick(e); });
+$("ce").addEventListener("pointermove",e=>{ if(drag) pick(e); });
+$("ce").addEventListener("pointerup",()=>{ drag=false; });
+
+/* ---------------- panel 3: wavefunction ---------------- */
+function drawWave(){
+  const {ctx,w,h}=setupCanvas($("cw")); ctx.clearRect(0,0,w,h);
+  const L=14,R=14,T=14,B=26, NC=5, st=blochState(S.sel.x,S.sel.sgn);
+  const N=1000, xs=[], re=[], ab=[];
+  for(let i=0;i<=N;i++){ const X=NC*i/N - 1e-9*(i===N); const p=psiAt(Math.max(0,X),st,S.sel.x); xs.push(X); re.push(p[0]); ab.push(Math.hypot(p[0],p[1])); }
+  const m=Math.max(...ab)||1;
+  const PX=x=>L+x/NC*(w-L-R), PY=v=>(T+h-B)/2-v/m*(h-T-B)/2*0.92;
+  ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,PY(0)); ctx.lineTo(w-R,PY(0)); ctx.stroke();
+  for(let n=0;n<=NC;n++){ ctx.strokeStyle=css("--muted"); ctx.globalAlpha=.5; ctx.lineWidth=n===0||n===NC?1:2; ctx.beginPath(); ctx.moveTo(PX(n),T); ctx.lineTo(PX(n),h-B); ctx.stroke(); ctx.globalAlpha=1; label(ctx,String(n)+"a",PX(n),h-B+13,css("--muted"),11); }
+  ctx.strokeStyle=css("--amber"); ctx.lineWidth=1.4; ctx.setLineDash([5,4]); ctx.beginPath(); xs.forEach((x,i)=>i?ctx.lineTo(PX(x),PY(ab[i])):ctx.moveTo(PX(x),PY(ab[i]))); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.2; ctx.beginPath(); xs.forEach((x,i)=>i?ctx.lineTo(PX(x),PY(re[i])):ctx.moveTo(PX(x),PY(re[i]))); ctx.stroke();
+  const n=bandIndex(S.sel.x);
+  $("winfo").innerHTML=`<h3>המצב שנבחר</h3><p>פס <span class="num">${n+1}</span>, <span class="num">k a/π = ${fmt(st.k/PI)}</span>, אנרגיה <span class="num">${fmt(S.sel.x**2,2)} ħ²/2ma²</span></p>
+  <p>${Math.abs(Math.abs(st.k)-PI)<0.02||Math.abs(st.k)<0.02?"בקצה פס (k = 0 או π/a) פונקציית הגל היא גל עומד: |ψ| מחזורי עם מחזור a, ו-ψ חוזר על עצמו או מחליף סימן בכל תא.":"|ψ| מחזורי עם מחזור a, אבל הפאזה של ψ מתקדמת ב-ka בכל תא: זה התוכן של משפט בלוך."}</p>`;
+}
+
+function drawAll(){ $("Po").textContent=S.P.toFixed(2); if(bandIndex(S.sel.x)<0){ const B=bandsList(); S.sel.x=0.5*(B[0][0]+B[0][1]); } drawTrace(); drawBands(); drawWave(); }
+$("P").addEventListener("input",e=>{ S.P=+e.target.value; drawAll(); });
+
+function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
+  const pd=fe.ownerDocument, hh=Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height)+48;
+  let st=pd.getElementById("viz-fit"); if(!st){ st=pd.createElement("style"); st.id="viz-fit"; pd.head.appendChild(st); }
+  st.textContent=`article div:has(> iframe[src*="/viz/"]){display:block!important;width:100%!important;padding-bottom:0!important;height:${hh}px!important}
+article iframe[src*="/viz/"]{position:absolute;inset:0;width:100%;height:100%;border:0}`;
+}catch(e){} }
+let rt=null; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ drawAll(); fitFrame(); },60); });
+window.addEventListener("load",fitFrame);
+if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawAll);
+drawAll(); fitFrame();
+window.__kp = { S, f, bandsList, blochState, psiAt, cellM, drawAll };
+})();
+</script>
+</body>
+</html>
