@@ -629,12 +629,14 @@ for i, s in enumerate(shells, start=1):
 ### 3. אזור ברילואן הראשון
 אזור ברילואן הראשון הוא תא ויגנר-זייץ של הסריג ההופכי: החיתוך של חצאי המרחב $\mathbf k\cdot\mathbf G\le\tfrac12|\mathbf G|^2$. המחברת מחשבת את החיתוך, סופרת את הפאות לפי מספר הצלעות, וצובעת כל פאה לפי הקליפה של ה-$\mathbf G$ שקובע אותה.
 
+הציור אינטראקטיבי: גוררים כדי לסובב, גוללים כדי להגדיל, ומעבירים את העכבר מעל פאה כדי לראות מאיזו קליפה היא באה. לחיצה על פריט במקרא מציגה או מסתירה אותו, למשל את נקודות הסריג ההופכי שקובעות את הפאות.
+
 > 🔮 **נחשו:** מה הצורה של אזור ברילואן בברירת המחדל, וכמה פאות יש לו?
 """),
 ("code", """
 H = HalfspaceIntersection(np.hstack([G, -0.5 * (G ** 2).sum(axis=1, keepdims=True)]), np.zeros(3))
 V = np.unique(np.round(H.intersections, 9), axis=0)
-faces, shell_of = [], []
+faces, shell_of, G_face = [], [], []
 for g, rg in zip(G, r):
     on = V[np.abs(V @ g - 0.5 * g @ g) < 1e-7]
     if len(on) < 3:
@@ -643,19 +645,63 @@ for g, rg in zip(G, r):
     u = on[0] - c; u /= np.linalg.norm(u); w = np.cross(n, u)
     faces.append(on[np.argsort(np.arctan2((on - c) @ w, (on - c) @ u))])
     shell_of.append(int(np.argmin(np.abs(shells - rg))) + 1)
+    G_face.append(g)
 sides = [len(f) for f in faces]
 print(f"{len(faces)} faces:", {k: sides.count(k) for k in sorted(set(sides))}, "(number of sides: number of faces)")
 print("faces from each shell:", {k: shell_of.count(k) for k in sorted(set(shell_of))})
 
-fig = plt.figure(figsize=(5.5, 5.5)); ax = fig.add_subplot(projection="3d")
-ax.add_collection3d(Poly3DCollection(faces, facecolors=[f"C{k-1}" for k in shell_of], edgecolors="k", linewidths=0.6, alpha=0.45))
-for j in range(3):
-    ax.quiver(0, 0, 0, *B[:, j], color="k", linewidth=1.5, arrow_length_ratio=0.1)
-    ax.text(*(1.08 * B[:, j]), f"b{j+1}", fontsize=11)
-lim = np.abs(V).max() * 1.1
-ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim); ax.set_zlim(-lim, lim); ax.set_box_aspect((1, 1, 1))
-ax.set_xlabel("k_x"); ax.set_ylabel("k_y"); ax.set_zlabel("k_z"); ax.set_title("first Brillouin zone")
-plt.show()
+colors = ["#2a78d6", "#eb6834", "#1baf7a", "#9b59b6", "#e0b100"]
+try:
+    import plotly.graph_objects as go
+except ImportError:
+    go = None
+
+if go is not None:                                   # interactive figure: drag to rotate, scroll to zoom
+    data = []
+    for k in sorted(set(shell_of)):
+        X, I, J, K, txt = [], [], [], [], []
+        for f, s_, g in zip(faces, shell_of, G_face):
+            if s_ != k:
+                continue
+            i0 = len(X)
+            X.extend(f)
+            for t in range(1, len(f) - 1):
+                I.append(i0); J.append(i0 + t); K.append(i0 + t + 1)
+            label = f"shell {k}, {len(f)} sides, |G| = {np.linalg.norm(g) / (2 * np.pi):.3f} * 2pi"
+            txt.extend([label] * len(f))
+        X = np.array(X)
+        data.append(go.Mesh3d(x=X[:, 0], y=X[:, 1], z=X[:, 2], i=I, j=J, k=K, color=colors[(k - 1) % 5],
+                              opacity=0.55, flatshading=True, name=f"faces of shell {k}", showlegend=True,
+                              hovertext=txt, hoverinfo="text"))
+    E = []
+    for f in faces:
+        E.extend(list(f) + [f[0], [None, None, None]])
+    E = np.array(E, dtype=float)
+    data.append(go.Scatter3d(x=E[:, 0], y=E[:, 1], z=E[:, 2], mode="lines", line=dict(color="black", width=2),
+                             name="edges", hoverinfo="skip"))
+    for j in range(3):
+        bj = B[:, j]
+        data.append(go.Scatter3d(x=[0, bj[0]], y=[0, bj[1]], z=[0, bj[2]], mode="lines+markers+text",
+                                 line=dict(color="black", width=5), marker=dict(size=[0, 4], color="black"),
+                                 text=["", f"b{j+1}"], textposition="top center", name=f"b{j+1}", hoverinfo="skip"))
+    P = np.array(G_face)
+    data.append(go.Scatter3d(x=P[:, 0], y=P[:, 1], z=P[:, 2], mode="markers",
+                             marker=dict(size=4, color=[colors[(k - 1) % 5] for k in shell_of]),
+                             name="reciprocal points of the faces", visible="legendonly", hoverinfo="skip"))
+    fig = go.Figure(data)
+    fig.update_layout(title="first Brillouin zone", height=560, margin=dict(l=0, r=0, t=40, b=0),
+                      scene=dict(aspectmode="data", xaxis_title="k_x", yaxis_title="k_y", zaxis_title="k_z"))
+    fig.show()
+else:                                                # static fallback without plotly
+    fig = plt.figure(figsize=(5.5, 5.5)); ax = fig.add_subplot(projection="3d")
+    ax.add_collection3d(Poly3DCollection(faces, facecolors=[colors[(k - 1) % 5] for k in shell_of], edgecolors="k", linewidths=0.6, alpha=0.45))
+    for j in range(3):
+        ax.quiver(0, 0, 0, *B[:, j], color="k", linewidth=1.5, arrow_length_ratio=0.1)
+        ax.text(*(1.08 * B[:, j]), f"b{j+1}", fontsize=11)
+    lim = np.abs(V).max() * 1.1
+    ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim); ax.set_zlim(-lim, lim); ax.set_box_aspect((1, 1, 1))
+    ax.set_xlabel("k_x"); ax.set_ylabel("k_y"); ax.set_zlabel("k_z"); ax.set_title("first Brillouin zone")
+    plt.show()
 """),
 ("md", r"""
 ### 4. סריקה: הסריג ההופכי כשמשנים זווית
