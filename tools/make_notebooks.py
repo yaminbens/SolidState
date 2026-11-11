@@ -551,117 +551,154 @@ print(f"packing fraction eta = {eta:.4f}")
 
 # ------------------------------------------------------------------ week 5
 w5 = [
-("md", header(5, "שבוע 5 · אזורי ברילואן בדו-ממד", "הדגמה לתרגול 5 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
+("md", header(5, "שבוע 5 · הסריג ההופכי בתלת-ממד", "הדגמה לתרגול 5 · מבוא למצב מוצק תשפ״ז · אוניברסיטת תל אביב") + r"""
 ## תיאור ההדגמה
-לסריג דו-ממדי עם וקטורים פרימיטיביים $\mathbf a_1,\mathbf a_2$ המחברת מחשבת את הסריג ההופכי מהתנאי $\mathbf a_i\cdot\mathbf b_j=2\pi\delta_{ij}$, ובונה מפה של אזורי ברילואן: נקודה $\mathbf k$ שייכת לאזור ה-$n$ אם בדיוק $n-1$ נקודות של הסריג ההופכי קרובות אליה יותר מהראשית. לבסוף היא מודדת את השטח של כל אזור על ידי ספירת נקודות רשת.
+סריג ברווה תלת-ממדי נקבע על ידי שישה מספרים: האורכים של שלושת הווקטורים הפרימיטיביים והזוויות ביניהם. המחברת בונה מהם את $\mathbf a_1,\mathbf a_2,\mathbf a_3$ ומחשבת את הסריג ההופכי מ-$B=2\pi(A^{-1})^T$, כמו בתרגול. אחר כך היא מוצאת את הקליפות הראשונות של הסריג ההופכי, מציירת את אזור ברילואן הראשון בתלת-ממד, ולבסוף עוקבת אחרי הסריג ההופכי כשמשנים את אחת הזוויות.
 
-**יחידות:** אורכים במרחב הישיר ביחידות של $|\mathbf a_1|$, ובמרחב ההופכי ביחידות של $1/|\mathbf a_1|$.
+**יחידות:** אורכים במרחב הישיר ביחידות של $|\mathbf a_1|$, ובמרחב ההופכי ביחידות של $2\pi/|\mathbf a_1|$.
 
-לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week05-reciprocal) שמציג את הסריג ההופכי ואת האזורים בזמן אמת.
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week05-reciprocal) שמציג את הסריג ההופכי ואת אזורי ברילואן בזמן אמת.
 """),
 ("code", """
+import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from scipy.spatial import HalfspaceIntersection
 """),
 ("md", r"""
 ### ⚙️ פרמטרים
-- `a1`, `a2` – הווקטורים הפרימיטיביים של הסריג הישיר. ברירת המחדל היא סריג ריבועי.
-- `n_max` – מספר האזורים שמחשבים ומציגים.
-- `N_grid` – מספר נקודות הרשת בכל כיוון (יותר נקודות: שטחים מדויקים יותר, חישוב איטי יותר).
+- `lengths` – האורכים $|\mathbf a_1|,|\mathbf a_2|,|\mathbf a_3|$.
+- `angles` – הזוויות, במעלות: בין $\mathbf a_2$ ל-$\mathbf a_3$, בין $\mathbf a_1$ ל-$\mathbf a_3$, ובין $\mathbf a_1$ ל-$\mathbf a_2$.
+
+ברירת המחדל היא סריג הקסגונלי: שני וקטורים שווים בזווית $120^\circ$ במישור, ושלישי ניצב להם ובאורך אחר.
 """),
 ("code", """
 # ---- Parameters ----
-a1 = [1.0, 0.0]     # primitive vectors of the direct lattice
-a2 = [0.0, 1.0]
-n_max = 4           # number of Brillouin zones to compute
-N_grid = 700        # grid points per direction
+lengths = [1.0, 1.0, 1.6]     # |a1|, |a2|, |a3|
+angles = [90, 90, 120]        # degrees: angle(a2,a3), angle(a1,a3), angle(a1,a2)
 """),
 ("md", r"""
-### 1. הסריג ההופכי
-כותבים את הווקטורים הפרימיטיביים כשורות של מטריצה $A$. התנאי $\mathbf a_i\cdot\mathbf b_j=2\pi\delta_{ij}$ הוא $AB^{T}=2\pi I$, ולכן $B=2\pi\,(A^{-1})^{T}$.
+### 1. הווקטורים הפרימיטיביים והסריג ההופכי
+את $\mathbf a_1$ מניחים לאורך $\hat x$ ואת $\mathbf a_2$ במישור $xy$; $\mathbf a_3$ נקבע מהזוויות שלו עם שני האחרים. לא כל שלוש זוויות אפשריות: למשל שלוש זוויות שוות חייבות להיות קטנות מ-$120^\circ$. $A$ היא המטריצה שעמודותיה $\mathbf a_i$, ומ-$A^TB=2\pi I$ מקבלים $B=2\pi(A^{-1})^T$, שעמודותיה $\mathbf b_j$.
 
-> 🔮 **נחשו:** אם מאריכים את $\mathbf a_2$ פי שניים, מה קורה ל-$\mathbf b_2$? ולכיוון שלו?
+> 🔮 **נחשו:** בסריג של ברירת המחדל, מה הזווית בין $\mathbf b_1$ ל-$\mathbf b_2$, ובאיזה כיוון מצביע $\mathbf b_3$?
 """),
 ("code", """
-A = np.array([a1, a2], dtype=float)
-B = 2 * np.pi * np.linalg.inv(A).T          # rows are b1, b2
-print("b1 =", np.round(B[0], 4), "   b2 =", np.round(B[1], 4))
-print("A B^T / (2 pi) =\\n", np.round(A @ B.T / (2 * np.pi), 10))
+def primitive_vectors(lengths, angles):
+    \"\"\"Columns a1, a2, a3 from the three lengths and the three angles (degrees).\"\"\"
+    L1, L2, L3 = lengths
+    al, be, ga = np.radians(angles)
+    cx = np.cos(be)
+    cy = (np.cos(al) - np.cos(be) * np.cos(ga)) / np.sin(ga)
+    cz2 = 1 - cx ** 2 - cy ** 2
+    if cz2 <= 1e-12:
+        raise ValueError(f"no lattice with the angles {angles}")
+    return np.column_stack([L1 * np.array([1.0, 0, 0]),
+                            L2 * np.array([np.cos(ga), np.sin(ga), 0]),
+                            L3 * np.array([cx, cy, np.sqrt(cz2)])])
 
-fig, axs = plt.subplots(1, 2, figsize=(9, 4.2))
-for ax, V, name, lab in [(axs[0], A, "direct lattice", "a"), (axs[1], B, "reciprocal lattice", "b")]:
-    n = np.arange(-4, 5)
-    P = np.array([i * V[0] + j * V[1] for i in n for j in n])
-    ax.plot(P[:, 0], P[:, 1], "k.", ms=5)
-    for i, c in enumerate(["C0", "C1"]):
-        ax.annotate("", xy=V[i], xytext=(0, 0), arrowprops=dict(arrowstyle="->", color=c, lw=2))
-        ax.text(*(V[i] * 1.12), f"{lab}{i+1}", color=c, fontsize=12)
-    r = 2.6 * np.abs(V).max()
-    ax.set_xlim(-r, r); ax.set_ylim(-r, r); ax.set_aspect("equal"); ax.set_title(name)
+def reciprocal(A):
+    return 2 * np.pi * np.linalg.inv(A).T                 # columns b1, b2, b3
+
+def angle(u, v):
+    return np.degrees(np.arccos(np.clip(u @ v / np.linalg.norm(u) / np.linalg.norm(v), -1, 1)))
+
+A = primitive_vectors(lengths, angles)
+B = reciprocal(A)
+print("A^T B / 2pi =\\n", np.round(A.T @ B / (2 * np.pi), 10))
+for j in range(3):
+    print(f"b{j+1} = {np.round(B[:, j] / (2 * np.pi), 4)} * 2pi    |b{j+1}| = {np.linalg.norm(B[:, j]) / (2 * np.pi):.4f} * 2pi")
+print(f"angles: (b2,b3) = {angle(B[:, 1], B[:, 2]):.2f}   (b1,b3) = {angle(B[:, 0], B[:, 2]):.2f}   (b1,b2) = {angle(B[:, 0], B[:, 1]):.2f}  degrees")
+"""),
+("md", r"""
+### 2. הקליפות של הסריג ההופכי
+מחשבים את כל הווקטורים $\mathbf G=m_1\mathbf b_1+m_2\mathbf b_2+m_3\mathbf b_3$ עם $|m_i|\le4$, ומקבצים אותם לפי האורך. מספר הווקטורים בכל קליפה והיחס בין האורכים מזהים את הסריג: למשל ב-SC הקליפות הראשונות הן $6,12,8$, ב-BCC $8,6,12$ וב-FCC $12,6,24$.
+
+> 🔮 **נחשו:** כמה וקטורים יש בקליפה הראשונה של הסריג ההופכי בברירת המחדל?
+"""),
+("code", """
+m = np.array([v for v in itertools.product(range(-4, 5), repeat=3) if any(v)])
+G = m @ B.T                                          # all G vectors, one per row
+r = np.linalg.norm(G, axis=1) / (2 * np.pi)
+shells = np.unique(np.round(r, 6))[:5]
+for i, s in enumerate(shells, start=1):
+    print(f"shell {i}:  |G| = {s:.4f} * 2pi   number of vectors = {np.sum(np.isclose(r, s, atol=1e-6))}")
+"""),
+("md", r"""
+### 3. אזור ברילואן הראשון
+אזור ברילואן הראשון הוא תא ויגנר-זייץ של הסריג ההופכי: החיתוך של חצאי המרחב $\mathbf k\cdot\mathbf G\le\tfrac12|\mathbf G|^2$. המחברת מחשבת את החיתוך, סופרת את הפאות לפי מספר הצלעות, וצובעת כל פאה לפי הקליפה של ה-$\mathbf G$ שקובע אותה.
+
+> 🔮 **נחשו:** מה הצורה של אזור ברילואן בברירת המחדל, וכמה פאות יש לו?
+"""),
+("code", """
+H = HalfspaceIntersection(np.hstack([G, -0.5 * (G ** 2).sum(axis=1, keepdims=True)]), np.zeros(3))
+V = np.unique(np.round(H.intersections, 9), axis=0)
+faces, shell_of = [], []
+for g, rg in zip(G, r):
+    on = V[np.abs(V @ g - 0.5 * g @ g) < 1e-7]
+    if len(on) < 3:
+        continue
+    c = on.mean(axis=0); n = g / np.linalg.norm(g)
+    u = on[0] - c; u /= np.linalg.norm(u); w = np.cross(n, u)
+    faces.append(on[np.argsort(np.arctan2((on - c) @ w, (on - c) @ u))])
+    shell_of.append(int(np.argmin(np.abs(shells - rg))) + 1)
+sides = [len(f) for f in faces]
+print(f"{len(faces)} faces:", {k: sides.count(k) for k in sorted(set(sides))}, "(number of sides: number of faces)")
+print("faces from each shell:", {k: shell_of.count(k) for k in sorted(set(shell_of))})
+
+fig = plt.figure(figsize=(5.5, 5.5)); ax = fig.add_subplot(projection="3d")
+ax.add_collection3d(Poly3DCollection(faces, facecolors=[f"C{k-1}" for k in shell_of], edgecolors="k", linewidths=0.6, alpha=0.45))
+for j in range(3):
+    ax.quiver(0, 0, 0, *B[:, j], color="k", linewidth=1.5, arrow_length_ratio=0.1)
+    ax.text(*(1.08 * B[:, j]), f"b{j+1}", fontsize=11)
+lim = np.abs(V).max() * 1.1
+ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim); ax.set_zlim(-lim, lim); ax.set_box_aspect((1, 1, 1))
+ax.set_xlabel("k_x"); ax.set_ylabel("k_y"); ax.set_zlabel("k_z"); ax.set_title("first Brillouin zone")
+plt.show()
+"""),
+("md", r"""
+### 4. סריקה: הסריג ההופכי כשמשנים זווית
+משנים את הזווית בין $\mathbf a_1$ ל-$\mathbf a_2$ מ-$40^\circ$ עד $140^\circ$, עם האורכים שבתא הפרמטרים ושתי הזוויות האחרות ישרות, ולכל ערך מחשבים את האורכים של $\mathbf b_j$ ואת הזוויות ביניהם. ערכים שאינם נותנים סריג מדולגים.
+
+> 🔮 **נחשו:** איך משתנים $|\mathbf b_1|$ והזווית בין $\mathbf b_1$ ל-$\mathbf b_2$ כשהזווית בין $\mathbf a_1$ ל-$\mathbf a_2$ גדלה?
+"""),
+("code", """
+t_values = np.linspace(40, 140, 201)
+rows = []
+for t in t_values:
+    angles_t = [90, 90, t]                     # the angles that change in the scan
+    try:
+        Bt = reciprocal(primitive_vectors(lengths, angles_t))
+    except ValueError:
+        continue
+    rows.append([t] + [np.linalg.norm(Bt[:, j]) / (2 * np.pi) for j in range(3)]
+                + [angle(Bt[:, 1], Bt[:, 2]), angle(Bt[:, 0], Bt[:, 2]), angle(Bt[:, 0], Bt[:, 1])])
+rows = np.array(rows)
+print(f"{len(rows)} of {len(t_values)} values give a lattice")
+
+fig, axs = plt.subplots(1, 2, figsize=(10, 3.8))
+for j, ls in zip(range(3), ["-", "--", ":"]):
+    axs[0].plot(rows[:, 0], rows[:, 1 + j], ls, lw=2, label=f"|b{j+1}|")
+for j, (lab, ls) in enumerate(zip(["(b2,b3)", "(b1,b3)", "(b1,b2)"], ["-", "--", ":"])):
+    axs[1].plot(rows[:, 0], rows[:, 4 + j], ls, lw=2, label=lab)
+axs[0].set_ylabel("|b_j|  [2pi / |a1|]"); axs[1].set_ylabel("angle between the b's  [deg]")
+for ax in axs:
+    ax.set_xlabel("scanned angle t  [deg]"); ax.grid(alpha=0.3); ax.legend()
 plt.tight_layout(); plt.show()
 """),
 ("md", r"""
-### 2. מפת אזורי ברילואן
-לכל נקודה $\mathbf k$ ברשת סופרים כמה וקטורים $\mathbf G\neq0$ מקיימים $|\mathbf k-\mathbf G|<|\mathbf k|$, כלומר $\mathbf k\cdot\mathbf G>|\mathbf G|^2/2$. האזור של הנקודה הוא המספר הזה ועוד אחד.
-
-> 🔮 **נחשו:** מה הצורה של האזור הראשון בסריג הריבועי, ומכמה חתיכות נפרדות בנוי האזור השני?
-"""),
-("code", """
-bmax = np.linalg.norm(B, axis=1).max()
-L = 0.75 * np.sqrt(n_max + 2) * bmax                 # half-width of the k-grid
-x = np.linspace(-L, L, N_grid)
-KX, KY = np.meshgrid(x, x)
-K = np.column_stack([KX.ravel(), KY.ravel()])
-
-m = np.arange(-12, 13)
-G = np.array([i * B[0] + j * B[1] for i in m for j in m if (i, j) != (0, 0)])
-G = G[np.linalg.norm(G, axis=1) < 2.2 * L]            # only nearby G can matter
-
-zone = np.ones(len(K), dtype=int)
-for chunk in np.array_split(np.arange(len(K)), 20):   # count closer G points, in chunks
-    zone[chunk] += ((K[chunk] @ G.T) > 0.5 * (G ** 2).sum(axis=1)).sum(axis=1)
-zone = zone.reshape(KX.shape)
-
-cmap = ListedColormap(plt.cm.tab10.colors[:n_max])
-shown = np.where(zone <= n_max, zone, np.nan)
-plt.figure(figsize=(5.6, 5))
-plt.imshow(shown, origin="lower", extent=[-L, L, -L, L], cmap=cmap, vmin=0.5, vmax=n_max + 0.5)
-plt.colorbar(ticks=range(1, n_max + 1), label="zone")
-pts = G[np.all(np.abs(G) < L, axis=1)]
-plt.plot(pts[:, 0], pts[:, 1], "k.", ms=4); plt.plot(0, 0, "k+", ms=10)
-plt.xlabel("k_x"); plt.ylabel("k_y"); plt.title("Brillouin zones")
-plt.show()
-"""),
-("md", r"""
-### 3. השטח של כל אזור
-סופרים את נקודות הרשת בכל אזור ומכפילים בשטח של משבצת רשת. מציגים את השטח של כל אזור ביחס לשטח של האזור הראשון.
-
-> 🔮 **נחשו:** האם האזורים הרחוקים גדולים יותר מהאזור הראשון, קטנים יותר, או שווים לו?
-"""),
-("code", """
-cell = (x[1] - x[0]) ** 2
-areas = np.array([(zone == n).sum() * cell for n in range(1, n_max + 1)])
-for n, s in enumerate(areas, start=1):
-    print(f"zone {n}:  area = {s:8.4f}   area / area(zone 1) = {s / areas[0]:.3f}")
-plt.figure(figsize=(5, 3.2))
-plt.bar(range(1, n_max + 1), areas / areas[0], color="C0")
-plt.axhline(1, color="0.6", lw=0.8)
-plt.xlabel("zone n"); plt.ylabel("area / area of zone 1"); plt.ylim(0, 1.3)
-plt.show()
-"""),
-("md", r"""
 ### 💬 שאלות לדיון
-1. מה קורה ל-$\mathbf b_1$ ול-$\mathbf b_2$ כשמסובבים את $\mathbf a_2$ כך שהזווית בין $\mathbf a_1$ ל-$\mathbf a_2$ קטנה? מה לגבי הזווית בין $\mathbf b_1$ ל-$\mathbf b_2$?
-2. מכמה חתיכות נפרדות בנוי האזור השני בסריג הריבועי? והשלישי?
-3. נסו רשת גסה יותר (`N_grid` קטן). איך משתנים השטחים, ולמה?
+1. בסריג של ברירת המחדל, מה הזווית בין $\mathbf b_1$ ל-$\mathbf b_2$, ולמה $\mathbf b_3$ מקביל ל-$\mathbf a_3$?
+2. מה הצורה של אזור ברילואן בברירת המחדל? איזו קליפה נותנת את שתי הפאות המשושות, ואיזו את שש הפאות המלבניות?
+3. בסריקה של חלק 4, למה $|\mathbf b_3|$ אינו משתנה, ולמה $|\mathbf b_1|$ גדל כשהזווית מתקרבת ל-$40^\circ$ או ל-$140^\circ$?
 
 <details>
 <summary>🗝️ הכוונה לתשובות (לחצו לפתיחה)</summary>
 
-1. תרגול 5, סעיף 1 (התנאי $\mathbf a_i\cdot\mathbf b_j=2\pi\delta_{ij}$ והניצבות $\mathbf b_1\perp\mathbf a_2$, $\mathbf b_2\perp\mathbf a_1$).
-2. תרגול 5, סעיף 3 (ההגדרה של אזור ברילואן ה-$n$) ותרגיל 4.
-3. זו שאלה על השיטה הנומרית ולא על התרגול: ראו בחלק 3 של המחברת איך השטח מחושב מספירה של נקודות רשת.
+1. תרגול 5, סעיף 1 (התנאי $\mathbf a_i\cdot\mathbf b_j=2\pi\delta_{ij}$: $\mathbf b_3$ ניצב ל-$\mathbf a_1$ ול-$\mathbf a_2$, ו-$\mathbf b_1\perp\mathbf a_2$ בתוך המישור).
+2. תרגול 5, סעיף 3 (אזור ברילואן כתא ויגנר-זייץ של הסריג ההופכי, וכל פאה באמצע הדרך לווקטור הופכי) ותרגיל 5; הבנייה עצמה בנספח של תרגול 4.
+3. תרגול 5, סעיף 1 (המקרה הדו-ממדי, $\mathbf b_1\perp\mathbf a_2$, ונפח התא שבמכנה של הנוסחה עם המכפלה הווקטורית).
 
 אם אינכם יודעים לענות על אחת השאלות, חזרו לסעיף המתאים בתרגול.
 
