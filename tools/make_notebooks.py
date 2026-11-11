@@ -689,7 +689,8 @@ if go is not None:                                   # interactive figure: drag 
                              marker=dict(size=4, color=[colors[(k - 1) % 5] for k in shell_of]),
                              name="reciprocal points of the faces", visible="legendonly", hoverinfo="skip"))
     fig = go.Figure(data)
-    fig.update_layout(title="first Brillouin zone", height=560, margin=dict(l=0, r=0, t=40, b=0),
+    fig.update_layout(title="first Brillouin zone", height=620, margin=dict(l=0, r=0, t=40, b=0),
+                      legend=dict(orientation="h", yanchor="top", y=0.02, x=0),
                       scene=dict(aspectmode="data", xaxis_title="k_x", yaxis_title="k_y", zaxis_title="k_z"))
     fig.show()
 else:                                                # static fallback without plotly
