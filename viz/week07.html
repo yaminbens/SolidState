@@ -63,9 +63,9 @@ button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:
 
   <!-- ================= Panel 1: dispersion ================= -->
   <section class="card">
-    <h2>יחס הנפיצה</h2>
-    <p class="sub">לחצו או גררו על הגרף כדי לבחור וקטור גל וענף. היחידות: <span class="num">a = K₁ = m₁ = 1</span>, כאשר a הוא אורך תא היחידה.</p>
-    <canvas id="cd" width="680" height="400" aria-label="יחס הנפיצה"></canvas>
+    <h2>יחס הנפיצה וספירת אופני התנודה</h2>
+    <p class="sub">לחצו או גררו על הגרף כדי לבחור וקטור גל וענף. הנקודות על העקומה הן ערכי k המותרים בשרשרת של N תאים, והן מרווחות באופן אחיד ב-k. כל נקודה מוטלת ימינה אל ציר התדירות, ומשם נבנית צפיפות המצבים g(ω): במקום שבו העקומה שטוחה, הרבה נקודות נופלות על אותו תחום תדירויות. היחידות: <span class="num">a = K₁ = m₁ = 1</span>, כאשר a הוא אורך תא היחידה.</p>
+    <canvas id="cd" width="680" height="420" aria-label="יחס הנפיצה וצפיפות המצבים"></canvas>
     <div class="legend" id="dleg"></div>
     <div class="ctlrow">
       <div class="ctl">
@@ -75,6 +75,7 @@ button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:
         </div>
         <div class="row" id="rk"><span class="lab" style="margin:0">K<sub>2</sub> / K<sub>1</sub></span><input id="kr" type="range" min="-1.386" max="1.386" step="0.001" value="0.693"><output id="kro"></output></div>
         <div class="row" id="rm"><span class="lab" style="margin:0">m<sub>2</sub> / m<sub>1</sub></span><input id="mr" type="range" min="-1.386" max="1.386" step="0.001" value="0"><output id="mro"></output></div>
+        <div class="row"><span class="lab" style="margin:0">מספר התאים N</span><input id="nn" type="range" min="8" max="200" step="2" value="24"><output id="nno"></output></div>
         <div>
           <div class="lab">הצגה</div>
           <div class="seg" id="zseg"><button data-z="red">אזור ברילואן ראשון</button><button data-z="ext">אזור מורחב</button></div>
@@ -99,13 +100,6 @@ button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:
       </div>
       <div class="ctl"><div class="box" id="minfo"></div></div>
     </div>
-  </section>
-
-  <!-- ================= Panel 3: density of states ================= -->
-  <section class="card">
-    <h2>צפיפות המצבים</h2>
-    <p class="sub">היסטוגרמה של התדירויות של כל אופני התנודה, לאטום. הקו האנכי מסמן את התדירות שנבחרה; תחום מוצלל הוא פער תדירויות שבו אין אופני תנודה כלל.</p>
-    <canvas id="cg" width="680" height="240" aria-label="צפיפות המצבים"></canvas>
   </section>
 </div>
 
@@ -139,7 +133,8 @@ const fmt = (x,d) => (Math.abs(x)<5e-4?0:x).toFixed(d===undefined?3:d);
 /* ---------------- physics ---------------- */
 // State. Cell length a = 1. Monoatomic: spacing 1, spring K1 = 1, mass 1.
 // Diatomic: atom A (mass 1) at x = n, atom B (mass m2) at x = n + 1/2; spring K2 inside the cell (A_n-B_n), K1 = 1 between cells (B_n-A_{n+1}).
-const S = { s:"di", K2:2, m2:1, zone:"red", k:0.35*PI, br:0, playing:true, t:0, wave:false, alias:false };
+const S = { s:"di", K2:2, m2:1, zone:"red", k:0.35*PI, br:0, playing:true, t:0, wave:false, alias:false, N:24 };
+const DWIN = 0.1;      // frequency window of the mode count in the info box
 
 // 2x2 mass-weighted dynamical matrix [[al, be],[be*, ga]] with be complex: returns {w:[w-,w+], v:[[A,B]-,[A,B]+]} (A,B complex as [re,im])
 function eig(k){
@@ -165,7 +160,11 @@ function eig(k){
 }
 const reduce = k => { let r=((k+PI)%TAU+TAU)%TAU-PI; return r; };
 function omegaAt(k,br){ return eig(reduce(k)).w[br]; }
-function groupVel(k,br){ const h=1e-4; return (omegaAt(k+h,br)-omegaAt(k-h,br))/(2*h); }
+function groupVel(k,br){ const h=1e-4;
+  // at the zone edge take the one-sided slope along the branch as it is drawn (a centred difference across the edge
+  // would give 0 even when the branch has a finite slope there, as for K2 = K1 and equal masses)
+  if(Math.abs(Math.abs(k)-PI)<1e-6){ const out=S.zone==="ext"&&br===1, dir=(out?1:-1)*(k>0?1:-1); return (omegaAt(k+dir*h,br)-omegaAt(k,br))/(dir*h); }
+  return (omegaAt(k+h,br)-omegaAt(k-h,br))/(2*h); }
 function gapInfo(){ if(S.s==="mono") return null; const e=eig(PI).w; const lo=Math.max(e[0],eig(PI).w[0]), top=Math.min(...[0,1].map(i=>i));
   // acoustic max and optical min (both at the zone edge for this chain)
   let amax=0, omin=1e9; for(let i=0;i<=400;i++){ const k=-PI+TAU*i/400, w=eig(k).w; amax=Math.max(amax,w[0]); omin=Math.min(omin,w[1]); }
@@ -180,18 +179,25 @@ function dos(nb){
   return {h, dw, wmax};
 }
 
-/* ---------------- panel 1: dispersion ---------------- */
+// allowed wave vectors of a ring of N cells, k_j = 2 pi j / N in [-pi, pi), and the frequencies of all modes
+function allowedK(){ const ks=[]; for(let j=-S.N/2;j<S.N/2;j++) ks.push(TAU*j/S.N); return ks; }
+function modes(){ const out=[]; allowedK().forEach(k=>eig(k).w.forEach((w,b)=>out.push({k,b,w}))); return out; }
+function countNear(w0){ return modes().filter(m=>Math.abs(m.w-w0)<=DWIN/2+1e-12).length; }
+
+/* ---------------- panel 1: dispersion and mode counting ---------------- */
 let D = null;     // cached geometry of the dispersion plot
 function drawDisp(){
   const {ctx,w,h}=setupCanvas($("cd")); ctx.clearRect(0,0,w,h);
   const ext=S.zone==="ext", kmax=ext?TAU:PI;
   let wmax=0; for(let i=0;i<=200;i++){ const e=eig(-PI+TAU*i/200).w; wmax=Math.max(wmax,...e); }
   wmax=Math.max(wmax*1.12,0.5);
-  const L=46,R=14,T=14,B=38, X=k=>L+(k+kmax)/(2*kmax)*(w-L-R), Y=o=>h-B-o/wmax*(h-T-B);
+  const DW=Math.max(84,Math.min(190,0.25*w)), GUT=16, R0=12;          // width of the g(omega) strip, gutter for the projected marks
+  const L=46,R=R0+DW+GUT,T=14,B=38, X=k=>L+(k+kmax)/(2*kmax)*(w-L-R), Y=o=>h-B-o/wmax*(h-T-B);
+  const xs=w-R, xd=xs+GUT, xe=w-R0;                                  // right edge of the dispersion, the g = 0 axis, the right edge
   D={X,Y,kmax,wmax,L,R,T,B,w,h};
   // gap shading
   const g=gapInfo();
-  if(g&&g.gap>1e-6){ ctx.fillStyle=css("--amber"); ctx.globalAlpha=.13; ctx.fillRect(L,Y(g.omin),w-L-R,Y(g.amax)-Y(g.omin)); ctx.globalAlpha=1; }
+  if(g&&g.gap>1e-6){ ctx.fillStyle=css("--amber"); ctx.globalAlpha=.13; ctx.fillRect(L,Y(g.omin),xe-L,Y(g.amax)-Y(g.omin)); ctx.globalAlpha=1; }
   // axes, zone boundaries
   ctx.strokeStyle=css("--line"); ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
@@ -199,7 +205,7 @@ function drawDisp(){
   const tl=t=>t===0?"0":(t===1?"π":t===-1?"−π":(t<0?"−":"")+Math.abs(t)+"π");
   ticks.forEach(t=>{ const x=X(t*PI); label(ctx,tl(t),x,h-B+14,css("--muted"),12); });
   [-1,1].forEach(t=>{ const x=X(t*PI); ctx.setLineDash([4,4]); ctx.strokeStyle=css("--muted"); ctx.globalAlpha=.5; ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,h-B); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; });
-  label(ctx,"k  (units of 1/a)",(L+w-R)/2,h-8,css("--muted"),12);
+  label(ctx,"k  (units of 1/a)",(L+xs)/2,h-8,css("--muted"),12);
   ctx.save(); ctx.translate(13,(T+h-B)/2); ctx.rotate(-PI/2); label(ctx,"ω",0,0,css("--muted"),13); ctx.restore();
   for(let o=0;o<=wmax;o+=0.5){ const y=Y(o); if(y<T) break; label(ctx,o.toFixed(1),L-6,y,css("--muted"),11,"right"); }
   // branches
@@ -216,16 +222,34 @@ function drawDisp(){
     }
   }
   ctx.setLineDash([]);
-  // selected point
+  // g(omega) drawn sideways: the same omega axis, g to the right (continuum limit, per atom)
+  if(!DOS) DOS=dos(120);
+  { const {h:hist,dw}=DOS, gmax=Math.min(3,Math.max(...hist)*1.05), GX=v=>xd+Math.min(v,gmax)/gmax*(xe-xd);
+    ctx.fillStyle=css("--blue"); ctx.globalAlpha=.32;
+    for(let j=0;j<hist.length;j++){ const y1=Y((j+1)*dw), y0=Y(j*dw); if(y0<T) break; ctx.fillRect(xd,Math.max(T,y1),GX(hist[j])-xd,Math.max(1,y0-Math.max(T,y1)-0.4)); }
+    ctx.globalAlpha=1; ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(xd,T); ctx.lineTo(xd,h-B); ctx.lineTo(xe,h-B); ctx.stroke();
+    label(ctx,"g(ω)",(xd+xe)/2,h-B+14,css("--muted"),12); }
+  // the N allowed k values on the curve, each projected to the right onto the omega axis
+  { const ks=allowedK(), rP=S.N<=40?3.4:S.N<=90?2.5:1.8;
+    const place=(k,b)=>!ext?k:(S.s==="mono"||b===0?k:(k>=0?k-TAU:k+TAU));      // extended zone: the optical branch lives in pi < |k| < 2 pi
+    ks.forEach(k=>{ for(let b=0;b<nb;b++){ const wv=eig(k).w[b], kk=place(k,b), x=X(kk), y=Y(wv);
+      if(S.N<=60&&kk>=-1e-9){ ctx.strokeStyle=cols[b]; ctx.globalAlpha=.16; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(xs,y); ctx.stroke(); }
+      ctx.globalAlpha=.55; ctx.strokeStyle=cols[b]; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(xs+2,y); ctx.lineTo(xd-2,y); ctx.stroke();
+      ctx.globalAlpha=1; ctx.fillStyle=css("--panel"); ctx.strokeStyle=cols[b]; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x,y,rP,0,TAU); ctx.fill(); ctx.stroke(); } });
+    ctx.globalAlpha=1; }
+  // selected point, with its frequency carried across to g(omega)
   const ws=omegaAt(S.k,S.br), px=X(S.k), py=Y(ws);
+  ctx.strokeStyle=css("--amber"); ctx.lineWidth=1.6; ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(xe,py); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle=css("--amber"); ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.arc(px,py,7,0,TAU); ctx.fill(); ctx.stroke();
   // legend
-  $("dleg").innerHTML = S.s==="mono" ? `<span><span class="dot" style="background:${cols[0]}"></span>ענף יחיד (אקוסטי)</span>`
-    : `<span><span class="dot" style="background:${cols[0]}"></span>ענף אקוסטי</span><span><span class="dot" style="background:${cols[1]}"></span>ענף אופטי</span>` + (g&&g.gap>1e-6?`<span><span class="dot" style="background:${css("--amber")};opacity:.5"></span>פער</span>`:"");
+  $("dleg").innerHTML = (S.s==="mono" ? `<span><span class="dot" style="background:${cols[0]}"></span>ענף יחיד (אקוסטי)</span>`
+    : `<span><span class="dot" style="background:${cols[0]}"></span>ענף אקוסטי</span><span><span class="dot" style="background:${cols[1]}"></span>ענף אופטי</span>` + (g&&g.gap>1e-6?`<span><span class="dot" style="background:${css("--amber")};opacity:.5"></span>פער</span>`:""))
+    + `<span><span class="dot" style="background:transparent;border:2px solid ${cols[0]}"></span>ערכי k המותרים</span>`;
 }
 function pick(ev){
   if(!D) return; const r=$("cd").getBoundingClientRect(), x=ev.clientX-r.left, y=ev.clientY-r.top;
+  if(x>D.w-D.R+6) return;                                   // clicks on the g(omega) strip do not select a mode
   let k=-D.kmax+(x-D.L)/(D.w-D.L-D.R)*2*D.kmax; k=Math.max(-D.kmax,Math.min(D.kmax,k));
   const o=(D.h-D.B-y)/(D.h-D.T-D.B)*D.wmax;
   if(S.s==="mono"){ S.br=0; }
@@ -241,7 +265,7 @@ $("cd").addEventListener("pointerup",()=>{ dragging=false; });
 function info(){
   const kr=reduce(S.k), e=eig(kr), w=e.w[S.br], vg=groupVel(S.k,S.br);
   let s=`<h3>הנקודה שנבחרה</h3>
-  <p><span class="num">k a/π = ${fmt(S.k/PI)}</span>${Math.abs(S.k-kr)>1e-9?` (שקול ל-<span class="num">${fmt(kr/PI)}</span> באזור הראשון)`:""}</p>
+  <p><span class="num">k a/π = ${fmt(S.k/PI)}</span>${Math.abs(S.k-kr)>1e-9&&Math.abs(Math.abs(S.k)-PI)>1e-9?` (שקול ל-<span class="num">${fmt(kr/PI)}</span> באזור הראשון)`:""}</p>
   <p><span class="num">ω = ${fmt(w)}</span>, ומהירות החבורה <span class="num">v_g = dω/dk = ${fmt(vg)}</span></p>`;
   if(S.s==="di"){
     const [A,B]=e.v[S.br], rA=Math.hypot(...A), rB=Math.hypot(...B);
@@ -252,6 +276,10 @@ function info(){
   } else {
     s+=`<p>תדירות מרבית <span class="num">2.000</span>, בקצה אזור ברילואן</p>`;
   }
+  const nm=S.N*(S.s==="mono"?1:2);
+  s+=`<h3 style="margin-top:10px">ספירת אופני התנודה</h3>
+  <p><span class="num">N = ${S.N}</span> תאים: <b>${S.N}</b> ערכי k מותרים באזור ברילואן הראשון, במרווח <span class="num">2π/(Na)</span>, ובסך הכול <b>${nm}</b> אופני תנודה, אחד לכל אטום.</p>
+  <p>אופני תנודה בחלון <span class="num">Δω = ${DWIN}</span> סביב התדירות שנבחרה: <b>${countNear(w)}</b></p>`;
   $("dinfo").innerHTML=s;
 }
 
@@ -299,24 +327,7 @@ function drawMotion(){
   $("minfo").innerHTML=s;
 }
 
-/* ---------------- panel 3: DoS ---------------- */
-let DOS=null;
-function drawDos(){
-  const {ctx,w,h}=setupCanvas($("cg")); ctx.clearRect(0,0,w,h);
-  if(!DOS) DOS=dos(150);
-  const {h:hist,dw,wmax}=DOS, L=46,R=14,T=12,B=34;
-  const ymax=Math.min(3, Math.max(...hist)*1.05), X=o=>L+o/wmax*(w-L-R), Y=v=>h-B-Math.min(v,ymax)/ymax*(h-T-B);
-  const g=gapInfo();
-  if(g&&g.gap>1e-6){ ctx.fillStyle=css("--amber"); ctx.globalAlpha=.13; ctx.fillRect(X(g.amax),T,X(g.omin)-X(g.amax),h-T-B); ctx.globalAlpha=1; }
-  ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
-  ctx.fillStyle=css("--blue"); ctx.globalAlpha=.75;
-  for(let j=0;j<hist.length;j++){ const x0=X(j*dw), x1=X((j+1)*dw); ctx.fillRect(x0,Y(hist[j]),Math.max(1,x1-x0-0.5),h-B-Y(hist[j])); }
-  ctx.globalAlpha=1;
-  for(let o=0;o<=wmax;o+=0.5) label(ctx,o.toFixed(1),X(o),h-B+13,css("--muted"),11);
-  label(ctx,"ω",w-R-6,h-B-10,css("--muted"),13);
-  ctx.save(); ctx.translate(13,(T+h-B)/2); ctx.rotate(-PI/2); label(ctx,"g(ω) per atom",0,0,css("--muted"),12); ctx.restore();
-  const ws=omegaAt(S.k,S.br); ctx.strokeStyle=css("--amber"); ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(X(ws),T); ctx.lineTo(X(ws),h-B); ctx.stroke();
-}
+let DOS=null;       // cached continuum g(omega); reset when the chain changes
 
 /* ---------------- wiring ---------------- */
 function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
@@ -324,15 +335,16 @@ function syncCtl(){
   const mono=S.s==="mono";
   $("rk").classList.toggle("off",mono); $("rm").classList.toggle("off",mono);
   $("kr").disabled=mono; $("mr").disabled=mono;
-  $("kro").textContent=S.K2.toFixed(2); $("mro").textContent=S.m2.toFixed(2);
+  $("kro").textContent=S.K2.toFixed(2); $("mro").textContent=S.m2.toFixed(2); $("nno").textContent=S.N;
   pressed("sseg","s",S.s); pressed("zseg","z",S.zone);
   if(S.s==="mono") S.br=0;
 }
-function drawStatic(){ syncCtl(); drawDisp(); info(); drawDos(); drawMotion(); }
+function drawStatic(){ syncCtl(); drawDisp(); info(); drawMotion(); }
 document.querySelectorAll("#sseg button").forEach(b=>b.addEventListener("click",()=>{ S.s=b.dataset.s; DOS=null; drawStatic(); }));
 document.querySelectorAll("#zseg button").forEach(b=>b.addEventListener("click",()=>{ S.zone=b.dataset.z; if(S.zone==="red") S.k=reduce(S.k); drawStatic(); }));
 $("kr").addEventListener("input",e=>{ S.K2=Math.exp(+e.target.value); DOS=null; drawStatic(); });
 $("mr").addEventListener("input",e=>{ S.m2=Math.exp(+e.target.value); DOS=null; drawStatic(); });
+$("nn").addEventListener("input",e=>{ S.N=+e.target.value; drawStatic(); });
 $("wave").addEventListener("change",e=>{ S.wave=e.target.checked; drawMotion(); });
 $("alias").addEventListener("change",e=>{ S.alias=e.target.checked; drawMotion(); });
 $("play").addEventListener("click",()=>{ S.playing=!S.playing; $("play").textContent=S.playing?"עצור":"הפעל"; if(S.playing) loop(); });
@@ -358,7 +370,7 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawStatic);
 
 $("kr").value=Math.log(S.K2); $("mr").value=Math.log(S.m2);
 drawStatic(); fitFrame(); loop();
-window.__chain = { S, eig, dos, gapInfo, omegaAt, groupVel, reduce, drawStatic, drawMotion };
+window.__chain = { S, eig, dos, gapInfo, omegaAt, groupVel, reduce, allowedK, modes, countNear, drawStatic, drawMotion };
 })();
 </script>
 </body>
