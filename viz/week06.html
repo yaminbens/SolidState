@@ -26,10 +26,11 @@ h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
   box-shadow:0 6px 18px rgba(18,41,77,.06)}
 .card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
 .card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
-.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
-canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none;cursor:grab}
-canvas:active{cursor:grabbing}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none}
+canvas.drag{cursor:grab}
+canvas.drag:active{cursor:grabbing}
 .hint{color:var(--muted);font-size:12.5px;margin:6px 0 0}
 .ctl{display:flex;flex-direction:column;gap:12px}
 .lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
@@ -37,35 +38,38 @@ canvas:active{cursor:grabbing}
 .seg button{font:inherit;font-size:14px;background:transparent;color:var(--fg);border:1px solid var(--line);
   border-radius:999px;padding:4px 12px;cursor:pointer}
 .seg button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
-.seg button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-.row{display:grid;grid-template-columns:auto minmax(0,1fr) 3.2em;gap:10px;align-items:center}
+.seg button:focus-visible,input:focus-visible,button.act:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.row{display:grid;grid-template-columns:7.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center}
 input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
+input[type=range]:disabled{opacity:.45}
 .checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
 .checks label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 .box{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
 .box h3{margin:0 0 6px;font-size:14px;font-weight:700}
-.box p{margin:3px 0}
+.box p{margin:4px 0}
 .num{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate;font-size:13px}
-p .num{white-space:nowrap}
-.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
-.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+p .num,li .num{white-space:nowrap}
 output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;text-align:left}
-.ok{color:var(--teal);font-weight:700}
-.no{color:var(--rose);font-weight:700}
 .ctlrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:12px}
 @media (max-width:760px){.ctlrow{grid-template-columns:minmax(0,1fr)}}
-.row{grid-template-columns:7.5em minmax(0,1fr) 3.6em}
-table.pts{border-collapse:collapse;font-size:13px;width:100%}
+table.pts{border-collapse:collapse;font-size:13px;width:100%;margin-top:4px}
 table.pts td,table.pts th{padding:3px 6px;border-bottom:1px solid var(--line);text-align:center}
 table.pts th{color:var(--muted);font-weight:500}
+.scroll{max-height:15em;overflow:auto}
 button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:5px 14px;cursor:pointer}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:8px;color:var(--muted)}
+.sw{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+.sw.ring{background:transparent;border:2px solid var(--rose)}
+.sw.bar{border-radius:2px;height:4px;width:16px;vertical-align:3px}
+.col{display:flex;flex-direction:column;gap:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>פיזור מגביש: בניית אוולד ותבנית אבקה</h1>
-    <p class="lede">שיא פיזור מתקבל כאשר <span class="num">k′ − k = G</span> ו-<span class="num">|k′| = |k|</span>. בחלק העליון רואים מתי זה קורה בגביש יחיד, בגביש מסתובב ובאבקה; בחלק התחתון רואים איך הבסיס קובע את עוצמת השיאים. אין צורך להריץ דבר.</p>
+    <h1>פיזור מגביש: בניית אוולד וגורם המבנה</h1>
+    <p class="lede">שיא פיזור מתקבל כאשר <span class="num">k′ − k = G</span> ו-<span class="num">|k′| = |k|</span>. בחלק העליון רואים מתי זה קורה בגביש יחיד, בגביש מסתובב ובאבקה. בחלק התחתון רואים את גורם המבנה כסכום של חץ אחד לכל אטום בבסיס, ואיך הסכום קובע אילו שיאים נשארים ומה העוצמה שלהם. אין צורך להריץ דבר.</p>
   </header>
 
   <!-- ================= Panel 1: Ewald construction ================= -->
@@ -79,10 +83,10 @@ button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:
           <div class="lab">שיטה</div>
           <div class="seg" id="mseg"><button data-m="fixed">גביש קבוע</button><button data-m="rot">גביש מסתובב</button><button data-m="powder">אבקה</button></div>
         </div>
-        <div class="row"><span class="lab" style="margin:0">λ / a</span><input id="lam" type="range" min="0.25" max="1.5" step="0.005" value="0.6"><output id="lamo"></output></div>
-        <div class="row"><span class="lab" style="margin:0">סיבוב הגביש</span><input id="phi" type="range" min="0" max="90" step="0.1" value="17"><output id="phio"></output></div>
+        <div class="row"><span class="lab" style="margin:0">λ / a</span><input id="lam" type="range" min="0.25" max="2.2" step="0.005" value="0.6"><output id="lamo"></output></div>
+        <div class="row"><span class="lab" style="margin:0">סיבוב הגביש</span><input id="phi" type="range" min="0" max="90" step="0.1" value="23"><output id="phio"></output></div>
         <div class="row"><span class="lab" style="margin:0">גודל הגביש N</span><input id="nc" type="range" min="1" max="2" step="0.01" value="1.3"><output id="nco"></output></div>
-        <div><button class="act" id="sweep" type="button">סובב את הגביש</button></div>
+        <div class="btns"><button class="act" id="scan" type="button">סרוק את אורך הגל</button><button class="act" id="sweep" type="button">סובב את הגביש</button></div>
       </div>
       <div class="ctl">
         <div class="box" id="einfo"></div>
@@ -90,22 +94,34 @@ button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:
     </div>
   </section>
 
-  <!-- ================= Panel 2: powder pattern ================= -->
+  <!-- ================= Panel 2: structure factor as a sum of arrows ================= -->
   <section class="card">
-    <h2>תבנית פיזור של אבקה</h2>
-    <p class="sub">העוצמה של כל שיא היא |S(G)|² כפול מספר הווקטורים ההופכיים באותו אורך (הריבוי). גורמי הצורה האטומיים נלקחים קבועים, ומקדמים זוויתיים נוספים לא נכללים.</p>
-    <canvas id="cp" width="680" height="360" aria-label="תבנית אבקה"></canvas>
-    <div class="ctlrow">
-      <div class="ctl">
-        <div>
-          <div class="lab">מבנה (צלע הקובייה a)</div>
-          <div class="seg" id="sseg"><button data-s="sc">SC</button><button data-s="bcc">BCC</button><button data-s="fcc">FCC</button><button data-s="cscl">מבנה CsCl</button></div>
+    <h2>גורם המבנה כסכום חצים</h2>
+    <p class="sub">מתארים כל מבנה כסריג SC עם צלע a ובסיס, ולכן הנקודות הן <span class="num">G = (2π/a)(h,k,l)</span>. כל אטום בבסיס תורם חץ <span class="num">f<sub>j</sub> e<sup>−iG·d<sub>j</sub></sup></span>, והחצים מתחברים זה לזה. השטח של כל נקודה פרופורציוני ל-<span class="num">|S(G)|²</span>, ועיגול ריק פירושו <span class="num">S = 0</span>: השיא נעלם.</p>
+    <div class="grid">
+      <div class="col">
+        <canvas id="c3" class="drag" width="600" height="540" aria-label="נקודות הסריג ההופכי בתלת-ממד"></canvas>
+        <p class="hint">גררו כדי לסובב. לחצו על נקודה כדי לראות את החצים שלה.</p>
+        <div class="legend"><span><span class="sw" style="background:var(--blue)"></span>S ≠ 0</span><span><span class="sw ring"></span>S = 0</span><span><span class="sw" style="background:var(--amber)"></span>הנקודה שנבחרה</span><span id="cubeleg"><span class="sw bar" style="background:var(--amber)"></span>קובייה בצלע 4π/a</span></div>
+        <div class="ctl" style="margin-top:4px">
+          <div>
+            <div class="lab">מבנה (צלע הקובייה a)</div>
+            <div class="seg" id="sseg"><button data-s="sc">SC</button><button data-s="bcc">BCC</button><button data-s="fcc">FCC</button><button data-s="cscl">מבנה CsCl</button></div>
+          </div>
+          <div class="row" id="frow"><span class="lab" style="margin:0">f<sub>B</sub> / f<sub>A</sub></span><input id="fr" type="range" min="0" max="1" step="0.01" value="0.5"><output id="fro"></output></div>
+          <div class="checks">
+            <label><input type="checkbox" id="hide0"> הסתר נקודות עם S = 0</label>
+            <label><input type="checkbox" id="cube" checked> קובייה בצלע 4π/a</label>
+            <label><input type="checkbox" id="big"> טווח גדול (−2 עד 2)</label>
+            <label><input type="checkbox" id="spin"> סיבוב אוטומטי</label>
+          </div>
         </div>
-        <div class="row" id="frow"><span class="lab" style="margin:0">f<sub>B</sub> / f<sub>A</sub></span><input id="fr" type="range" min="0" max="1" step="0.01" value="0.5"><output id="fro"></output></div>
-        <div class="row"><span class="lab" style="margin:0">λ / a</span><input id="lam2" type="range" min="0.2" max="1.2" step="0.005" value="0.45"><output id="lam2o"></output></div>
-        <div class="row"><span class="lab" style="margin:0">גודל הגביש N</span><input id="nc2" type="range" min="1" max="2.5" step="0.01" value="1.7"><output id="nc2o"></output></div>
       </div>
-      <div class="ctl"><div class="box" id="pinfo"></div></div>
+      <div class="col">
+        <canvas id="cph" width="460" height="400" aria-label="סכום החצים"></canvas>
+        <p class="hint" style="margin-top:-6px">החצים מחוברים ראש לזנב, ומספר החץ הוא מספר האטום בטבלה. חץ שחופף לחץ קודם מוזז מעט הצידה. רדיוס המעגל המקווקו הוא f<sub>A</sub>.</p>
+        <div class="box" id="sinfo"></div>
+      </div>
     </div>
   </section>
 </div>
@@ -128,21 +144,23 @@ try{ if(window.parent!==window) new MutationObserver(()=>{applyTheme(); drawAll(
 if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{applyTheme(); drawAll();});
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function setupCanvas(c){
-  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=c.height/c.width;
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=c.clientWidth||c.width, ratio=+(c.dataset.r||(c.dataset.r=c.height/c.width));
   const W=Math.round(w*dpr), H=Math.round(w*ratio*dpr);
   if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
   const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h:w*ratio};
 }
-function arrow(ctx,a,b,col,lw){ ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw||2.4;
-  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
-  const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), L=10;
-  ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(b[0]-L*Math.cos(ang-.4),b[1]-L*Math.sin(ang-.4)); ctx.lineTo(b[0]-L*Math.cos(ang+.4),b[1]-L*Math.sin(ang+.4)); ctx.fill(); }
+function arrow(ctx,a,b,col,lw,head){ ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw||2.4;
+  const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), L=head||10, len=Math.hypot(b[0]-a[0],b[1]-a[1]), Lh=Math.min(L,0.6*len);
+  const e=[b[0]-0.6*Lh*Math.cos(ang),b[1]-0.6*Lh*Math.sin(ang)];
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(e[0],e[1]); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(b[0]-Lh*Math.cos(ang-.4),b[1]-Lh*Math.sin(ang-.4)); ctx.lineTo(b[0]-Lh*Math.cos(ang+.4),b[1]-Lh*Math.sin(ang+.4)); ctx.closePath(); ctx.fill(); }
 function label(ctx,t,x,y,col,size,align){ ctx.font=`600 ${size||14}px `+css("--f-num"); ctx.fillStyle=col; ctx.textAlign=align||"center"; ctx.textBaseline="middle"; ctx.direction="ltr"; ctx.fillText(t,x,y); }
+const fmt=(x,d)=>{ const v=Math.abs(x)<5e-10?0:x; return (v<0?"−":"")+Math.abs(v).toFixed(d==null?2:d); };
 
 /* ================= Panel 1: Ewald ================= */
 // units: a = 1, reciprocal lattice spacing g = 2 pi
-const E = { mode:"fixed", lam:0.6, phi:17, logN:1.3, hits:[], sweeping:false };
-const g = TAU;
+const E = { mode:"fixed", lam:0.6, phi:23, logN:1.3, hits:[], sweeping:false, scanning:false, scan:[] };
+const g = TAU, SCAN_MAX=2.1, SCAN_MIN=0.5;
 function ewaldGeom(){
   const k=TAU/E.lam, N=Math.pow(10,E.logN), tol=g/N, c=Math.cos(E.phi*Math.PI/180), s=Math.sin(E.phi*Math.PI/180);
   const M=Math.ceil(2*k/g)+1, pts=[];
@@ -150,130 +168,215 @@ function ewaldGeom(){
   return {k,N,tol,pts};
 }
 function twoTheta(G,k){ return 2*Math.asin(Math.min(1,G/(2*k)))*180/Math.PI; }
+// the wavelength at which (h,l) lies exactly on the circle, for the present rotation:  lambda = -2 (h c - l s)/(h^2+l^2)  (a = 1)
+function scanTargets(){
+  const c=Math.cos(E.phi*Math.PI/180), s=Math.sin(E.phi*Math.PI/180), out=[];
+  for(let h=-8;h<=8;h++) for(let l=-8;l<=8;l++){ if(!h&&!l) continue; const lam=-2*(h*c-l*s)/(h*h+l*l);
+    if(lam>=SCAN_MIN-1e-9&&lam<=SCAN_MAX+1e-9) out.push({h,l,lam,tt:twoTheta(TAU*Math.hypot(h,l),TAU/lam)}); }
+  out.sort((p,q)=>q.lam-p.lam||p.l-q.l);
+  const groups=[]; out.forEach(t=>{ const G=groups[groups.length-1]; if(G&&Math.abs(G.lam-t.lam)<1e-7) G.pts.push(t); else groups.push({lam:t.lam,pts:[t]}); });
+  return groups;
+}
 function drawEwald(){
   const {ctx,w,h}=setupCanvas($("ce")), G=ewaldGeom(), k=G.k;
   ctx.clearRect(0,0,w,h);
-  // view: circle center at (-k,0); show the circle plus a margin
-  const R=k*1.12, sc=Math.min(w,h)/(2*R), cx=w/2+k*sc*0.0, X=x=>w/2+(x+k)*sc, Y=y=>h/2-y*sc;
+  const R=k*1.12, sc=Math.min(w,h)/(2*R), X=x=>w/2+(x+k)*sc, Y=y=>h/2-y*sc;
   const C=[X(-k),Y(0)], O=[X(0),Y(0)];
-  // powder rings
-  if(E.mode==="powder"){
-    const radii=[...new Set(G.pts.filter(p=>p.h||p.l).map(p=>Math.round(Math.hypot(p.x,p.y)*1e6)/1e6))].filter(r=>r<=2*k+1e-9).sort((a,b)=>a-b);
-    ctx.strokeStyle=css("--teal"); ctx.globalAlpha=.45; ctx.lineWidth=1.2;
-    radii.forEach(r=>{ ctx.beginPath(); ctx.arc(O[0],O[1],r*sc,0,TAU); ctx.stroke(); }); ctx.globalAlpha=1;
-  }
-  // reciprocal lattice points
+  const radii=E.mode==="powder"?[...new Set(G.pts.filter(p=>p.h||p.l).map(p=>Math.round(Math.hypot(p.x,p.y)*1e6)/1e6))].filter(r=>r<=2*k+1e-9).sort((a,b)=>a-b):[];
+  if(E.mode==="powder"){ ctx.strokeStyle=css("--teal"); ctx.globalAlpha=.45; ctx.lineWidth=1.2;
+    radii.forEach(r=>{ ctx.beginPath(); ctx.arc(O[0],O[1],r*sc,0,TAU); ctx.stroke(); }); ctx.globalAlpha=1; }
   const hits=[];
   G.pts.forEach(p=>{
     const px=X(p.x), py=Y(p.y); if(px<-20||px>w+20||py<-20||py>h+20) return;
-    const d=Math.abs(Math.hypot(p.x+k,p.y)-k), on=(p.h||p.l)&&d<G.tol/2;
+    const d=Math.abs(Math.hypot(p.x+k,p.y)-k), on=(p.h||p.l)&&d<G.tol/2+1e-9;
     if(on) hits.push(p);
     ctx.fillStyle=css(on?"--amber":"--fg"); ctx.globalAlpha=on?1:0.75;
     ctx.beginPath(); ctx.arc(px,py,Math.max(2,Math.min(14,(G.tol/2)*sc)),0,TAU); ctx.fill(); ctx.globalAlpha=1; });
-  // Ewald circle
   ctx.strokeStyle=css("--blue"); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(C[0],C[1],k*sc,0,TAU); ctx.stroke();
-  // incident k, from C to O
   arrow(ctx,C,O,css("--blue"),2.6); label(ctx,"k",(C[0]+O[0])/2,C[1]-12,css("--blue"));
-  // diffracted beams
-  const dirs=[];
   if(E.mode==="powder"){
-    const radii=[...new Set(G.pts.filter(p=>p.h||p.l).map(p=>Math.round(Math.hypot(p.x,p.y)*1e6)/1e6))].filter(r=>r<=2*k+1e-9).sort((a,b)=>a-b);
-    radii.forEach(r=>{ const tt=twoTheta(r,k); dirs.push({r,tt}); [1,-1].forEach(sg=>{ const ang=sg*tt*Math.PI/180, end=[C[0]+k*sc*Math.cos(ang),C[1]-k*sc*Math.sin(ang)];
+    radii.forEach(r=>{ const tt=twoTheta(r,k); [1,-1].forEach(sg=>{ const ang=sg*tt*Math.PI/180, end=[C[0]+k*sc*Math.cos(ang),C[1]-k*sc*Math.sin(ang)];
       ctx.strokeStyle=css("--amber"); ctx.globalAlpha=.7; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(C[0],C[1]); ctx.lineTo(end[0],end[1]); ctx.stroke(); ctx.globalAlpha=1; }); });
   } else {
     hits.forEach(p=>{ arrow(ctx,C,[X(p.x),Y(p.y)],css("--amber"),2.2); label(ctx,`(${p.h},${p.l})`,X(p.x)+16,Y(p.y)-12,css("--amber"),12); });
   }
-  // marks accumulated during a sweep, on a ring around C (detector)
   if(E.mode==="rot"){ ctx.fillStyle=css("--rose"); E.hits.forEach(a=>{ const ang=a*Math.PI/180; ctx.beginPath(); ctx.arc(C[0]+(k*sc+10)*Math.cos(ang),C[1]-(k*sc+10)*Math.sin(ang),3.5,0,TAU); ctx.fill(); }); }
   ctx.fillStyle=css("--fg"); ctx.beginPath(); ctx.arc(O[0],O[1],4,0,TAU); ctx.fill(); label(ctx,"0",O[0]+10,O[1]+12,css("--fg"),12);
-  // readouts
   $("lamo").textContent=E.lam.toFixed(2); $("phio").textContent=E.phi.toFixed(1)+"°"; $("nco").textContent=Math.round(G.N);
   let html="";
   if(E.mode==="fixed"){
     html=`<h3>גביש יחיד וקרן באורך גל אחד</h3><p>שיאים כרגע: <b>${hits.length}</b></p>`+
       (hits.length?`<table class="pts"><tr><th>(h,k)</th><th>2θ</th></tr>${hits.map(p=>`<tr><td class="num">(${p.h}, ${p.l})</td><td class="num">${twoTheta(Math.hypot(p.x,p.y),k).toFixed(1)}°</td></tr>`).join("")}</table>`:"")+
-      `<p>בגביש גדול הנקודות קטנות, ובדרך כלל אף אחת מהן לא נוגעת במעגל. נסו לסובב מעט את הגביש.</p>`;
+      (E.scan.length||E.scanning?
+        `<p style="margin-top:10px"><b>סריקת אורך הגל</b>, מ-<span class="num">λ = ${SCAN_MAX}a</span> עד <span class="num">${SCAN_MIN}a</span>, בזווית הסיבוב הנוכחית. שיא מתקבל רק באורכי הגל האלה:</p>`+
+        `<div class="scroll"><table class="pts"><tr><th>λ / a</th><th>(h,k)</th><th>2θ</th></tr>${E.scan.map(gp=>gp.pts.map((p,i)=>`<tr><td class="num">${i?"":gp.lam.toFixed(3)}</td><td class="num">(${p.h}, ${p.l})</td><td class="num">${p.tt.toFixed(1)}°</td></tr>`).join("")).join("")}</table></div>`
+        :`<p>בגביש גדול הנקודות קטנות, ובדרך כלל אף אחת מהן לא נוגעת במעגל. אפשר לסובב מעט את הגביש, או לסרוק את אורך הגל: הכפתור מקטין את λ בהדרגה ועוצר בכל אורך גל שבו נקודה נוגעת במעגל.</p>`);
   } else if(E.mode==="rot"){
     const uniq=[...new Set(E.hits.map(a=>Math.abs(a).toFixed(1)))];
     html=`<h3>גביש מסתובב</h3><p>לחצו "סובב את הגביש": בכל זווית שבה נקודה עוברת דרך המעגל נרשמת קרן מפוזרת (נקודות ורודות סביב המעגל).</p><p>זוויות פיזור שנרשמו: <b>${uniq.length}</b></p>`;
   } else {
-    html=`<h3>אבקה</h3><p>באבקה יש גרגירים בכל הכיוונים, ולכן כל וקטור הופכי עם |G| ≤ 2|k| נותן פיזור, בזווית 2θ = 2 arcsin(|G|/2|k|). המעגלים הטורקיזיים הם האורכים האפשריים של G.</p>`+
-      `<table class="pts"><tr><th>|G| · a/2π</th><th>2θ</th></tr>${dirs.map(d=>`<tr><td class="num">${(d.r/g).toFixed(3)}</td><td class="num">${d.tt.toFixed(1)}°</td></tr>`).join("")}</table>`;
+    const dirs=radii.map(r=>({r,tt:twoTheta(r,k)}));
+    html=`<h3>אבקה</h3><p>באבקה יש גרגירים בכל הכיוונים, ולכן כל וקטור הופכי עם <span class="num">|G| ≤ 2|k|</span> נותן פיזור, בזווית <span class="num">2θ = 2 arcsin(|G|/2|k|)</span>. המעגלים הטורקיזיים הם האורכים האפשריים של G.</p>`+
+      `<div class="scroll"><table class="pts"><tr><th>|G| · a/2π</th><th>2θ</th></tr>${dirs.map(d=>`<tr><td class="num">${(d.r/g).toFixed(3)}</td><td class="num">${d.tt.toFixed(1)}°</td></tr>`).join("")}</table></div>`;
   }
   $("einfo").innerHTML=html;
-  $("phi").disabled=E.mode==="powder"; $("sweep").style.display=E.mode==="rot"?"":"none";
+  $("phi").disabled=E.mode==="powder";
+  $("sweep").style.display=E.mode==="rot"?"":"none"; $("scan").style.display=E.mode==="fixed"?"":"none";
+  return hits;
 }
-let sweepRaf=null;
+function stopAll(){ E.sweeping=false; E.scanning=false; $("sweep").textContent="סובב את הגביש"; $("scan").textContent="סרוק את אורך הגל"; }
 function sweep(){
-  if(E.sweeping){ E.sweeping=false; $("sweep").textContent="סובב את הגביש"; return; }
-  E.sweeping=true; E.hits=[]; E.phi=0; $("sweep").textContent="עצור"; let last=performance.now();
-  const step=t=>{ if(!E.sweeping) return; const dt=(t-last)/1000; last=t; E.phi+=dt*14; if(E.phi>=90){ E.phi=90; E.sweeping=false; $("sweep").textContent="סובב את הגביש"; }
+  if(E.sweeping){ stopAll(); return; }
+  stopAll(); E.sweeping=true; E.hits=[]; E.phi=0; $("sweep").textContent="עצור"; let last=performance.now();
+  const step=t=>{ if(!E.sweeping) return; const dt=Math.min(0.1,(t-last)/1000); last=t; E.phi+=dt*14; if(E.phi>=90){ E.phi=90; stopAll(); }
     $("phi").value=E.phi; const G=ewaldGeom();
     G.pts.forEach(p=>{ if(!(p.h||p.l)) return; const d=Math.abs(Math.hypot(p.x+G.k,p.y)-G.k); if(d<G.tol/2){ const ang=Math.atan2(p.y,p.x+G.k)*180/Math.PI; if(!E.hits.some(a=>Math.abs(a-ang)<0.4)) E.hits.push(ang); } });
-    drawEwald(); if(E.sweeping) sweepRaf=requestAnimationFrame(step); };
-  sweepRaf=requestAnimationFrame(step);
+    drawEwald(); if(E.sweeping) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+// wavelength scan (Laue-like): lambda decreases from SCAN_MAX; the scan holds at every wavelength where a point touches the circle
+function scan(){
+  if(E.scanning){ stopAll(); drawEwald(); return; }
+  stopAll(); const groups=scanTargets(); E.scan=[]; E.scanning=true; E.lam=SCAN_MAX; $("scan").textContent="עצור";
+  let gi=0, hold=0, last=performance.now();
+  const step=t=>{ if(!E.scanning) return; const dt=Math.min(0.1,(t-last)/1000); last=t;
+    if(hold>0){ hold-=dt; if(hold<=0) gi++; }
+    else { const target=gi<groups.length?groups[gi].lam:SCAN_MIN; E.lam-=dt*0.28;
+      if(E.lam<=target){ E.lam=target; if(gi<groups.length){ E.scan.push(groups[gi]); hold=1.0; } else { stopAll(); } } }
+    $("lam").value=E.lam; drawEwald(); if(E.scanning) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
 }
 
-/* ================= Panel 2: powder pattern ================= */
-const PS = { s:"bcc", fr:0.5, lam:0.45, logN:1.7 };
+/* ================= Panel 2: structure factor as a sum of arrows ================= */
+// every structure is an SC lattice (cube edge a) with a basis; positions in units of a
 const STR = {
   sc:{ name:"SC", basis:[[0,0,0,"A"]] },
   bcc:{ name:"BCC", basis:[[0,0,0,"A"],[.5,.5,.5,"A"]] },
   fcc:{ name:"FCC", basis:[[0,0,0,"A"],[.5,.5,0,"A"],[.5,0,.5,"A"],[0,.5,.5,"A"]] },
   cscl:{ name:"מבנה CsCl", basis:[[0,0,0,"A"],[.5,.5,.5,"B"]] }
 };
-function families(){
-  const st=STR[PS.s], fB=PS.fr, fam={};
-  const M=Math.ceil(2/PS.lam)+1;
-  for(let h=-M;h<=M;h++) for(let k=-M;k<=M;k++) for(let l=-M;l<=M;l++){
-    if(!h&&!k&&!l) continue; const s2=h*h+k*k+l*l; const sinth=PS.lam*Math.sqrt(s2)/2; if(sinth>=1) continue;
-    let re=0, im=0; st.basis.forEach(([x,y,z,sp])=>{ const f=sp==="A"?1:fB, ph=-TAU*(h*x+k*y+l*z); re+=f*Math.cos(ph); im+=f*Math.sin(ph); });
-    const S2=re*re+im*im; const key=[Math.abs(h),Math.abs(k),Math.abs(l)].sort((a,b)=>b-a).join("");
-    (fam[key]=fam[key]||{key,s2,m:0,S2,I:0}); fam[key].m++; fam[key].I+=S2;
-  }
-  return Object.values(fam).map(f=>({...f,tt:2*Math.asin(PS.lam*Math.sqrt(f.s2)/2)*180/Math.PI})).sort((a,b)=>a.tt-b.tt);
-}
-function drawPowder(){
-  const {ctx,w,h}=setupCanvas($("cp")), fam=families(), N=Math.pow(10,PS.logN);
+const T = { s:"bcc", fr:0.5, sel:[1,0,0], hide0:false, cube:true, big:false, spin:false, yaw:-0.62, pitch:0.36, proj:[] };
+function fOf(sp){ return sp==="A"?1:T.fr; }
+function terms(hkl){ return STR[T.s].basis.map(([x,y,z,sp],j)=>{ const ph=TAU*(hkl[0]*x+hkl[1]*y+hkl[2]*z), f=fOf(sp);
+  return {j,sp,pos:[x,y,z],ph,f,re:f*Math.cos(-ph),im:f*Math.sin(-ph)}; }); }
+function Sof(hkl){ return terms(hkl).reduce((s,t)=>[s[0]+t.re,s[1]+t.im],[0,0]); }
+function Smax(){ return STR[T.s].basis.reduce((s,b)=>s+fOf(b[3]),0); }
+function draw3D(){
+  const {ctx,w,h}=setupCanvas($("c3"));
   ctx.clearRect(0,0,w,h);
-  const m={l:46,r:14,t:16,b:34}, pw=w-m.l-m.r, ph=h-m.t-m.b, X=t=>m.l+t/180*pw;
-  // profile: Gaussian in 2theta with Scherrer width  FWHM(2theta) = 0.9 lambda / (N a cos theta)  (radians)
-  const seen=fam.filter(f=>f.I>1e-6), Imax=Math.max(...seen.map(f=>f.I),1e-9);
-  const prof=new Float64Array(901);
-  seen.forEach(f=>{ const th=f.tt*Math.PI/360, fw=Math.min(25,0.9*PS.lam/(N*Math.cos(th))*180/Math.PI), sg=fw/2.355;
-    for(let i=0;i<=900;i++){ const t=i*0.2, d=(t-f.tt)/sg; if(Math.abs(d)<6) prof[i]+=f.I/Imax*Math.exp(-0.5*d*d); } });
-  let pmax=0; for(let i=0;i<=900;i++) pmax=Math.max(pmax,prof[i]); pmax=Math.max(pmax,1e-9);
-  const Y=v=>m.t+ph-(v/pmax)*ph*0.92;
-  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(m.l,m.t+ph); ctx.lineTo(w-m.r,m.t+ph); ctx.stroke();
-  [0,30,60,90,120,150,180].forEach(t=>{ label(ctx,t+"°",X(t),h-m.b+16,css("--muted"),11); ctx.globalAlpha=.4; ctx.beginPath(); ctx.moveTo(X(t),m.t); ctx.lineTo(X(t),m.t+ph); ctx.stroke(); ctx.globalAlpha=1; });
-  label(ctx,"2θ",w-m.r-10,h-8,css("--muted"),12);
-  ctx.save(); ctx.translate(14,m.t+ph/2); ctx.rotate(-Math.PI/2); label(ctx,"intensity",0,0,css("--muted"),12); ctx.restore();
-  ctx.strokeStyle=css("--blue"); ctx.lineWidth=1.8; ctx.beginPath(); for(let i=0;i<=900;i++){ const x=X(i*0.2), y=Y(prof[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); } ctx.stroke();
-  // labels (not for FCC: the HW indexes an FCC series)
-  if(PS.s!=="fcc"){ const byS={}; seen.forEach(f=>{ (byS[f.s2]=byS[f.s2]||[]).push(f); });
-    Object.values(byS).forEach(grp=>{ const f=grp[0], i=Math.round(f.tt/0.2); if(prof[i]/pmax>0.05) label(ctx,grp.map(q=>"("+q.key+")").join(" "),X(f.tt),Y(prof[i])-10,css("--fg"),11); }); }
-  // missing reflections as small marks
-  fam.filter(f=>f.I<=1e-6).forEach(f=>{ ctx.strokeStyle=css("--rose"); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(X(f.tt),m.t+ph); ctx.lineTo(X(f.tt),m.t+ph-8); ctx.stroke(); });
-  $("fro").textContent=PS.fr.toFixed(2); $("lam2o").textContent=PS.lam.toFixed(2); $("nc2o").textContent=Math.round(N);
-  $("frow").style.display=PS.s==="cscl"?"":"none";
-  const nOn=seen.length, nOff=fam.length-seen.length;
-  $("pinfo").innerHTML=`<h3>${STR[PS.s].name}</h3><p>שיאים בתבנית: <b>${nOn}</b>. משפחות שהעוצמה שלהן מתאפסת (סימון ורוד על הציר): <b>${nOff}</b>.</p>`+
-    (PS.s==="cscl"?`<p>כש-f<sub>B</sub> = f<sub>A</sub> המבנה הופך ל-BCC, והשיאים עם h+k+l אי-זוגי נעלמים. כש-f<sub>B</sub> = 0 נשאר SC.</p>`:"")+
-    `<p>הקטנת הגביש מרחיבה את השיאים: הרוחב הוא בערך 2π/(Na) במרחב ההופכי.</p>`;
+  const cy=Math.cos(T.yaw), sy=Math.sin(T.yaw), cp=Math.cos(T.pitch), sp=Math.sin(T.pitch);
+  // small range: h,k,l in [0,2] (the cube of edge 4 pi/a), centred on (1,1,1); large range: [-2,2], centred on the origin
+  const lo=T.big?-2:0, hi=2, ctr=T.big?[0,0,0]:[1,1,1], ext=(T.big?2:1.45)*Math.sqrt(3)*1.04, scale=Math.min(w,h)/(2*ext);
+  const P3=q0=>{ const q=[q0[0]-ctr[0],q0[1]-ctr[1],q0[2]-ctr[2]], x1=q[0]*cy-q[1]*sy, y1=q[0]*sy+q[1]*cy, y2=y1*cp-q[2]*sp, z2=y1*sp+q[2]*cp; return [w/2+x1*scale,h/2-z2*scale,y2]; };
+  const seg=(a,b,col,lw,dash,alpha)=>{ const A=P3(a), B=P3(b); ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.setLineDash(dash||[]); ctx.globalAlpha=alpha==null?1:alpha; ctx.beginPath(); ctx.moveTo(A[0],A[1]); ctx.lineTo(B[0],B[1]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; };
+  // axes through the origin
+  [[1,0,0],[0,1,0],[0,0,1]].forEach((v,i)=>{ const L0=T.big?-2.6:0, L=2.6; seg(v.map(c=>c*L0),v.map(c=>c*L),css("--line"),1.2); const e=P3(v.map(c=>c*(L+0.25))); label(ctx,["kx","ky","kz"][i],e[0],e[1],css("--muted"),12); });
+  // the cube of edge 4 pi / a, [0,2]^3: the conventional cell of the true reciprocal lattice for BCC and FCC
+  const showCube=T.cube&&(T.s==="bcc"||T.s==="fcc");
+  if(showCube){ const C=[0,2]; for(const a of C) for(const b of C){ seg([0,a,b],[2,a,b],css("--amber"),1.6,[5,4],0.8); seg([a,0,b],[a,2,b],css("--amber"),1.6,[5,4],0.8); seg([a,b,0],[a,b,2],css("--amber"),1.6,[5,4],0.8); } }
+  const Sm=Smax(), rmax=Math.max(5,Math.min(11,scale*0.13)), items=[];
+  for(let a=lo;a<=hi;a++) for(let b=lo;b<=hi;b++) for(let c=lo;c<=hi;c++){
+    const S=Sof([a,b,c]), m=Math.hypot(S[0],S[1]), q=P3([a,b,c]); items.push({hkl:[a,b,c],m,q}); }
+  items.sort((u,v)=>v.q[2]-u.q[2]);   // far first
+  const dmin=Math.min(...items.map(it=>it.q[2])), dmax=Math.max(...items.map(it=>it.q[2]));
+  T.proj=[];
+  items.forEach(it=>{
+    const [a,b,c]=it.hkl, origin=!a&&!b&&!c, sel=a===T.sel[0]&&b===T.sel[1]&&c===T.sel[2], zero=it.m<1e-9;
+    if(zero&&T.hide0&&!sel) return;
+    const depth=(it.q[2]-dmin)/Math.max(1e-9,dmax-dmin), alpha=0.45+0.55*(1-depth);
+    ctx.globalAlpha=sel?1:alpha;
+    let r;
+    if(origin){ r=4.5; ctx.fillStyle=css("--fg"); ctx.beginPath(); ctx.arc(it.q[0],it.q[1],r,0,TAU); ctx.fill(); }
+    else if(zero){ r=4; ctx.strokeStyle=css("--rose"); ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(it.q[0],it.q[1],r,0,TAU); ctx.stroke(); }
+    else { r=Math.max(2.5,rmax*it.m/Sm); ctx.fillStyle=css(sel?"--amber":"--blue"); ctx.beginPath(); ctx.arc(it.q[0],it.q[1],r,0,TAU); ctx.fill(); }
+    if(sel){ ctx.globalAlpha=1; ctx.strokeStyle=css("--amber"); ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(it.q[0],it.q[1],Math.max(r,5)+5,0,TAU); ctx.stroke(); }
+    ctx.globalAlpha=1;
+    if(origin) label(ctx,"0",it.q[0]+11,it.q[1]+11,css("--fg"),11);
+    if(!origin) T.proj.push({hkl:it.hkl,x:it.q[0],y:it.q[1],d:it.q[2]});
+  });
+  $("cubeleg").style.display=showCube?"":"none";
 }
+function pick(x,y){
+  let best=null;
+  T.proj.forEach(p=>{ const d=Math.hypot(p.x-x,p.y-y); if(d<13&&(!best||p.d<best.d-1e-6||(Math.abs(p.d-best.d)<1e-6&&d<best.dist))) best={...p,dist:d}; });
+  return best;
+}
+function drawPhasor(){
+  const {ctx,w,h}=setupCanvas($("cph")), tl=terms(T.sel), Sm=Smax();
+  ctx.clearRect(0,0,w,h);
+  let zz=[0,0], reach=1; tl.forEach(t=>{ zz=[zz[0]+t.re,zz[1]+t.im]; reach=Math.max(reach,Math.hypot(zz[0],zz[1])); });
+  const R=reach*1.3, sc=Math.min(w,h)/(2*R), cx=w/2, cy=h/2, X=x=>cx+x*sc, Y=y=>cy-y*sc;
+  // axes and the circle |z| = sum of f
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(8,cy); ctx.lineTo(w-8,cy); ctx.moveTo(cx,8); ctx.lineTo(cx,h-8); ctx.stroke();
+  ctx.setLineDash([3,4]); ctx.beginPath(); ctx.arc(cx,cy,sc,0,TAU); ctx.stroke(); ctx.setLineDash([]);
+  label(ctx,"Re",w-18,cy-10,css("--muted"),11); label(ctx,"Im",cx+14,14,css("--muted"),11);
+  // head-to-tail chain; a segment lying on top of an earlier one is shifted sideways so that both stay visible
+  let z=[0,0]; const segs=[], step=Math.max(7,Math.min(11,sc*0.12));
+  tl.forEach(t=>{ const a=z.slice(), b=[z[0]+t.re,z[1]+t.im]; z=b;
+    const A=[X(a[0]),Y(a[1])], B=[X(b[0]),Y(b[1])], len=Math.hypot(B[0]-A[0],B[1]-A[1]);
+    const u=len>1e-9?[(B[0]-A[0])/len,(B[1]-A[1])/len]:[1,0], n=[-u[1],u[0]];
+    let off=0; for(let tries=0;tries<12;tries++){ const clash=segs.some(s=>{ const cr=Math.abs(s.u[0]*u[1]-s.u[1]*u[0]); if(cr>1e-3) return false;
+        const dd=Math.abs((A[0]+n[0]*off-s.A[0])*s.n[0]+(A[1]+n[1]*off-s.A[1])*s.n[1]); if(dd>2) return false;
+        const t0=(s.A[0]-A[0])*u[0]+(s.A[1]-A[1])*u[1], t1=(s.B[0]-A[0])*u[0]+(s.B[1]-A[1])*u[1];
+        return Math.max(t0,t1)>1&&Math.min(t0,t1)<len-1; });
+      if(!clash) break; off+=step; }
+    segs.push({A:[A[0]+n[0]*off,A[1]+n[1]*off],B:[B[0]+n[0]*off,B[1]+n[1]*off],u,n,t,off});
+  });
+  segs.forEach((s,i)=>{ if(i>0){ const p=segs[i-1]; if(Math.hypot(p.B[0]-s.A[0],p.B[1]-s.A[1])>0.5){ ctx.strokeStyle=css("--muted"); ctx.lineWidth=1; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(p.B[0],p.B[1]); ctx.lineTo(s.A[0],s.A[1]); ctx.stroke(); ctx.setLineDash([]); } }
+    const col=css(s.t.sp==="A"?"--blue":"--teal");
+    if(s.t.f>1e-9){ arrow(ctx,s.A,s.B,col,2.4,11); const m=[0.6*s.A[0]+0.4*s.B[0]+s.n[0]*11,0.6*s.A[1]+0.4*s.B[1]+s.n[1]*11]; label(ctx,String(s.t.j+1),m[0],m[1],col,12); } });
+  const S=z, mS=Math.hypot(S[0],S[1]);
+  if(mS>1e-9){ // the sum; when it lies along the chain it is drawn beside it, on the side away from the shifted arrows
+    const A=[X(0),Y(0)], B=[X(S[0]),Y(S[1])], len=Math.hypot(B[0]-A[0],B[1]-A[1]), u=[(B[0]-A[0])/len,(B[1]-A[1])/len], n=[-u[1],u[0]];
+    const along=segs.some(sg=>Math.abs(sg.u[0]*u[1]-sg.u[1]*u[0])<1e-3&&Math.abs((sg.A[0]-A[0])*n[0]+(sg.A[1]-A[1])*n[1])<2);
+    const shift=segs.reduce((acc,sg)=>acc+sg.off*(sg.n[0]*n[0]+sg.n[1]*n[1]),0), side=shift<0?1:-1, off=along?side*2.6*step:0;
+    const A2=[A[0]+n[0]*off,A[1]+n[1]*off], B2=[B[0]+n[0]*off,B[1]+n[1]*off];
+    if(along){ ctx.strokeStyle=css("--amber"); ctx.lineWidth=1; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(A[0],A[1]); ctx.lineTo(A2[0],A2[1]); ctx.moveTo(B[0],B[1]); ctx.lineTo(B2[0],B2[1]); ctx.stroke(); ctx.setLineDash([]); }
+    arrow(ctx,A2,B2,css("--amber"),4.2,14); label(ctx,"S",B2[0]+u[0]*14+n[0]*(along?side*10:12),B2[1]+u[1]*14+n[1]*(along?side*10:12),css("--amber"),14); }
+  else { ctx.strokeStyle=css("--amber"); ctx.lineWidth=2.4; ctx.beginPath(); ctx.arc(X(0),Y(0),7,0,TAU); ctx.stroke(); const up=segs.some(s=>s.off>0&&s.n[1]<0); label(ctx,"S = 0",X(0),Y(0)+(up?34:-34),css("--amber"),13); }
+  return {S,mS};
+}
+const POS = v=>"("+v.map(c=>c===0?"0":c===.5?"½":String(c)).join(", ")+")";
+function phaseTxt(ph){ const r=ph/Math.PI; if(Math.abs(r)<1e-9) return "0"; const n=Math.round(r); if(Math.abs(r-n)<1e-9) return (n===1?"":n===-1?"−":String(n).replace("-","−"))+"π"; return r.toFixed(2)+"π"; }
+function readout(S){
+  const tl=terms(T.sel), fcc=T.s==="fcc", m2=S[0]*S[0]+S[1]*S[1];
+  $("fro").textContent=T.fr.toFixed(2); $("frow").style.display=T.s==="cscl"?"":"none";
+  let html=`<h3>${fcc?"הנקודה שנבחרה":`<span class="num">(h,k,l) = (${T.sel.join(", ")})</span>`}</h3>`+
+    `<table class="pts"><tr><th>#</th><th>אטום</th><th>מיקום d / a</th>${fcc?"":"<th>G·d</th>"}<th>f e<sup>−iG·d</sup></th></tr>`+
+    tl.map(t=>`<tr><td class="num">${t.j+1}</td><td>${t.sp==="A"?"A":"B"}</td><td class="num">${POS(t.pos)}</td>${fcc?"":`<td class="num">${phaseTxt(t.ph)}</td>`}<td class="num">${fmt(t.re)}${Math.abs(t.im)>1e-9?(t.im<0?" − ":" + ")+Math.abs(t.im).toFixed(2)+"i":""}</td></tr>`).join("")+`</table>`+
+    `<p><span class="num">S = ${fmt(S[0])}${Math.abs(S[1])>1e-9?(S[1]<0?" − ":" + ")+Math.abs(S[1]).toFixed(2)+"i":""}</span>, <span class="num">|S|² = ${fmt(m2)}</span> (גורמי הצורה ביחידות של f<sub>A</sub>).</p>`;
+  const note={
+    sc:`בתא יש אטום אחד, ולכן יש חץ אחד בכל נקודה וכל הנקודות שוות.`,
+    bcc:`שני חצים באורך 1: באותו כיוון או בכיוונים מנוגדים, לפי הזוגיות של h+k+l. הנקודות שנשארות יוצרות סריג FCC בצלע 4π/a, ההופכי של BCC מתרגול 5. סובבו עד שרואים אותו בתוך הקובייה.`,
+    fcc:`ארבעה חצים באורך 1. בנקודות שנעלמות הם מתבטלים בזוגות. הנקודות שנשארות יוצרות סריג BCC בצלע 4π/a. סובבו עד שרואים אותו בתוך הקובייה.`,
+    cscl:`החץ של B קצר יותר, ולכן בנקודות שבהן החצים מנוגדים הסכום הוא f<sub>A</sub> − f<sub>B</sub> ולא אפס. כש-f<sub>B</sub> = f<sub>A</sub> המבנה הוא BCC, וכש-f<sub>B</sub> = 0 הוא SC.`
+  }[T.s];
+  $("sinfo").innerHTML=html+`<p>${note}</p>`;
+}
+function drawStruct(){ draw3D(); const {S}=drawPhasor(); readout(S); }
 
 /* ---------------- wiring ---------------- */
-function drawAll(){ drawEwald(); drawPowder(); }
+function drawAll(){ drawEwald(); drawStruct(); }
 function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
-document.querySelectorAll("#mseg button").forEach(b=>b.addEventListener("click",()=>{ E.mode=b.dataset.m; E.sweeping=false; E.hits=[]; $("sweep").textContent="סובב את הגביש"; pressed("mseg","m",E.mode); drawEwald(); }));
-$("lam").addEventListener("input",e=>{ E.lam=+e.target.value; E.hits=[]; drawEwald(); });
-$("phi").addEventListener("input",e=>{ E.phi=+e.target.value; drawEwald(); });
+document.querySelectorAll("#mseg button").forEach(b=>b.addEventListener("click",()=>{ stopAll(); E.mode=b.dataset.m; E.hits=[]; pressed("mseg","m",E.mode); drawEwald(); }));
+$("lam").addEventListener("input",e=>{ if(E.scanning) stopAll(); E.lam=+e.target.value; E.hits=[]; drawEwald(); });
+$("phi").addEventListener("input",e=>{ if(E.scanning) stopAll(); E.phi=+e.target.value; E.scan=[]; drawEwald(); });
 $("nc").addEventListener("input",e=>{ E.logN=+e.target.value; E.hits=[]; drawEwald(); });
 $("sweep").addEventListener("click",sweep);
-document.querySelectorAll("#sseg button").forEach(b=>b.addEventListener("click",()=>{ PS.s=b.dataset.s; pressed("sseg","s",PS.s); drawPowder(); }));
-$("fr").addEventListener("input",e=>{ PS.fr=+e.target.value; drawPowder(); });
-$("lam2").addEventListener("input",e=>{ PS.lam=+e.target.value; drawPowder(); });
-$("nc2").addEventListener("input",e=>{ PS.logN=+e.target.value; drawPowder(); });
+$("scan").addEventListener("click",scan);
+document.querySelectorAll("#sseg button").forEach(b=>b.addEventListener("click",()=>{ T.s=b.dataset.s; pressed("sseg","s",T.s); drawStruct(); }));
+$("fr").addEventListener("input",e=>{ T.fr=+e.target.value; drawStruct(); });
+$("hide0").addEventListener("change",e=>{ T.hide0=e.target.checked; draw3D(); });
+$("cube").addEventListener("change",e=>{ T.cube=e.target.checked; draw3D(); });
+$("big").addEventListener("change",e=>{ T.big=e.target.checked; draw3D(); });
+$("spin").addEventListener("change",e=>{ T.spin=e.target.checked; if(T.spin){ let last=performance.now();
+  const step=t=>{ if(!T.spin) return; T.yaw+=(t-last)*0.00035; last=t; draw3D(); requestAnimationFrame(step); }; requestAnimationFrame(step); } });
+(function(){ const c=$("c3"); let drag=null, moved=0;
+  c.addEventListener("pointerdown",e=>{ drag=[e.clientX,e.clientY]; moved=0; c.setPointerCapture(e.pointerId); });
+  c.addEventListener("pointermove",e=>{ if(!drag) return; const dx=e.clientX-drag[0], dy=e.clientY-drag[1]; moved+=Math.abs(dx)+Math.abs(dy);
+    if(moved<4) return; T.yaw-=dx*0.008; T.pitch=Math.max(-1.45,Math.min(1.45,T.pitch+dy*0.008)); drag=[e.clientX,e.clientY]; draw3D(); });
+  c.addEventListener("pointerup",e=>{ if(drag&&moved<4){ const r=c.getBoundingClientRect(), p=pick(e.clientX-r.left,e.clientY-r.top); if(p){ T.sel=p.hkl.slice(); drawStruct(); } } drag=null; });
+  c.addEventListener("pointercancel",()=>{ drag=null; }); })();
 
 // When embedded in the course site (same origin), size the iframe box to the content height.
 function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
@@ -287,9 +390,9 @@ window.addEventListener("load",fitFrame);
 if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawAll);
 
-pressed("mseg","m",E.mode); pressed("sseg","s",PS.s);
+pressed("mseg","m",E.mode); pressed("sseg","s",T.s);
 drawAll(); fitFrame();
-window.__diff = { E, PS, ewaldGeom, families, drawEwald, drawPowder };
+window.__diff = { E, T, ewaldGeom, scanTargets, terms, Sof, drawEwald, drawStruct, pick };
 })();
 </script>
 </body>
