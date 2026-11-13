@@ -765,7 +765,7 @@ $$S(hkl)=\sum_j f_j\,e^{-2\pi i(hx_j+ky_j+lz_j)},$$
 
 **יחידות:** אורכים ב-nm, זוויות במעלות. גורמי הצורה $f_j$ נלקחים קבועים (לא תלויים בזווית).
 
-לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week06-diffraction) עם בניית אוולד ותבניות אבקה.
+לצד המחברת יש גם [דף אינטראקטיבי](https://yaminbens.github.io/SolidState/week06-diffraction) עם בניית אוולד ועם גורם המבנה כסכום של חצים.
 """),
 ("code", """
 import itertools
