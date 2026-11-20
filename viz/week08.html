@@ -45,13 +45,19 @@ output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;
 button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:5px 14px;cursor:pointer}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px;align-items:center}
 .grad{display:inline-block;width:90px;height:10px;border-radius:5px;vertical-align:-1px;background:linear-gradient(90deg,var(--amber),var(--blue))}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 10px}
+.tbl th,.tbl td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:center}
+.tbl th{color:var(--muted);font-weight:500}
+.tbl tr.zero td{color:var(--muted)}
+.mat{display:inline-grid;grid-template-columns:repeat(3,auto);gap:2px 16px;font-family:var(--f-num);direction:ltr;font-size:13px;padding:4px 10px;border-left:2px solid var(--muted);border-right:2px solid var(--muted);border-radius:4px;vertical-align:middle}
+.matrow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>פונונים בתלת-ממד: ענפים, קיטוב וסימטריה</h1>
-    <p class="lede">גביש קובי של אטומים זהים עם קפיצים מרכזיים בין שכנים קרובים ביותר: קשיחות <span class="num">κ_L</span> לאורך הקשר ו-<span class="num">κ_T</span> בניצב לו. בוחרים נקודה על הענפים ורואים את תנועת האטומים באופן התנודה המתאים. אין צורך להריץ דבר.</p>
+    <p class="lede">גביש קובי של אטומים זהים עם קפיצים מרכזיים בין שכנים קרובים ביותר: קשיחות <span class="num">κ_L</span> לאורך הקשר ו-<span class="num">κ_T</span> בניצב לו. בוחרים נקודה על הענפים ורואים את תנועת האטומים באופן התנודה המתאים, אילו קשרים נמתחים ואילו נגזרים, ואיך כל קבוצת קשרים תורמת למטריצה הדינמית. אין צורך להריץ דבר.</p>
   </header>
 
   <section class="card">
@@ -73,12 +79,19 @@ button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:
 
   <section class="card">
     <h2>תנועת האטומים</h2>
-    <p class="sub">גררו כדי לסובב. החץ הכתום הוא כיוון וקטור הגל, והחץ הכחול הוא כיוון הקיטוב (התזוזה מוגדלת). האטומים בצבע כהה יותר קרובים יותר אליכם.</p>
+    <p class="sub">גררו כדי לסובב. החץ הכתום הוא כיוון וקטור הגל, והחץ הכחול הוא כיוון הקיטוב (התזוזה מוגדלת). האטומים בצבע כהה יותר קרובים יותר אליכם. הקווים הם הקשרים לשכנים הקרובים: העובי שלהם הוא <span class="num">sin²(k·R/2)</span>, כמה האופן מעוות אותם, והצבע הוא <span class="num">(R̂·e)²</span>, מכחול לקשר שנמתח ועד כתום לקשר שנגזר.</p>
     <canvas id="cm" width="680" height="440" aria-label="תנועת האטומים"></canvas>
+    <div class="legend"><span>נמתח (κ_L)</span><span class="grad"></span><span>נגזר (κ_T)</span></div>
     <div class="ctlrow">
       <div class="ctl"><div><button class="act" id="play" type="button">עצור</button></div></div>
       <div class="ctl"><div class="box" id="minfo"></div></div>
     </div>
+  </section>
+
+  <section class="card">
+    <h2>המטריצה הדינמית כסכום על הקשרים</h2>
+    <p class="sub">כל קשר <span class="num">R</span> תורם ל-<span class="num">D(k)</span> את המטריצה <span class="num">2sin²(k·R/2)·[κ_T·I + (κ_L−κ_T)·R̂R̂ᵀ]</span>. הטבלה מקבצת את הקשרים לפי הפאזה <span class="num">k·R</span>, ומראה מה כל קבוצה תורמת ל-<span class="num">ω²</span> של האופן שנבחר: במתיחה, דרך <span class="num">κ_L</span>, ובגזירה, דרך <span class="num">κ_T</span>. קשרים עם <span class="num">k·R = 0</span> זזים כגוף אחד ואינם תורמים.</p>
+    <div class="box" id="dkinfo"></div>
   </section>
 </div>
 
@@ -193,14 +206,51 @@ $("cb").addEventListener("pointerdown",e=>{ drag=true; $("cb").setPointerCapture
 $("cb").addEventListener("pointermove",e=>{ if(drag) pick(e); });
 $("cb").addEventListener("pointerup",()=>{ drag=false; });
 
+/* proper rotations of the cube (signed permutation matrices with det +1) */
+const ROTS = (()=>{ const out=[], perms=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+  for(const p of perms) for(const sx of [1,-1]) for(const sy of [1,-1]) for(const sz of [1,-1]){
+    const s=[sx,sy,sz], M=[[0,0,0],[0,0,0],[0,0,0]]; for(let i=0;i<3;i++) M[i][p[i]]=s[i];
+    const det=M[0][0]*(M[1][1]*M[2][2]-M[1][2]*M[2][1])-M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0])+M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
+    if(det===1) out.push(M); }
+  return out; })();
+const mul=(A,B)=>A.map((r,i)=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));
+const isI=A=>A.every((r,i)=>r.every((v,j)=>v===(i===j?1:0)));
+function order(M){ let P=M, n=1; while(!isI(P)&&n<8){ P=mul(P,M); n++; } return n; }
+// highest order of a rotation of the cube whose axis is along k (1 = none)
+function axisOrder(k){ const n=Math.hypot(...k); if(n<1e-9) return 0; const u=k.map(v=>v/n); let best=1;
+  for(const M of ROTS){ const v=M.map(r=>r[0]*u[0]+r[1]*u[1]+r[2]*u[2]); if(Math.hypot(v[0]-u[0],v[1]-u[1],v[2]-u[2])<1e-9) best=Math.max(best,order(M)); }
+  return best; }
+
 function info(){
   const k=kAt(S.sel.x), m=modes(k), q=m[S.sel.br];
   const deg=m.filter(o=>Math.abs(o.w-q.w)<1e-6*Math.max(1,q.w)).length;
-  const kk=k.map(v=>v/TAU);
+  const kk=k.map(v=>v/TAU), n=axisOrder(k);
+  const ax = n===0 ? "במרכז האזור כל שלושת הענפים מתאפסים." : n>1 ? `לאורך <span class="num">k̂</span> יש ציר סיבוב מסדר <span class="num">${n}</span>${n>=3?", ולכן שני הענפים הרוחביים חייבים להיות מנוונים.":", שאינו מחייב ניוון."}` : `לאורך <span class="num">k̂</span> אין ציר סיבוב של הגביש.`;
   $("binfo").innerHTML=`<h3>האופן שנבחר</h3>
   <p>וקטור הגל <span class="num">k = (2π/a)(${kk.map(v=>fmt(v,2)).join(", ")})</span></p>
   <p>תדירות <span class="num">ω = ${fmt(q.w)}</span>, וחלק אורכי <span class="num">|k̂·e|² = ${Math.hypot(...k)>1e-9?fmt(q.L,2):"–"}</span></p>
-  <p>${deg>1?`האופן מנוון: <span class="num">${deg}</span> ענפים בתדירות הזו.`:"האופן אינו מנוון."}</p>`;
+  <p>${deg>1?`האופן מנוון: <span class="num">${deg}</span> ענפים בתדירות הזו.`:"האופן אינו מנוון."}</p>
+  <p>${ax}</p>`;
+}
+
+/* bond groups of the selected mode: contributions to omega^2 (m = kappa_L = 1) */
+function groups(){
+  const k=kAt(S.sel.x), q=modes(k)[S.sel.br], e=q.e, G=new Map();
+  for(const r of LAT[S.s].nb){
+    const n=Math.hypot(...r), rh=r.map(v=>v/n), ph=k[0]*r[0]+k[1]*r[1]+k[2]*r[2];
+    const red=Math.acos(Math.max(-1,Math.min(1,Math.cos(ph)))), s=2*Math.sin(ph/2)**2, f=(rh[0]*e[0]+rh[1]*e[1]+rh[2]*e[2])**2;
+    const key=red.toFixed(6); if(!G.has(key)) G.set(key,{ph:red,w:s,n:0,str:0,shr:0});
+    const g=G.get(key); g.n++; g.str+=s*f; g.shr+=s*S.kt*(1-f);
+  }
+  return {k,q,list:[...G.values()].sort((a,b)=>b.ph-a.ph)};
+}
+function dkInfo(){
+  const {k,q,list}=groups(), D=dyn(k), tot=list.reduce((s,g)=>s+g.str+g.shr,0);
+  const rows=list.map(g=>`<tr class="${g.w<1e-9?"zero":""}"><td><span class="num">${fmt(g.ph/PI,3)}π</span></td><td><span class="num">${g.n}</span></td><td><span class="num">${fmt(g.w)}</span></td><td><span class="num">${fmt(g.str)}</span></td><td><span class="num">${fmt(g.shr)}</span></td></tr>`).join("");
+  const mat=D.map(r=>r.map(v=>`<span>${fmt(v)}</span>`).join("")).join("");
+  $("dkinfo").innerHTML=`<table class="tbl"><thead><tr><th>|k·R|</th><th>קשרים</th><th>2sin²(k·R/2)</th><th>במתיחה</th><th>בגזירה</th></tr></thead><tbody>${rows}</tbody></table>
+  <p>סכום התרומות: <span class="num">${fmt(tot)}</span>, וזה <span class="num">ω² = ${fmt(q.w*q.w)}</span> של האופן שנבחר (ביחידות <span class="num">κ_L/m</span>).</p>
+  <div class="matrow"><span>המטריצה כולה, <span class="num">D(k)/κ_L</span>:</span><span class="mat">${mat}</span></div>`;
 }
 
 /* ---------------- panel 2: atoms in 3D ---------------- */
@@ -210,18 +260,30 @@ function sites(){
   else { for(let x=0;x<=4;x++) for(let y=0;y<=4;y++) for(let z=0;z<=4;z++) if((x+y+z)%2===0) out.push([x/2,y/2,z/2]); }
   const c=S.s==="SC"?1.5:1; return out.map(p=>p.map(v=>v-c));
 }
+const BOND_CACHE={};
+function bonds(ST){ if(BOND_CACHE[S.s]) return BOND_CACHE[S.s];
+  const d0=S.s==="SC"?1:Math.SQRT1_2, out=[];
+  for(let i=0;i<ST.length;i++) for(let j=i+1;j<ST.length;j++){ const R=ST[j].map((v,n)=>v-ST[i][n]); if(Math.abs(Math.hypot(...R)-d0)<1e-6) out.push([i,j,R]); }
+  return (BOND_CACHE[S.s]=out); }
 function rot(p){ const cy=Math.cos(S.yaw), sy=Math.sin(S.yaw), cp=Math.cos(S.pitch), sp=Math.sin(S.pitch);
   const x=cy*p[0]+sy*p[1], y=-sy*p[0]+cy*p[1], z=p[2];
   return [x, cp*y-sp*z, sp*y+cp*z]; }   // returns screen-x, depth, screen-y(up)
 function drawMotion(){
   const {ctx,w,h}=setupCanvas($("cm")); ctx.clearRect(0,0,w,h);
   const k=kAt(S.sel.x), q=modes(k)[S.sel.br], sc=Math.min(w,h)/(S.s==="SC"?6.2:4.6), cx=w*0.46, cy=h*0.52;
-  const amp=0.22, ph=q.w*S.t, P=[];
-  for(const r of sites()){
+  const amp=0.22, ph=q.w*S.t, P=[], ST=sites();
+  for(const r of ST){
     const c=Math.cos(k[0]*r[0]+k[1]*r[1]+k[2]*r[2]-ph);
     const p=r.map((v,i)=>v+amp*q.e[i]*c), s=rot(p);
     P.push({sx:cx+s[0]*sc, sy:cy-s[2]*sc, d:s[1]});
   }
+  // nearest-neighbour bonds: width = how much this mode deforms the bond, colour = stretch (blue) or shear (amber)
+  const B=bonds(ST), cS=css("--blue"), cH=css("--amber"), dlo=Math.min(...P.map(p=>p.d)), dhi=Math.max(...P.map(p=>p.d));
+  const BB=B.map(([i,j,R])=>{ const n=Math.hypot(...R), f=((R[0]*q.e[0]+R[1]*q.e[1]+R[2]*q.e[2])/n)**2, w=Math.sin((k[0]*R[0]+k[1]*R[1]+k[2]*R[2])/2)**2; return {i,j,f,w,d:(P[i].d+P[j].d)/2}; }).sort((a,b)=>b.d-a.d);
+  for(const b of BB){ const t=(b.d-dlo)/Math.max(1e-9,dhi-dlo);
+    ctx.strokeStyle=mix(cH,cS,b.f); ctx.globalAlpha=(0.22+0.7*b.w)*(1-0.4*t); ctx.lineWidth=0.8+3.6*b.w;
+    ctx.beginPath(); ctx.moveTo(P[b.i].sx,P[b.i].sy); ctx.lineTo(P[b.j].sx,P[b.j].sy); ctx.stroke(); }
+  ctx.globalAlpha=1;
   // wireframe of the bounding cube (static) as a depth cue
   const hc=S.s==="SC"?1.5:1, C=[];
   for(const x of [-hc,hc]) for(const y of [-hc,hc]) for(const z of [-hc,hc]) C.push([x,y,z]);
@@ -258,7 +320,7 @@ $("cm").addEventListener("pointerup",()=>{ rdrag=null; });
 
 /* ---------------- wiring ---------------- */
 function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
-function drawStatic(){ pressed("sseg","s",S.s); $("kto").textContent=S.kt.toFixed(2); drawBands(); info(); drawMotion(); }
+function drawStatic(){ pressed("sseg","s",S.s); $("kto").textContent=S.kt.toFixed(2); drawBands(); info(); dkInfo(); drawMotion(); }
 document.querySelectorAll("#sseg button").forEach(b=>b.addEventListener("click",()=>{ S.s=b.dataset.s; const R=routeData(); S.sel={x:Math.min(S.sel.x,R.total), br:S.sel.br}; drawStatic(); }));
 $("kt").addEventListener("input",e=>{ S.kt=+e.target.value; drawStatic(); });
 $("play").addEventListener("click",()=>{ S.playing=!S.playing; $("play").textContent=S.playing?"עצור":"הפעל"; if(S.playing) requestAnimationFrame(loop); });
@@ -278,7 +340,7 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawStatic);
 
 $("kt").value=S.kt;
 drawStatic(); fitFrame(); requestAnimationFrame(loop);
-window.__ph = { S, dyn, eig3, modes, kAt, routeData, drawStatic };
+window.__ph = { S, dyn, eig3, modes, kAt, routeData, drawStatic, axisOrder, groups, bonds, sites };
 })();
 </script>
 </body>
