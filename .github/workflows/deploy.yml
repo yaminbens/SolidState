@@ -34,8 +34,12 @@ jobs:
         env:
           BASE_URL: /${{ github.event.repository.name }}
         run: jupyter-book build --html
-      - name: Add the interactive pages (static HTML, embedded by the weekly pages)
-        run: cp -r viz _build/html/viz
+      - name: Add the interactive pages of the published weeks (static HTML, embedded by the weekly pages)
+        run: |
+          mkdir -p _build/html/viz
+          for w in $(grep -oE 'week[0-9]{2}-[a-z]+\.md' myst.yml | cut -c5-6 | sort -u); do
+            cp "viz/week$w.html" _build/html/viz/
+          done
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _build/html
