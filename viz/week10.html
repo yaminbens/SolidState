@@ -45,6 +45,7 @@ output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;
 button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:5px 14px;cursor:pointer}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px;align-items:center}
 .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+#cb{cursor:crosshair}
 .grad{display:inline-block;width:90px;height:10px;border-radius:5px;vertical-align:-1px;background:linear-gradient(90deg,var(--amber),var(--blue))}
 </style>
 </head>
@@ -52,12 +53,12 @@ button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:
 <div class="wrap">
   <header>
     <h1>אלקטרונים כמעט חופשיים בסריג ריבועי</h1>
-    <p class="lede">אלקטרונים חופשיים בסריג ריבועי עם קבוע סריג a, בתוספת פוטנציאל מחזורי חלש עם שני רכיבי פורייה: <span class="num">V₁₀</span> עבור <span class="num">G = (2π/a)(±1,0), (0,±1)</span> ו-<span class="num">V₁₁</span> עבור <span class="num">G = (2π/a)(±1,±1)</span>. הפסים מחושבים מהמשוואה המרכזית עם תשעה גלים מישוריים. אין צורך להריץ דבר.</p>
+    <p class="lede">אלקטרונים חופשיים בסריג ריבועי עם קבוע סריג a, בתוספת פוטנציאל מחזורי חלש עם שני רכיבי פורייה: <span class="num">V₁₀</span> עבור <span class="num">G = (2π/a)(±1,0), (0,±1)</span> ו-<span class="num">V₁₁</span> עבור <span class="num">G = (2π/a)(±1,±1)</span>. הפסים מחושבים מהמשוואה המרכזית עם תשעה גלים מישוריים. בוחרים מצב על הפסים ורואים מאילו גלים מישוריים הוא בנוי. אין צורך להריץ דבר.</p>
   </header>
 
   <section class="card">
     <h2>הפסים לאורך מסלול סימטריה</h2>
-    <p class="sub">האנרגיה ביחידות של <span class="num">E_X = ħ²(π/a)²/2m</span>, האנרגיה של אלקטרון חופשי בנקודה X. הקווים המקווקווים הם אלקטרונים חופשיים.</p>
+    <p class="sub">האנרגיה ביחידות של <span class="num">E_X = ħ²(π/a)²/2m</span>, האנרגיה של אלקטרון חופשי בנקודה X. הקווים המקווקווים הם אלקטרונים חופשיים. לחצו או גררו על הגרף כדי לבחור מצב.</p>
     <canvas id="cb" width="680" height="360" aria-label="הפסים"></canvas>
     <div class="ctlrow">
       <div class="ctl">
@@ -66,6 +67,13 @@ button.act{font:inherit;font-size:14px;background:var(--blue);color:#fff;border:
       </div>
       <div class="box" id="binfo"></div>
     </div>
+  </section>
+
+  <section class="card">
+    <h2>מאילו גלים מישוריים בנוי המצב</h2>
+    <p class="sub">המצב שנבחר הוא צירוף <span class="num">Σ c(k+G)·e^(i(k+G)·r)</span>. כל עיגול יושב בווקטור הגל <span class="num">k+G</span> של אחד הגלים, והשטח שלו פרופורציוני למשקל <span class="num">|c(k+G)|²</span>. הנקודות האפורות הן הסריג ההופכי, והריבוע הוא אזור ברילואן הראשון. במצב מנוון מוצג המשקל הממוצע על כל המצבים באותה אנרגיה.</p>
+    <canvas id="cw" width="680" height="440" aria-label="המשקלים של הגלים המישוריים"></canvas>
+    <div class="box" id="winfo" style="margin-top:12px"></div>
   </section>
 
   <section class="card">
@@ -111,7 +119,7 @@ const fmt=(x,d)=>(Math.abs(x)<5e-4?0:x).toFixed(d===undefined?3:d);
 function hex2rgb(h){ h=h.replace("#",""); if(h.length===3) h=h.split("").map(c=>c+c).join(""); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); }
 
 /* ---------------- physics: units a = 1, hbar^2/2m = 1, energies in E_X = pi^2 ---------------- */
-const S = { V10:0.12, V11:0.05, n:2 };
+const S = { V10:0.12, V11:0.05, n:2, sel:{x:1, br:0} };
 const Gs=[]; for(let i=-1;i<=1;i++) for(let j=-1;j<=1;j++) Gs.push([i,j]);
 function eigSym(A){ // Jacobi for small symmetric matrices, returns ascending eigenvalues
   const n=A.length, a=A.map(r=>r.slice());
@@ -124,23 +132,44 @@ function eigSym(A){ // Jacobi for small symmetric matrices, returns ascending ei
   const e=[]; for(let i=0;i<n;i++) e.push(a[i][i]); return e.sort((x,y)=>x-y);
 }
 function VG(d){ const s=Math.abs(d[0])+Math.abs(d[1]); if(s===1) return S.V10; if(Math.abs(d[0])===1&&Math.abs(d[1])===1) return S.V11; return 0; }
-function bandsAt(kx,ky){ // kx,ky in units of pi/a; returns energies / E_X
+function hamAt(kx,ky){ // kx,ky in units of pi/a; energies / E_X
   const n=Gs.length, H=[];
   for(let i=0;i<n;i++){ H.push(new Array(n).fill(0)); }
   for(let i=0;i<n;i++) for(let j=0;j<n;j++){
     if(i===j){ const qx=kx+2*Gs[i][0], qy=ky+2*Gs[i][1]; H[i][i]=qx*qx+qy*qy; }
     else H[i][j]=VG([Gs[i][0]-Gs[j][0],Gs[i][1]-Gs[j][1]]); }
-  return eigSym(H);
+  return H;
 }
+function bandsAt(kx,ky){ return eigSym(hamAt(kx,ky)); }
+function eigSymV(A){ // Jacobi with eigenvectors: {w ascending, v[i] = eigenvector of w[i]}
+  const n=A.length, a=A.map(r=>r.slice()), V=A.map((r,i)=>r.map((_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<80;sweep++){
+    let off=0; for(let p=0;p<n;p++) for(let q=p+1;q<n;q++) off+=Math.abs(a[p][q]); if(off<1e-13) break;
+    for(let p=0;p<n;p++) for(let q=p+1;q<n;q++){ if(Math.abs(a[p][q])<1e-16) continue;
+      const th=(a[q][q]-a[p][p])/(2*a[p][q]), t=Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1)), c=1/Math.sqrt(t*t+1), s=t*c;
+      for(let k=0;k<n;k++){ const akp=a[k][p], akq=a[k][q]; a[k][p]=c*akp-s*akq; a[k][q]=s*akp+c*akq; }
+      for(let k=0;k<n;k++){ const apk=a[p][k], aqk=a[q][k]; a[p][k]=c*apk-s*aqk; a[q][k]=s*apk+c*aqk; }
+      for(let k=0;k<n;k++){ const vkp=V[k][p], vkq=V[k][q]; V[k][p]=c*vkp-s*vkq; V[k][q]=s*vkp+c*vkq; } } }
+  const idx=[...Array(n).keys()].sort((i,j)=>a[i][i]-a[j][j]);
+  return {w:idx.map(i=>a[i][i]), v:idx.map(i=>V.map(r=>r[i]))};
+}
+// plane-wave weights of the selected state (averaged over a degenerate level)
+function weightsAt(kx,ky,br){ const E=eigSymV(hamAt(kx,ky)), e0=E.w[br], idx=E.w.map((w,i)=>i).filter(i=>Math.abs(E.w[i]-e0)<2e-3);  // the 9-wave basis splits exact degeneracies by ~1e-4
+  const W=Gs.map((g,j)=>idx.reduce((s,i)=>s+E.v[i][j]**2,0)/idx.length); return {e:e0, deg:idx.length, W}; }
 function freeAt(kx,ky){ const e=Gs.map(g=>(kx+2*g[0])**2+(ky+2*g[1])**2); return e.sort((x,y)=>x-y); }
 
 /* ---------------- panel 1: bands ---------------- */
 const PATH=[["Γ",[0,0]],["X",[1,0]],["M",[1,1]],["Γ",[0,0]]];
+let G1=null;
+function pathK(x){ let tot=0; for(let i=0;i<PATH.length-1;i++){ const p=PATH[i][1], q=PATH[i+1][1], L=Math.hypot(q[0]-p[0],q[1]-p[1]);
+    if(x<=tot+L+1e-12){ const t=Math.max(0,Math.min(1,(x-tot)/L)); return [p[0]+t*(q[0]-p[0]), p[1]+t*(q[1]-p[1])]; } tot+=L; }
+  return [0,0]; }
 function drawBands(){
   const {ctx,w,h}=setupCanvas($("cb")); ctx.clearRect(0,0,w,h);
   const segs=[], ticks=[0]; let tot=0;
   for(let i=0;i<PATH.length-1;i++){ const p=PATH[i][1], q=PATH[i+1][1], L=Math.hypot(q[0]-p[0],q[1]-p[1]); segs.push({p,q,x0:tot,L}); tot+=L; ticks.push(tot); }
   const L=40,R=12,T=12,B=30, emax=3.2, X=x=>L+x/tot*(w-L-R), Y=e=>h-B-e/emax*(h-T-B);
+  G1={L,R,T,B,w,h,tot,emax};
   ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
   ticks.forEach((t,i)=>{ const x=X(t); ctx.strokeStyle=css("--muted"); ctx.globalAlpha=.3; ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,h-B); ctx.stroke(); ctx.globalAlpha=1; label(ctx,PATH[i][0],x,h-B+14,css("--fg"),13); });
   for(let e=0;e<=3;e+=0.5) label(ctx,e.toFixed(1),L-6,Y(e),css("--muted"),11,"right");
@@ -151,6 +180,8 @@ function drawBands(){
     ctx.strokeStyle=css("--muted"); ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath(); F.forEach((e,i)=>{ const x=X(tot*i/N), y=Y(Math.min(e[j],emax*1.05)); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke(); ctx.setLineDash([]);
     ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.4; ctx.beginPath(); Bd.forEach((e,i)=>{ const x=X(tot*i/N), y=Y(Math.min(e[j],emax*1.05)); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke();
   }
+  { const k=pathK(S.sel.x), e=bandsAt(k[0],k[1])[S.sel.br];
+    ctx.fillStyle=css("--rose"); ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(X(S.sel.x),Y(Math.min(e,emax*1.05)),7,0,TAU); ctx.fill(); ctx.stroke(); }
   const eX=bandsAt(1,0), eM=bandsAt(1,1);
   $("binfo").innerHTML=`<h3>בנקודות הסימטריה</h3>
   <p>בנקודה X (שני מצבים חופשיים מנוונים): <span class="num">${fmt(eX[0],3)}, ${fmt(eX[1],3)}</span></p>
@@ -158,7 +189,41 @@ function drawBands(){
   <p>האנרגיות ביחידות של <span class="num">E_X</span>, מהפתרון עם תשעה גלים מישוריים; הפיצול בסדר ראשון נקבע רק מ-<span class="num">V₁₀</span> ו-<span class="num">V₁₁</span>.</p>`;
 }
 
-/* ---------------- panel 2: Fermi surface ---------------- */
+function pickB(ev){ if(!G1) return; const r=$("cb").getBoundingClientRect(), px=ev.clientX-r.left, py=ev.clientY-r.top;
+  const x=Math.max(0,Math.min(G1.tot,(px-G1.L)/(G1.w-G1.L-G1.R)*G1.tot)), e=(G1.h-G1.B-py)/(G1.h-G1.T-G1.B)*G1.emax;
+  const k=pathK(x), E=bandsAt(k[0],k[1]).slice(0,6); let best=0; E.forEach((v,j)=>{ if(Math.abs(v-e)<Math.abs(E[best]-e)) best=j; });
+  S.sel={x,br:best}; drawBands(); drawWeights(); }
+let bdrag=false;
+$("cb").addEventListener("pointerdown",e=>{ bdrag=true; $("cb").setPointerCapture(e.pointerId); pickB(e); });
+$("cb").addEventListener("pointermove",e=>{ if(bdrag) pickB(e); });
+$("cb").addEventListener("pointerup",()=>{ bdrag=false; });
+
+/* ---------------- panel 2: plane-wave content of the selected state ---------------- */
+function drawWeights(){
+  const {ctx,w,h}=setupCanvas($("cw")); ctx.clearRect(0,0,w,h);
+  const k=pathK(S.sel.x), R=weightsAt(k[0],k[1],S.sel.br), half=3.15, sc=Math.min(w,h)/(2*half), cx=w/2, cy=h/2;
+  const PX=x=>cx+x*sc, PY=y=>cy-y*sc;
+  ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.6; ctx.strokeRect(PX(-1),PY(1),2*sc,2*sc);
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PX(-half),PY(0)); ctx.lineTo(PX(half),PY(0)); ctx.moveTo(PX(0),PY(-half)); ctx.lineTo(PX(0),PY(half)); ctx.stroke();
+  Gs.forEach(g=>{ ctx.fillStyle=css("--muted"); ctx.globalAlpha=.55; ctx.beginPath(); ctx.arc(PX(2*g[0]),PY(2*g[1]),3,0,TAU); ctx.fill(); ctx.globalAlpha=1; });
+  const rmax=0.62*sc, items=Gs.map((g,j)=>({g, wgt:R.W[j], q:[k[0]+2*g[0], k[1]+2*g[1]]})).sort((a,b)=>a.wgt-b.wgt);
+  for(const it of items){ if(it.wgt<1e-4) continue; const r=rmax*Math.sqrt(it.wgt);
+    ctx.fillStyle=css("--blue"); ctx.globalAlpha=.30+.5*Math.min(1,it.wgt*2); ctx.beginPath(); ctx.arc(PX(it.q[0]),PY(it.q[1]),Math.max(2.5,r),0,TAU); ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle=css("--blue"); ctx.lineWidth=1.4; ctx.stroke();
+    if(it.wgt>=0.02) label(ctx,fmt(it.wgt,2),PX(it.q[0]),PY(it.q[1])+Math.max(2.5,r)+11,css("--fg"),11); }
+  ctx.fillStyle=css("--rose"); ctx.beginPath(); ctx.arc(PX(k[0]),PY(k[1]),4,0,TAU); ctx.fill();
+  label(ctx,"k",PX(k[0])+9,PY(k[1])-9,css("--rose"),12);
+  label(ctx,"k_x (π/a)",PX(half)-34,PY(0)+12,css("--muted"),11); label(ctx,"k_y",PX(0)+16,PY(half)+8,css("--muted"),11);
+  const big=items.filter(it=>it.wgt>0.05).sort((a,b)=>b.wgt-a.wgt);
+  const why = big.length<=1 ? "המצב הוא כמעט גל מישורי אחד: רחוק ממישורי בראג הפוטנציאל רק מזיז מעט את האנרגיה, בסדר שני."
+    : big.length===2 ? "שני גלים מישוריים עם אותה אנרגיה חופשית, משני צדי מישור בראג: הפוטנציאל מערבב אותם בחלקים שווים ופותח פער."
+    : `${big.length} גלים מישוריים מנוונים, בפינה של האזור: הפוטנציאל מערבב את כולם.`;
+  const nm=["Γ","X","M"], at=[[0,0],[1,0],[1,1]].findIndex(p=>Math.hypot(p[0]-k[0],p[1]-k[1])<1e-6);
+  $("winfo").innerHTML=`<h3>המצב שנבחר</h3><p>פס <span class="num">${S.sel.br+1}</span>${at>=0?`, בנקודה ${nm[at]}`:""}, <span class="num">k = (π/a)(${fmt(k[0],2)}, ${fmt(k[1],2)})</span>, אנרגיה <span class="num">${fmt(R.e,3)} E_X</span>${R.deg>1?` (רמה מנוונת, <span class="num">${R.deg}</span> מצבים)`:""}</p>
+  <p>המשקלים הגדולים: ${big.map(it=>`<span class="num">G = (2π/a)(${it.g[0]}, ${it.g[1]}): ${fmt(it.wgt,2)}</span>`).join(", ")}</p><p>${why}</p>`;
+}
+
+/* ---------------- panel 3: Fermi surface ---------------- */
 const NG=90; let cache=null;
 function computeGrid(){
   const E=[], all=[];
@@ -197,10 +262,10 @@ function drawFermi(recompute){
 }
 
 function pressed(id,attr,val){ document.querySelectorAll(`#${id} button`).forEach(b=>b.setAttribute("aria-pressed",b.dataset[attr]===String(val)?"true":"false")); }
-function drawAll(recompute){ $("v10o").textContent=S.V10.toFixed(3); $("v11o").textContent=S.V11.toFixed(3); pressed("nseg","n",S.n); drawBands(); drawFermi(recompute); }
+function drawAll(recompute){ $("v10o").textContent=S.V10.toFixed(3); $("v11o").textContent=S.V11.toFixed(3); pressed("nseg","n",S.n); drawBands(); drawWeights(); drawFermi(recompute); }
 let tmr=null; const later=()=>{ clearTimeout(tmr); tmr=setTimeout(()=>drawFermi(true),120); };
-$("v10").addEventListener("input",e=>{ S.V10=+e.target.value; $("v10o").textContent=S.V10.toFixed(3); drawBands(); later(); });
-$("v11").addEventListener("input",e=>{ S.V11=+e.target.value; $("v11o").textContent=S.V11.toFixed(3); drawBands(); later(); });
+$("v10").addEventListener("input",e=>{ S.V10=+e.target.value; $("v10o").textContent=S.V10.toFixed(3); drawBands(); drawWeights(); later(); });
+$("v11").addEventListener("input",e=>{ S.V11=+e.target.value; $("v11o").textContent=S.V11.toFixed(3); drawBands(); drawWeights(); later(); });
 document.querySelectorAll("#nseg button").forEach(b=>b.addEventListener("click",()=>{ S.n=+b.dataset.n; pressed("nseg","n",S.n); drawFermi(false); }));
 
 function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
@@ -215,7 +280,7 @@ if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySel
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>drawAll(false));
 $("v10").value=S.V10; $("v11").value=S.V11;
 drawAll(true); fitFrame();
-window.__nfe = { S, bandsAt, freeAt, drawAll };
+window.__nfe = { S, bandsAt, freeAt, drawAll, weightsAt, pathK, eigSymV, hamAt };
 })();
 </script>
 </body>
