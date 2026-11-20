@@ -26,7 +26,9 @@ h1{margin:0;font-size:25px;font-weight:800;line-height:1.25}
 .card>h2{margin:0 0 4px;font-size:18px;font-weight:700;border-right:5px solid var(--amber);padding-right:.6rem}
 .card>p.sub{margin:0 0 12px;color:var(--muted);font-size:14px}
 canvas{display:block;width:100%;height:auto;border-radius:10px;background:var(--soft);touch-action:none}
-#ce{cursor:crosshair}
+#ct{cursor:crosshair}
+.lamrow{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:14px 18px;align-items:center}
+@media (max-width:640px){.lamrow{grid-template-columns:minmax(0,1fr)}}
 .lab{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
 .row{display:grid;grid-template-columns:8.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center}
 input[type=range]{width:100%;accent-color:var(--blue);direction:ltr}
@@ -46,12 +48,12 @@ output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;
 <div class="wrap">
   <header>
     <h1>מודל קרוניג-פני: פסים ממטריצת המעבר</h1>
-    <p class="lede">אלקטרון בשרשרת של מחסומי דלתא, <span class="num">U(x) = V₀ Σ δ(x − na)</span>. משפט בלוך נותן <span class="num">cos ka = ½ Tr M(ε) = cos αa + P sin(αa)/(αa)</span>, כאשר <span class="num">ε = ħ²α²/2m</span> ו-<span class="num">P = mV₀a/ħ²</span> הוא החוזק של המחסומים. אין צורך להריץ דבר.</p>
+    <p class="lede">אלקטרון בשרשרת של מחסומי דלתא, <span class="num">U(x) = V₀ Σ δ(x − na)</span>. משפט בלוך נותן <span class="num">cos ka = ½ Tr M(ε) = cos αa + P sin(αa)/(αa)</span>, כאשר <span class="num">ε = ħ²α²/2m</span> ו-<span class="num">P = mV₀a/ħ²</span> הוא החוזק של המחסומים. בוחרים אנרגיה, בפס או בפער, ורואים את הערכים העצמיים של מטריצת המעבר ואת הפתרון לאורך השרשרת. אין צורך להריץ דבר.</p>
   </header>
 
   <section class="card">
     <h2>התנאי לפסים</h2>
-    <p class="sub">הגרף הוא <span class="num">½ Tr M</span> כפונקציה של <span class="num">αa</span>. אנרגיות שבהן הוא בתוך הרצועה המוצללת שייכות לפסים (הקווים הכחולים בתחתית); השאר הן פערים.</p>
+    <p class="sub">הגרף הוא <span class="num">½ Tr M</span> כפונקציה של <span class="num">αa</span>. אנרגיות שבהן הוא בתוך הרצועה המוצללת שייכות לפסים (הקווים הכחולים בתחתית); השאר הן פערים. לחצו או גררו על הגרף כדי לבחור אנרגיה, גם בתוך פער.</p>
     <canvas id="ct" width="680" height="300" aria-label="חצי העקבה של מטריצת המעבר"></canvas>
     <div class="ctlrow">
       <div><div class="row"><span class="lab" style="margin:0">חוזק המחסומים P</span><input id="P" type="range" min="0" max="3" step="0.01" value="1.5"><output id="Po"></output></div></div>
@@ -60,15 +62,17 @@ output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;
   </section>
 
   <section class="card">
-    <h2>יחס הנפיצה</h2>
-    <p class="sub">האנרגיה ביחידות של <span class="num">ħ²/2ma²</span>. הקו המקווקו הוא אלקטרון חופשי, מקופל לאזור ברילואן הראשון. לחצו על נקודה כדי לראות את פונקציית הגל שלה.</p>
-    <canvas id="ce" width="680" height="420" aria-label="יחס הנפיצה"></canvas>
-    <div class="legend"><span><span class="dot" style="background:var(--blue)"></span>קרוניג-פני</span><span><span class="dot" style="background:var(--amber)"></span>אלקטרון חופשי</span></div>
+    <h2>הערכים העצמיים של מטריצת המעבר</h2>
+    <p class="sub">מכיוון ש-<span class="num">det M = 1</span>, מכפלת שני הערכים העצמיים היא 1: הם <span class="num">λ</span> ו-<span class="num">1/λ</span>, עם <span class="num">λ + 1/λ = Tr M</span>. כאשר <span class="num">|½ Tr M| ≤ 1</span> שניהם על מעגל היחידה, <span class="num">λ = e^(±ika)</span>; אחרת הם ממשיים, ואחד מהם גדול מ-1 בערכו המוחלט.</p>
+    <div class="lamrow">
+      <canvas id="cl" width="300" height="300" aria-label="הערכים העצמיים במישור המרוכב"></canvas>
+      <div class="box" id="linfo"></div>
+    </div>
   </section>
 
   <section class="card">
-    <h2>פונקציית בלוך</h2>
-    <p class="sub">החלק הממשי של ψ(x) לאורך חמישה תאים, והמעטפת |ψ(x)|. הקווים האנכיים הם מיקומי המחסומים.</p>
+    <h2>הפתרון באנרגיה שנבחרה</h2>
+    <p class="sub">בפס: החלק הממשי של פונקציית בלוך ψ(x) והמעטפת |ψ(x)| לאורך שישה תאים. בפער: הפתרון שמוכפל ב-λ בכל תא; אין פתרון חסום, ולכן אין מצב בלוך. הקווים האנכיים הם מיקומי המחסומים.</p>
     <canvas id="cw" width="680" height="260" aria-label="פונקציית הגל"></canvas>
     <div class="box" id="winfo" style="margin-top:12px"></div>
   </section>
@@ -130,11 +134,13 @@ function psiAt(X, st, x){
   return cmul(ph,p);
 }
 
-/* ---------------- panel 1: half-trace ---------------- */
+/* ---------------- panel 1: half-trace (click to choose any energy) ---------------- */
+let G1=null;
 function drawTrace(){
   const {ctx,w,h}=setupCanvas($("ct")); ctx.clearRect(0,0,w,h);
   const L=40,R=14,T=12,B=40, ymin=-2.4, ymax=Math.max(2.6, 1+S.P+0.3);
   const X=x=>L+x/XMAX*(w-L-R), Y=y=>T+(ymax-y)/(ymax-ymin)*(h-T-B);
+  G1={L,R,w};
   ctx.fillStyle=css("--teal"); ctx.globalAlpha=.12; ctx.fillRect(L,Y(1),w-L-R,Y(-1)-Y(1)); ctx.globalAlpha=1;
   ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
   [1,-1,0].forEach(v=>{ ctx.strokeStyle=css("--muted"); ctx.globalAlpha=v?0.6:0.25; ctx.beginPath(); ctx.moveTo(L,Y(v)); ctx.lineTo(w-R,Y(v)); ctx.stroke(); ctx.globalAlpha=1; label(ctx,String(v),L-8,Y(v),css("--muted"),11,"right"); });
@@ -143,67 +149,73 @@ function drawTrace(){
   ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.2; ctx.beginPath();
   for(let i=1;i<=800;i++){ const x=XMAX*i/800, y=Math.max(ymin,Math.min(ymax,f(x))); i===1?ctx.moveTo(X(x),Y(y)):ctx.lineTo(X(x),Y(y)); } ctx.stroke();
   ctx.fillStyle=css("--blue"); bandsList().forEach(([a,b])=>ctx.fillRect(X(a),Y(-2.15),X(b)-X(a),8));
-  ctx.fillStyle=css("--rose"); ctx.beginPath(); ctx.arc(X(S.sel.x),Y(f(S.sel.x)),6,0,TAU); ctx.fill();
+  ctx.strokeStyle=css("--rose"); ctx.globalAlpha=.5; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(X(S.sel.x),T); ctx.lineTo(X(S.sel.x),h-B); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+  ctx.fillStyle=css("--rose"); ctx.beginPath(); ctx.arc(X(S.sel.x),Y(Math.max(ymin,Math.min(ymax,f(S.sel.x)))),6,0,TAU); ctx.fill();
   const Bs=bandsList(); let s=`<h3>הפסים</h3>`;
   Bs.forEach((b,i)=>{ s+=`<p>פס ${i+1}: <span class="num">αa/π = ${fmt(b[0]/PI,3)} – ${fmt(Math.min(b[1],XMAX)/PI,3)}</span></p>`; });
   s+=`<p>כל פס מסתיים ב-<span class="num">αa = nπ</span>, ושם <span class="num">½ Tr M = ±1</span>.</p>`;
   $("tinfo").innerHTML=s;
 }
-
-/* ---------------- panel 2: band structure ---------------- */
-let E2=null;
-function drawBands(){
-  const {ctx,w,h}=setupCanvas($("ce")); ctx.clearRect(0,0,w,h);
-  const L=52,R=14,T=12,B=36, emax=XMAX*XMAX;
-  const X=k=>L+(k+PI)/TAU*(w-L-R), Y=e=>h-B-e/emax*(h-T-B);
-  E2={X,Y,L,R,T,B,w,h,emax};
-  ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,h-B); ctx.lineTo(w-R,h-B); ctx.stroke();
-  [-1,-0.5,0,0.5,1].forEach(t=>label(ctx,t===0?"0":(t<0?"−":"")+(Math.abs(t)===1?"π":"π/2"),X(t*PI),h-B+14,css("--muted"),12));
-  for(let e=0;e<=emax;e+=25){ label(ctx,String(e),L-6,Y(e),css("--muted"),11,"right"); }
-  label(ctx,"k a",(L+w-R)/2,h-6,css("--muted"),12);
-  // gaps shading
-  const Bs=bandsList(); ctx.fillStyle=css("--amber"); ctx.globalAlpha=.10;
-  let prev=0; Bs.forEach(([a,b])=>{ ctx.fillRect(L,Y(a*a),w-L-R,Y(prev*prev)-Y(a*a)); prev=b; }); ctx.globalAlpha=1;
-  // free electron folded
-  ctx.strokeStyle=css("--amber"); ctx.lineWidth=1.2; ctx.setLineDash([5,4]);
-  for(let n=-3;n<=3;n++){ ctx.beginPath(); for(let i=0;i<=200;i++){ const k=-PI+TAU*i/200, e=(k+TAU*n)**2; if(e>emax*1.02){ continue; } i===0?ctx.moveTo(X(k),Y(e)):ctx.lineTo(X(k),Y(e)); } ctx.stroke(); }
-  ctx.setLineDash([]);
-  // KP bands
-  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.6;
-  Bs.forEach(([a,b])=>{ for(const sg of [1,-1]){ ctx.beginPath(); for(let i=0;i<=300;i++){ const x=a+(b-a)*i/300, k=sg*Math.acos(Math.max(-1,Math.min(1,f(x)))); i===0?ctx.moveTo(X(k),Y(x*x)):ctx.lineTo(X(k),Y(x*x)); } ctx.stroke(); } });
-  const st=blochState(S.sel.x,S.sel.sgn);
-  ctx.fillStyle=css("--rose"); ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(X(st.k),Y(S.sel.x**2),7,0,TAU); ctx.fill(); ctx.stroke();
-}
-function pick(ev){
-  if(!E2) return; const r=$("ce").getBoundingClientRect(), px=ev.clientX-r.left, py=ev.clientY-r.top;
-  let best=null, bd=1e9;
-  bandsList().forEach(([a,b])=>{ for(let i=0;i<=400;i++){ const x=a+(b-a)*i/400, k=Math.acos(Math.max(-1,Math.min(1,f(x))));
-    for(const sg of [1,-1]){ const d=Math.hypot(E2.X(sg*k)-px, E2.Y(x*x)-py); if(d<bd){ bd=d; best={x, sgn:sg}; } } } });
-  if(best){ S.sel=best; drawAll(); }
-}
+function pickE(ev){ if(!G1) return; const r=$("ct").getBoundingClientRect(), px=ev.clientX-r.left;
+  const x=Math.max(0.02,Math.min(XMAX-1e-3,(px-G1.L)/(G1.w-G1.L-G1.R)*XMAX)); S.sel={x,sgn:1}; drawAll(); }
 let drag=false;
-$("ce").addEventListener("pointerdown",e=>{ drag=true; $("ce").setPointerCapture(e.pointerId); pick(e); });
-$("ce").addEventListener("pointermove",e=>{ if(drag) pick(e); });
-$("ce").addEventListener("pointerup",()=>{ drag=false; });
+$("ct").addEventListener("pointerdown",e=>{ drag=true; $("ct").setPointerCapture(e.pointerId); pickE(e); });
+$("ct").addEventListener("pointermove",e=>{ if(drag) pickE(e); });
+$("ct").addEventListener("pointerup",()=>{ drag=false; });
 
-/* ---------------- panel 3: wavefunction ---------------- */
+/* ---------------- panel 2: eigenvalues of the transfer matrix ---------------- */
+function eigs(x){ const h=f(x);
+  if(Math.abs(h)<=1){ const s=Math.sqrt(1-h*h); return {band:true, h, l1:[h,s], l2:[h,-s], ka:Math.acos(h)}; }
+  const s=Math.sqrt(h*h-1), a=h+Math.sign(h)*s; return {band:false, h, l1:[a,0], l2:[1/a,0]}; }
+function drawLambda(){
+  const {ctx,w,h}=setupCanvas($("cl")); ctx.clearRect(0,0,w,h);
+  const c=w/2, cy=h/2, Rm=Math.min(w,h)/2-14, rng=2.6, sc=Rm/rng;
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(c-Rm,cy); ctx.lineTo(c+Rm,cy); ctx.moveTo(c,cy-Rm); ctx.lineTo(c,cy+Rm); ctx.stroke();
+  label(ctx,"Re λ",c+Rm-16,cy-11,css("--muted"),11); label(ctx,"Im λ",c+24,cy-Rm+8,css("--muted"),11);
+  ctx.strokeStyle=css("--teal"); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(c,cy,sc,0,TAU); ctx.stroke();
+  [-1,1].forEach(v=>label(ctx,String(v),c+v*sc+(v>0?9:-9),cy+12,css("--muted"),11));
+  const E=eigs(S.sel.x);
+  const pt=(z,col)=>{ let X=z[0], Y=z[1], clip=false; const r=Math.hypot(X,Y); if(r>rng*0.94){ X*=rng*0.94/r; Y*=rng*0.94/r; clip=true; }
+    const px=c+X*sc, py=cy-Y*sc; ctx.fillStyle=col; ctx.strokeStyle=css("--edge"); ctx.lineWidth=1.2; ctx.beginPath(); ctx.arc(px,py,6.5,0,TAU); ctx.fill(); ctx.stroke();
+    if(clip) label(ctx,(z[0]>0?"→ ":"")+fmt(z[0],2)+(z[0]<0?" ←":""),px-(z[0]>0?34:-34),py-15,col,11); };
+  pt(E.l2,css("--blue")); pt(E.l1,css("--rose"));
+  let s=`<h3>${E.band?"האנרגיה בתוך פס":"האנרגיה בתוך פער"}</h3><p>אנרגיה <span class="num">${fmt(S.sel.x**2,2)} ħ²/2ma²</span>, כלומר <span class="num">αa/π = ${fmt(S.sel.x/PI)}</span>, ו-<span class="num">½ Tr M = ${fmt(E.h)}</span></p>`;
+  if(E.band) s+=`<p>שני הערכים העצמיים על מעגל היחידה: <span class="num">λ = e^(±ika)</span> עם <span class="num">ka/π = ${fmt(E.ka/PI)}</span>. הפתרון חוזר על עצמו בכל תא עד כדי פאזה: זה מצב בלוך.</p>`;
+  else s+=`<p>הערכים העצמיים ממשיים: <span class="num">λ = ${fmt(E.l1[0])}</span> ו-<span class="num">1/λ = ${fmt(E.l2[0])}</span>. פתרון אחד מוכפל ב-<span class="num">${fmt(Math.abs(E.l1[0]))}</span> בכל תא והשני מתכווץ באותו יחס${E.l1[0]<0?", ושניהם מחליפים סימן בכל תא":""}. אין פתרון חסום, ולכן אין מצב בלוך: זה פער.</p>`;
+  $("linfo").innerHTML=s;
+}
+
+/* ---------------- panel 3: the solution at the chosen energy ---------------- */
+function gapState(x){ const M=cellM(x), lam=eigs(x).l1[0];
+  let v=[M[0][1], lam-M[0][0]]; if(Math.hypot(...v)<1e-12) v=[lam-M[1][1], M[1][0]]; return {lam, v}; }
+function psiGap(X, g, x){ const n=Math.floor(X), y=X-n, c=Math.cos(x*y), s=Math.sin(x*y); return Math.pow(g.lam,n)*(c*g.v[0]+(s/x)*g.v[1]); }
 function drawWave(){
   const {ctx,w,h}=setupCanvas($("cw")); ctx.clearRect(0,0,w,h);
-  const L=14,R=14,T=14,B=26, NC=5, st=blochState(S.sel.x,S.sel.sgn);
-  const N=1000, xs=[], re=[], ab=[];
-  for(let i=0;i<=N;i++){ const X=NC*i/N - 1e-9*(i===N); const p=psiAt(Math.max(0,X),st,S.sel.x); xs.push(X); re.push(p[0]); ab.push(Math.hypot(p[0],p[1])); }
+  const L=14,R=14,T=14,B=26, NC=6, N=1200, x=S.sel.x, band=Math.abs(f(x))<=1;
+  const xs=[], re=[], ab=[];
+  let st=null, g=null;
+  if(band) st=blochState(x,S.sel.sgn); else g=gapState(x);
+  for(let i=0;i<=N;i++){ const X=NC*i/N - 1e-9*(i===N);
+    if(band){ const p=psiAt(Math.max(0,X),st,x); xs.push(X); re.push(p[0]); ab.push(Math.hypot(p[0],p[1])); }
+    else { const v=psiGap(Math.max(0,X),g,x); xs.push(X); re.push(v); ab.push(Math.abs(v)); } }
   const m=Math.max(...ab)||1;
-  const PX=x=>L+x/NC*(w-L-R), PY=v=>(T+h-B)/2-v/m*(h-T-B)/2*0.92;
+  const PX=X=>L+X/NC*(w-L-R), PY=v=>(T+h-B)/2-v/m*(h-T-B)/2*0.92;
   ctx.strokeStyle=css("--line"); ctx.beginPath(); ctx.moveTo(L,PY(0)); ctx.lineTo(w-R,PY(0)); ctx.stroke();
   for(let n=0;n<=NC;n++){ ctx.strokeStyle=css("--muted"); ctx.globalAlpha=.5; ctx.lineWidth=n===0||n===NC?1:2; ctx.beginPath(); ctx.moveTo(PX(n),T); ctx.lineTo(PX(n),h-B); ctx.stroke(); ctx.globalAlpha=1; label(ctx,String(n)+"a",PX(n),h-B+13,css("--muted"),11); }
-  ctx.strokeStyle=css("--amber"); ctx.lineWidth=1.4; ctx.setLineDash([5,4]); ctx.beginPath(); xs.forEach((x,i)=>i?ctx.lineTo(PX(x),PY(ab[i])):ctx.moveTo(PX(x),PY(ab[i]))); ctx.stroke(); ctx.setLineDash([]);
-  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.2; ctx.beginPath(); xs.forEach((x,i)=>i?ctx.lineTo(PX(x),PY(re[i])):ctx.moveTo(PX(x),PY(re[i]))); ctx.stroke();
-  const n=bandIndex(S.sel.x);
-  $("winfo").innerHTML=`<h3>המצב שנבחר</h3><p>פס <span class="num">${n+1}</span>, <span class="num">k a/π = ${fmt(st.k/PI)}</span>, אנרגיה <span class="num">${fmt(S.sel.x**2,2)} ħ²/2ma²</span></p>
+  if(band){ ctx.strokeStyle=css("--amber"); ctx.lineWidth=1.4; ctx.setLineDash([5,4]); ctx.beginPath(); xs.forEach((X,i)=>i?ctx.lineTo(PX(X),PY(ab[i])):ctx.moveTo(PX(X),PY(ab[i]))); ctx.stroke(); ctx.setLineDash([]); }
+  else { // growth by |lambda| per cell, through the cell-to-cell maxima
+    const m0=Math.max(...ab.slice(0,Math.floor(N/NC))), lam=Math.abs(g.lam);
+    ctx.strokeStyle=css("--amber"); ctx.lineWidth=1.4; ctx.setLineDash([5,4]);
+    for(const sg of [1,-1]){ ctx.beginPath(); for(let i=0;i<=200;i++){ const X=NC*i/200, v=sg*m0*Math.pow(lam,X); i?ctx.lineTo(PX(X),PY(v)):ctx.moveTo(PX(X),PY(v)); } ctx.stroke(); }
+    ctx.setLineDash([]); }
+  ctx.strokeStyle=css("--blue"); ctx.lineWidth=2.2; ctx.beginPath(); xs.forEach((X,i)=>i?ctx.lineTo(PX(X),PY(re[i])):ctx.moveTo(PX(X),PY(re[i]))); ctx.stroke();
+  const n=bandIndex(x);
+  if(band) $("winfo").innerHTML=`<h3>מצב בלוך</h3><p>פס <span class="num">${n+1}</span>, <span class="num">k a/π = ${fmt(st.k/PI)}</span>, אנרגיה <span class="num">${fmt(x*x,2)} ħ²/2ma²</span></p>
   <p>${Math.abs(Math.abs(st.k)-PI)<0.02||Math.abs(st.k)<0.02?"בקצה פס (k = 0 או π/a) פונקציית הגל היא גל עומד: |ψ| מחזורי עם מחזור a, ו-ψ חוזר על עצמו או מחליף סימן בכל תא.":"|ψ| מחזורי עם מחזור a, אבל הפאזה של ψ מתקדמת ב-ka בכל תא: זה התוכן של משפט בלוך."}</p>`;
+  else $("winfo").innerHTML=`<h3>אין מצב בלוך</h3><p>בפער הפתרון מוכפל ב-<span class="num">λ = ${fmt(g.lam)}</span> בכל תא (הקו המקווקו: <span class="num">|λ|^(x/a)</span>). בשרשרת ארוכה פתרון כזה מתבדר בכיוון אחד, ולכן אינו מצב של האלקטרון; האנרגיה הזו אסורה.</p>`;
 }
 
-function drawAll(){ $("Po").textContent=S.P.toFixed(2); if(bandIndex(S.sel.x)<0){ const B=bandsList(); S.sel.x=0.5*(B[0][0]+B[0][1]); } drawTrace(); drawBands(); drawWave(); }
+function drawAll(){ $("Po").textContent=S.P.toFixed(2); drawTrace(); drawLambda(); drawWave(); }
 $("P").addEventListener("input",e=>{ S.P=+e.target.value; drawAll(); });
 
 function fitFrame(){ try{ const fe=window.frameElement; if(!fe) return;
@@ -217,7 +229,7 @@ window.addEventListener("load",fitFrame);
 if(window.ResizeObserver) new ResizeObserver(fitFrame).observe(document.querySelector(".wrap"));
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawAll);
 drawAll(); fitFrame();
-window.__kp = { S, f, bandsList, blochState, psiAt, cellM, drawAll };
+window.__kp = { S, f, bandsList, blochState, psiAt, cellM, drawAll, eigs, gapState, psiGap };
 })();
 </script>
 </body>
