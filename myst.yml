@@ -7,10 +7,9 @@ project:
   license: CC-BY-4.0
   jupyter: true
   copyright: "2026"
-  # Weeks 7-11 are kept in the repo but not published yet. To release a week:
+  # Weeks 8-11 are kept in the repo but not published yet. To release a week:
   # add its two files to the toc, its two cards to index.md, and delete its line in exclude.
   exclude:
-    - week07*
     - week08*
     - week09*
     - week10*
@@ -26,6 +25,8 @@ project:
     - file: week05-reciprocal.md
     - file: week06.ipynb
     - file: week06-diffraction.md
+    - file: week07.ipynb
+    - file: week07-chain.md
 site:
   template: book-theme
   title: מבוא למצב מוצק תשפ״ז
